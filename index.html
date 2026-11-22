@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>جام جهان‌نما</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!--APP-START-->
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <h1 class="brand-title">جام <b>جهان‌نما</b></h1>
+      <p class="brand-sub">ایران و جهان، هم‌زمان، از نخستین تمدن‌ها تا امروز</p>
+    </div>
+    <div class="search-wrap">
+      <input id="q" class="search" type="search" placeholder="جست‌وجو: ناصرالدین شاه، ساسانیان، رنسانس…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
+      <ul id="qres" class="qres" hidden></ul>
+    </div>
+    <nav class="tools" aria-label="ابزارها">
+      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="انتخاب سرزمین‌ها برای مقایسه">سرزمین‌ها</button>
+      <button id="btnLayers" class="tbtn" aria-haspopup="true" aria-expanded="false" title="لایه‌ها">لایه‌ها</button>
+      <button id="btnScale" class="tbtn" title="تغییر مقیاس زمان">مقیاس: فشرده</button>
+      <button id="btnDir" class="tbtn" title="جهت گذر زمان">زمان: چپ←راست</button>
+      <button id="btnTheme" class="tbtn" title="روشن/تاریک">پوسته</button>
+      <button id="btnPanel" class="tbtn tbtn-on" aria-controls="panel" aria-expanded="true">برش زمان</button>
+      <button id="btnAbout" class="tbtn" title="روش و منابع">؟</button>
+    </nav>
+    <div id="regions" class="layers regions" hidden>
+      <div class="rg-head"><b>سرزمین‌هایی که زیر ایران دیده شوند</b><span><button type="button" class="lnk" id="rgAll">همه</button> · <button type="button" class="lnk" id="rgNone">هیچ</button></span></div>
+      <div id="rgList" class="rg-list"></div>
+    </div>
+    <div id="layers" class="layers" hidden>
+      <label><input type="checkbox" id="lyRulers" checked> فرمانروایان</label>
+      <label><input type="checkbox" id="lyEvents" checked> رویدادها</label>
+      <label><input type="checkbox" id="lyPeople" checked> چهره‌ها</label>
+      <label><input type="checkbox" id="lyLinks"> پیوند جانشینی دودمان‌های ایران</label>
+    </div>
+  </header>
+
+  <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
+
+  <div class="main">
+    <section class="stage" id="stage">
+      <canvas id="tl" aria-label="نمودار زمانی تعاملی تاریخ ایران و جهان" role="img"></canvas>
+      <div id="tip" class="tip" hidden></div>
+      <div class="hint" id="hint">کشیدن = جابه‌جایی · چرخ موس = بزرگ‌نمایی · کلیک = ثابت‌کردن برش زمان</div>
+    </section>
+    <aside class="panel" id="panel" aria-live="polite">
+      <div class="panel-head">
+        <div class="panel-kicker">برش زمان · جهان در این لحظه</div>
+        <div class="panel-year" id="pYear">—</div>
+        <div class="panel-cal" id="pCal"></div>
+        <div class="panel-focus" id="pFocus"></div>
+      </div>
+      <div class="panel-body" id="pBody"></div>
+    </aside>
+  </div>
+
+  <footer class="mini">
+    <canvas id="minimap" aria-label="نقشهٔ کوچک کل زمان"></canvas>
+  </footer>
+
+  <div class="modal" id="about" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="aboutT">
+      <button class="modal-x" id="aboutX" aria-label="بستن">×</button>
+      <h2 id="aboutT">روش و قراردادهای گاه‌شماری</h2>
+      <div id="aboutBody"></div>
+    </div>
+  </div>
+</div>
+<!--APP-END-->
+<script src="js/core.js"></script>
+<script src="data/regions.js"></script>
+<script src="data/iran.js"></script>
+<script src="data/iran-rulers.js"></script>
+<script src="data/iran-events.js"></script>
+<script src="data/near-east.js"></script>
+<script src="data/asia.js"></script>
+<script src="data/europe.js"></script>
+<script src="data/africa-americas.js"></script>
+<script src="data/extent.js"></script>
+<script src="data/world-rulers.js"></script>
+<script src="data/world-events.js"></script>
+<script src="data/people.js"></script>
+<script src="data/dominion.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
