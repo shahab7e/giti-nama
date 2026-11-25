@@ -563,7 +563,7 @@
   try { const sv = localStorage.getItem('jam-atlas-theme'); if (sv) dark = sv === 'dark'; } catch (e) { }
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    $('btnTheme').textContent = dark ? '☀ کاغذی' : '☾ شبانه';
+    $('btnTheme').textContent = dark ? '☀ روشن' : '☾ تیره';
     MS.dark = dark;
     try { localStorage.setItem('jam-atlas-theme', dark ? 'dark' : 'light'); } catch (e) { }
     R.readTheme(); redrawTL();
@@ -636,7 +636,7 @@
   function drawMini() {
     if (!mW) return;
     mctx.clearRect(0, 0, mW, mH);
-    mctx.fillStyle = S.dark ? '#090e1a' : '#efe7d8'; mctx.fillRect(0, 0, mW, mH);
+    mctx.fillStyle = S.dark ? '#0f1219' : '#f4f4f0'; mctx.fillRect(0, 0, mW, mH);
     const n = TL.regions.length, lh = (mH - 16) / n;
     TL.polities.forEach(p => {
       const ri = TL.regionById[p.r].order, xa = mx(p.s), xb = mx(Math.min(p.e, TL.NOW));

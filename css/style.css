@@ -1,23 +1,23 @@
-/* جام جهان‌نما — Space-Time Atlas UI
-   Default: Obsidian & Burnished Gold Observatory (dark); Alternate: Illuminated Persian Parchment Atlas (light). */
+/* جام جهان‌نما — Swiss Editorial Space-Time Atlas UI
+   Default: Matte Charcoal & Warm Gold (dark); Alternate: Swiss Alabaster Editorial (light). */
 :root{
-  --bg:#070b15; --surface:#0c111f; --sunk:#131b2e; --glass:rgba(11,16,29,.84);
-  --ink:#f5f1e8; --ink2:#b3bdd4; --muted:#7080a0;
-  --line:rgba(255,255,255,.08); --line2:rgba(232,190,102,.26);
-  --accent:#4f8cff; --accent-ink:#c4dbff; --gold:#e8be66;
-  --tint:rgba(61,123,255,.15); --tint2:rgba(232,190,102,.15);
-  --shadow:0 14px 40px rgba(0,0,0,.55);
+  --bg:#0a0d13; --surface:#0f1219; --sunk:#161b26; --glass:rgba(15,18,25,.86);
+  --ink:#f3f3f0; --ink2:#adb3c2; --muted:#6f778a;
+  --line:rgba(255,255,255,.08); --line2:rgba(216,180,108,.28);
+  --accent:#4a7de0; --accent-ink:#b9d0fa; --gold:#d8b46c;
+  --tint:rgba(74,125,224,.14); --tint2:rgba(216,180,108,.14);
+  --shadow:0 14px 36px rgba(0,0,0,.5);
   --f-ui:"Vazirmatn",Tahoma,"Segoe UI",sans-serif;
   --f-disp:"Gulzar","Vazirmatn",serif;
   color-scheme:dark;
 }
 :root[data-theme="light"]{
-  --bg:#f5efe4; --surface:#fbf7ef; --sunk:#efe7d8; --glass:rgba(251,247,239,.90);
-  --ink:#1f1810; --ink2:#574b3d; --muted:#8c7d6b;
-  --line:rgba(60,42,20,.12); --line2:rgba(168,118,28,.34);
-  --accent:#1e3f7a; --accent-ink:#163061; --gold:#a8761c;
-  --tint:rgba(30,63,122,.10); --tint2:rgba(168,118,28,.13);
-  --shadow:0 12px 34px rgba(45,32,12,.14);
+  --bg:#fafaf8; --surface:#ffffff; --sunk:#f2f2ee; --glass:rgba(255,255,255,.92);
+  --ink:#141416; --ink2:#4a4a52; --muted:#84848e;
+  --line:rgba(17,17,19,.09); --line2:rgba(17,17,19,.18);
+  --accent:#1d4496; --accent-ink:#163372; --gold:#b84a32;
+  --tint:rgba(29,68,150,.08); --tint2:rgba(184,74,50,.10);
+  --shadow:0 10px 30px rgba(0,0,0,.09);
   color-scheme:light;
 }
 *{box-sizing:border-box}

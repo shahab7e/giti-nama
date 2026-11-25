@@ -32,12 +32,12 @@
   TL.isIranian = (p) => (p.r === 'iran' ? !TL.FOREIGN.has(p.id) : !!(p.of && p.of.some(q => q.r === 'iran' && !TL.FOREIGN.has(q.id))));
 
   const GRP = {
-    'ایران': { h: 220, strong: '#3d7cff', gold: '#e8be66' },
-    'خاور نزدیک': { h: 36, strong: '#d99834' },
-    'آسیا': { h: 156, strong: '#28b580' },
-    'اروپا': { h: 342, strong: '#cf4c6c' },
-    'آفریقا': { h: 24, strong: '#cc6f38' },
-    'قارهٔ آمریکا و اقیانوسیه': { h: 266, strong: '#8e62e0' }
+    'ایران': { h: 218, s: 52, strong: '#3d72d6', gold: '#d8b46c' },
+    'خاور نزدیک': { h: 34, s: 32, strong: '#b5843c' },
+    'آسیا': { h: 158, s: 25, strong: '#3b8c70' },
+    'اروپا': { h: 350, s: 30, strong: '#a84a5c' },
+    'آفریقا': { h: 22, s: 28, strong: '#9e6240' },
+    'قارهٔ آمریکا و اقیانوسیه': { h: 248, s: 22, strong: '#6c5fa3' }
   };
   R.GRP = GRP;
 
@@ -70,32 +70,39 @@
     mcache.clear(); R.colorize();
   };
   const hsl = (h, s, l, a) => (a == null ? `hsl(${h} ${s}% ${l}%)` : `hsl(${h} ${s}% ${l}% / ${a})`);
+  // ---------- Swiss Editorial minimal color palette (restrained architectural ink tones, no rainbow!) ----------
   R.colorize = function () {
     const byReg = {};
     TL.polities.forEach(p => { (byReg[p.r] = byReg[p.r] || []).push(p); });
-    const OFF = [0, 12, -10, 20, -18, 6, -6, 15];
+    const H_SHIFT = [0, 6, -5, 10, -8, 3, -3, 8];
+    const L_CADENCE = [0, -5, 4, -3, 2, -6];
     const pass = () => Object.keys(byReg).forEach(rid => {
       const reg = TL.regionById[rid];
+      const grp = GRP[reg.grp] || { h: 210, s: 24 };
+      // Each region gets a subtle fixed offset from its continent's Swiss pigment family
+      const regShift = ((reg.order % 5) - 2) * 5;
       byReg[rid].sort((a, b) => a.s - b.s).forEach((p, i) => {
         p.ir = TL.isIranian(p);
         const foreignInIran = rid === 'iran' && !p.ir;
-        // Keep Iran polities in refined royal lapis-azure family unless explicitly hued; other regions in mineral/jewel tones
-        const hue = typeof p.c === 'number' ? p.c : (reg.hue + OFF[i % OFF.length] + 360) % 360;
-        let s = p.ir ? 68 : 54;
-        let l = S.dark ? (p.ir ? 48 : 45 - (i % 2) * 4) : (p.ir ? 42 : 44 - (i % 2) * 4);
-        if (foreignInIran) { s = 14; l = S.dark ? 42 : 55; }
-        if (p.k === 'culture') { s -= 14; l += S.dark ? 4 : 8; }
-        if (p.lv === 3) { s -= 10; l += S.dark ? 2 : 6; }
-        p.hue = hue; p.base = hsl(hue, s, l);
-        p.g = [hsl(hue - 10, s - 2, l + 6), hsl(hue, s + 4, l), hsl(hue + 12, s, l - 7)];
-        p.light = l >= 64;
-        p.txt = p.light ? hsl(hue, 40, 18) : '#ffffff';
+        const lord = p.of ? TL.overlord(p) : null;
+        // Restrained Swiss hue: Iran stays pure Prussian/Swiss Cobalt; dominions inherit overlord's Swiss hue; regions stay in continent family
+        let hue = p.ir ? (218 + (i % 3 - 1) * 5) : ((lord ? lord.hue : (grp.h + regShift + H_SHIFT[i % H_SHIFT.length])) + 360) % 360;
+        let s = p.ir ? (S.dark ? 54 : 52) : (lord ? (lord.ir ? 48 : 32) : grp.s);
+        let l = (S.dark ? (p.ir ? 44 : 40) : (p.ir ? 41 : 46)) + L_CADENCE[i % L_CADENCE.length];
+        if (foreignInIran) { hue = 220; s = 10; l = S.dark ? 36 : 56; }
+        if (p.k === 'culture') { s = Math.max(12, s - 10); l += S.dark ? 2 : 8; }
+        if (p.lv === 3) { s = Math.max(14, s - 8); l += S.dark ? 1 : 6; }
+        p.hue = hue;
+        p.base = hsl(hue, s, l);
+        // Flat Swiss architectural fill (minimal tonal modulation, zero rainbow gradient)
+        p.g = [hsl(hue, s, l + 2), p.base, hsl(hue, s, l - 3)];
+        p.light = l >= 62;
+        p.txt = p.light ? '#18181b' : '#f7f7f5';
       });
     });
     pass();
-    let again = false;
-    TL.polities.forEach(p => { if (p.of && typeof p.c !== 'number') { p.c = TL.overlord(p).hue; again = true; } });
-    if (again) pass();
+    // Second pass so dominions inherit exact Swiss overlord color cleanly
+    pass();
   };
 
   // ---------- territory profiles ----------
@@ -260,17 +267,16 @@
     }
 
     const sh = shapePath(p, xa, xb, yc, big);
-    const g = ctx.createLinearGradient(xa, 0, xb, 0);
-    g.addColorStop(0, p.g[0]); g.addColorStop(0.5, p.g[1]); g.addColorStop(1, p.g[2]);
-    if (S.dark && (focused || hovered)) { ctx.shadowColor = p.base; ctx.shadowBlur = hovered ? 18 : 12; }
-    ctx.fillStyle = g; ctx.fill();
+    // Clean Swiss flat matte fill (crisp architectural aesthetic)
+    if (S.dark && (focused || hovered)) { ctx.shadowColor = p.base; ctx.shadowBlur = hovered ? 14 : 9; }
+    ctx.fillStyle = p.base; ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Subtle matte rim highlight instead of glossy gradient
-    ctx.lineWidth = hovered ? 2.0 : (focused ? 1.6 : 0.7);
-    ctx.strokeStyle = hovered ? (S.dark ? '#ffffff' : '#111111')
-      : (focused ? (S.dark ? '#e8be66' : '#1f1810')
-      : (S.dark ? 'rgba(255,255,255,.20)' : 'rgba(255,255,255,.35)'));
+    // Minimal hairline stroke
+    ctx.lineWidth = hovered ? 1.8 : (focused ? 1.5 : 0.65);
+    ctx.strokeStyle = hovered ? (S.dark ? '#ffffff' : '#111113')
+      : (focused ? (S.dark ? '#d8b46c' : '#111113')
+      : (S.dark ? 'rgba(255,255,255,.14)' : 'rgba(17,17,19,.12)'));
     ctx.stroke();
 
     if (p.a && w > 30) {
@@ -406,35 +412,35 @@
   };
   const yearTxt = (y) => (y < 0 ? TL.fa(-y) + ' پ.م' : (y === 0 ? '۱ م' : TL.fa(y)));
   function drawAxis(ticks) {
-    ctx.fillStyle = S.dark ? '#0b101d' : '#241d15';
+    ctx.fillStyle = S.dark ? '#0f1219' : '#fafaf8';
     ctx.fillRect(0, 0, S.W, S.AX);
-    ctx.fillStyle = S.dark ? 'rgba(232,190,102,.28)' : 'rgba(181,132,40,.45)';
+    ctx.fillStyle = S.dark ? 'rgba(255,255,255,.10)' : 'rgba(17,17,19,.12)';
     ctx.fillRect(0, S.AX - 1, S.W, 1);
     TL.eras.forEach(er => {
       const [xa, xb] = span(er.s, er.e); if (xb < 0 || xa > S.PW) return;
       const v0 = Math.max(xa, 0), v1 = Math.min(xb, S.PW), font = F(500, 9.5), w = tw(er.n, font);
-      if (xa > 0) { ctx.fillStyle = 'rgba(232,190,102,.22)'; ctx.fillRect(xa, 3, 1, 10); }
-      if (v1 - v0 > w + 12) text(er.n, (v0 + v1) / 2, 9, font, 'rgba(232,190,102,.70)');
+      if (xa > 0) { ctx.fillStyle = S.dark ? 'rgba(255,255,255,.14)' : 'rgba(17,17,19,.14)'; ctx.fillRect(xa, 3, 1, 10); }
+      if (v1 - v0 > w + 12) text(er.n, (v0 + v1) / 2, 9, font, S.C.muted);
     });
     ticks.forEach(t => {
       const x = R.x(t.y), major = t.y % (t.st * 5) === 0 || t.st >= 1000;
-      ctx.fillStyle = 'rgba(255,255,255,.32)'; ctx.fillRect(x, S.AX - 5, 1, 5);
-      text(yearTxt(t.y), x, S.AX - 12, F(major ? 800 : 600, major ? 12.5 : 11), '#f5f1e8');
+      ctx.fillStyle = S.dark ? 'rgba(255,255,255,.24)' : 'rgba(17,17,19,.24)'; ctx.fillRect(x, S.AX - 5, 1, 5);
+      text(yearTxt(t.y), x, S.AX - 12, F(major ? 800 : 500, major ? 12 : 10.5), S.C.ink);
     });
   }
   function drawCalendar(ticks) {
     const y0 = S.H - S.CAL;
-    ctx.fillStyle = S.dark ? '#0c111f' : '#ebe2d0'; ctx.fillRect(0, y0, S.W, S.CAL);
-    ctx.fillStyle = S.C.line2; ctx.fillRect(0, y0, S.W, 1);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#f4f4f0'; ctx.fillRect(0, y0, S.W, S.CAL);
+    ctx.fillStyle = S.C.line; ctx.fillRect(0, y0, S.W, 1);
     ticks.forEach(t => {
       if (t.y < 623) return; const c = TL.calendars(t.y); if (!c) return;
-      text(c.sh.split('–').pop() + ' ش', R.x(t.y), y0 + 8, F(600, 9.5), S.dark ? '#e8be66' : '#8c5e12');
+      text(c.sh.split('–').pop() + ' ش', R.x(t.y), y0 + 8, F(600, 9.5), S.C.ink2);
       text(c.ah.split('–')[0] + ' ق', R.x(t.y), y0 + 17.5, F(400, 8.5), S.C.muted);
     });
   }
   function laneBg(L) {
-    if (S.dark) return L.idx % 2 ? '#0a0f1c' : '#070b15';
-    return L.idx % 2 ? '#efe7d8' : '#f5efe4';
+    if (S.dark) return L.idx % 2 ? '#0e1118' : '#0a0d13';
+    return L.idx % 2 ? '#f6f6f3' : '#fbfbfa';
   }
 
   // ---------- frame ----------
@@ -446,7 +452,7 @@
     S.focusSet = emp && emp.dom ? new Set([emp, ...emp.dom]) : null;
     ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
-    ctx.fillStyle = S.dark ? '#070b15' : '#f5efe4'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = S.dark ? '#0a0d13' : '#fafaf8'; ctx.fillRect(0, 0, W, H);
     const ticks = R.ticks(), ir = S.iran, wTop = S.worldTop, wBot = H - S.CAL;
     const grid = (y0, y1) => ticks.forEach(t => {
       ctx.fillStyle = S.dark ? 'rgba(255,255,255,.05)' : 'rgba(60,42,20,.07)';
@@ -462,7 +468,7 @@
         const gy = oy + L.grpY;
         if (gy < wBot && gy + 24 > wTop) {
           const grp = GRP[L.reg.grp] || { strong: S.C.ink2 };
-          ctx.fillStyle = S.dark ? '#0e1424' : '#e8decb'; ctx.fillRect(0, gy, W, 24);
+          ctx.fillStyle = S.dark ? '#121620' : '#f0f0ec'; ctx.fillRect(0, gy, W, 24);
           ctx.textAlign = 'right'; text(L.grpHead, PW - 12, gy + 12.5, F(800, 11.5), grp.strong); ctx.textAlign = 'center';
           ctx.fillStyle = grp.strong; ctx.globalAlpha = 0.35; ctx.fillRect(0, gy + 23, W, 1); ctx.globalAlpha = 1;
         }
@@ -487,26 +493,24 @@
     ctx.fillStyle = sh; ctx.fillRect(0, wTop, PW, 14);
     ctx.restore();
 
-    // Iran (pinned on top)
+    // Iran (pinned on top — crisp Swiss Prussian tint)
     ctx.save(); ctx.beginPath(); ctx.rect(0, ir.top, W, Math.max(0, ir.bottom - ir.top)); ctx.clip();
-    const ig = ctx.createLinearGradient(0, ir.top, 0, ir.bottom);
-    if (S.dark) { ig.addColorStop(0, '#101a32'); ig.addColorStop(1, '#0b1326'); }
-    else { ig.addColorStop(0, '#ebe3d3'); ig.addColorStop(1, '#e3d8c3'); }
-    ctx.fillStyle = ig; ctx.fillRect(0, ir.top, W, ir.bottom - ir.top);
+    ctx.fillStyle = S.dark ? '#111622' : '#f0f3f9';
+    ctx.fillRect(0, ir.top, W, ir.bottom - ir.top);
     grid(ir.top, ir.bottom);
     TL.iranEras.forEach((er, i) => {
       const [xa, xb] = span(er.s, er.e); if (xb < 0 || xa > PW) return;
-      ctx.fillStyle = S.dark ? (i % 2 ? 'rgba(232,190,102,.08)' : 'rgba(61,123,255,.06)') : (i % 2 ? 'rgba(30,63,122,.09)' : 'rgba(181,132,40,.06)');
+      ctx.fillStyle = S.dark ? (i % 2 ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.015)') : (i % 2 ? 'rgba(29,68,150,.06)' : 'rgba(29,68,150,.02)');
       ctx.fillRect(xa, ir.eraY, xb - xa, 14);
       const v0 = Math.max(xa, 0), v1 = Math.min(xb, PW), font = F(700, 9.5), w = tw(er.n, font);
-      if (v1 - v0 > w + 12) text(er.n, (v0 + v1) / 2, ir.eraY + 7.5, font, S.dark ? '#e8be66' : '#1e3f7a');
+      if (v1 - v0 > w + 12) text(er.n, (v0 + v1) / 2, ir.eraY + 7.5, font, S.dark ? '#a9bede' : '#1d4496');
     });
     if (S.layers.links) drawLinks(ir);
     ir.rows.forEach((row, ri) => row.forEach(p => drawPolity(p, ir.rowY[ri] + ir.rowH[ri] / 2, true, ir.top, ir.bottom)));
     if (S.layers.rulers) ir.rulRows.forEach((row, ri) => row.forEach((r, i) => drawRuler(r, ir.rulY + ri * (S.H < 340 ? 14 : 16), S.H < 340 ? 12 : 14, true, i)));
     if (S.layers.events) drawEvents(ir.events, ir.evY + (S.H < 340 ? 13 : 16), true, ir.top, ir.bottom);
     ctx.restore();
-    ctx.fillStyle = S.dark ? '#e8be66' : '#b58428'; ctx.fillRect(0, ir.bottom - 1.5, W, 1.5);
+    ctx.fillStyle = S.dark ? 'rgba(216,180,108,.65)' : '#1d4496'; ctx.fillRect(0, ir.bottom - 1.5, W, 1.5);
 
     // focus time column
     if (S.focus) {
@@ -518,8 +522,8 @@
     }
 
     drawAxis(ticks); drawCalendar(ticks); drawLabels(oy);
-    if (S.pinYear != null) cursor(R.x(S.pinYear), S.dark ? '#e8be66' : '#b58428', TL.yearLabel(Math.floor(S.pinYear)), false);
-    if (S.hoverX != null && S.hoverX < PW) cursor(S.hoverX, S.dark ? '#ffffff' : '#1f1810', TL.yearLabel(Math.floor(R.yearAt(S.hoverX))), true);
+    if (S.pinYear != null) cursor(R.x(S.pinYear), S.dark ? '#d8b46c' : '#b84a32', TL.yearLabel(Math.floor(S.pinYear)), false);
+    if (S.hoverX != null && S.hoverX < PW) cursor(S.hoverX, S.dark ? '#ffffff' : '#141416', TL.yearLabel(Math.floor(R.yearAt(S.hoverX))), true);
   };
 
   function cursor(x, col, label, faint) {
@@ -531,7 +535,7 @@
     ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     const font = F(800, 10.5), w = tw(label, font) + 14, bx = Math.min(S.PW - w / 2 - 2, Math.max(w / 2 + 2, x));
     rr(bx - w / 2, S.AX + 3, w, 18, 9); ctx.fillStyle = col; ctx.fill();
-    text(label, bx, S.AX + 12.5, font, (col === '#ffffff' || col === '#e8be66') ? '#090c14' : '#ffffff');
+    text(label, bx, S.AX + 12.5, font, (col === '#ffffff' || col === '#d8b46c') ? '#0a0d13' : '#ffffff');
     ctx.restore();
   }
 
@@ -552,39 +556,39 @@
 
   function drawLabels(oy) {
     const x0 = S.PW, W = S.W, ir = S.iran;
-    ctx.fillStyle = S.dark ? '#0c111f' : '#faf5eb'; ctx.fillRect(x0, 0, S.LW, S.H);
-    ctx.fillStyle = S.C.line2; ctx.fillRect(x0, S.AX, 1, S.H - S.AX);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#fafaf8'; ctx.fillRect(x0, 0, S.LW, S.H);
+    ctx.fillStyle = S.C.line; ctx.fillRect(x0, S.AX, 1, S.H - S.AX);
 
-    // Refined lapis-gold Iran label block
-    ctx.fillStyle = S.dark ? '#16254a' : '#1e3f7a'; ctx.fillRect(x0, ir.top, S.LW, ir.bottom - ir.top);
-    ctx.fillStyle = S.dark ? '#e8be66' : '#c4902c'; ctx.fillRect(W - 4, ir.top, 4, ir.bottom - ir.top);
+    // Clean Swiss Iran track header
+    ctx.fillStyle = S.dark ? '#171f31' : '#1d4496'; ctx.fillRect(x0, ir.top, S.LW, ir.bottom - ir.top);
+    ctx.fillStyle = S.dark ? '#d8b46c' : '#b84a32'; ctx.fillRect(W - 3.5, ir.top, 3.5, ir.bottom - ir.top);
     ctx.textAlign = 'right';
     text('ایران', W - 14, ir.top + Math.min(26, (ir.bottom - ir.top) * 0.35), `700 ${S.W < 640 ? 18 : 22}px ${DISPLAY}`, '#ffffff');
-    if (ir.bottom - ir.top > 56) text('محور نقشه', W - 14, ir.top + 48, F(400, 10.5), 'rgba(232,190,102,.85)');
+    if (ir.bottom - ir.top > 56) text('محور نقشه', W - 14, ir.top + 48, F(400, 10.5), 'rgba(255,255,255,.72)');
     [['رویدادها', ir.evY + 14, S.layers.events], ['دودمان‌ها', ir.rowY[0] + ir.rowH[0] / 2, true], ['فرمانروایان', ir.rulY + 7, S.layers.rulers && ir.rulRows.length]].forEach(([t, y, on]) => {
-      if (on && y > ir.top + 60 && y < ir.bottom - 6) text(t, W - 14, y, F(500, 9.5), 'rgba(255,255,255,.72)');
+      if (on && y > ir.top + 60 && y < ir.bottom - 6) text(t, W - 14, y, F(500, 9.5), 'rgba(255,255,255,.70)');
     });
 
     ctx.save(); ctx.beginPath(); ctx.rect(x0, S.worldTop, S.LW, Math.max(0, S.H - S.CAL - S.worldTop)); ctx.clip();
     S.lanes.forEach(L => {
       const top = oy + L.top; if (top > S.H || top + L.h < S.worldTop) return;
       const grp = GRP[L.reg.grp] || { strong: S.C.muted };
-      ctx.fillStyle = grp.strong; ctx.fillRect(W - 4, top + 3, 4, Math.max(0, L.h - 6));
+      ctx.fillStyle = grp.strong; ctx.fillRect(W - 3.5, top + 3, 3.5, Math.max(0, L.h - 6));
       const cy = top + Math.min(L.h / 2, 15);
       const font = F(L.iranX ? 700 : 600, S.W < 640 ? 10 : 11.5);
       let name = L.reg.n; while (tw(name, font) > S.LW - 22 && name.length > 4) name = name.slice(0, -2);
       if (name !== L.reg.n) name += '…';
-      text(name, W - 12, cy, font, L.iranX ? (S.dark ? '#7faeff' : '#1e3f7a') : S.C.ink);
+      text(name, W - 12, cy, font, L.iranX ? (S.dark ? '#8bb0ec' : '#1d4496') : S.C.ink);
       if (L.h > 38 && S.W >= 640) { ctx.direction = 'ltr'; text(L.reg.en, W - 12, cy + 14, F(400, 9), S.C.muted); ctx.direction = 'rtl'; }
       ctx.fillStyle = S.C.line; ctx.fillRect(x0, top + L.h - 1, S.LW, 1);
       hit(x0, top, W, top + L.h, L.reg, 'region');
     });
     ctx.restore();
 
-    ctx.fillStyle = S.dark ? '#0b101d' : '#241d15'; ctx.fillRect(x0, 0, S.LW, S.AX);
-    ctx.fillStyle = S.dark ? '#0c111f' : '#ebe2d0'; ctx.fillRect(x0, S.H - S.CAL, S.LW, S.CAL);
-    text('سال میلادی', W - 12, S.AX - 12, F(700, 10.5), '#f5f1e8');
-    text('خورشیدی · قمری', W - 12, S.H - S.CAL + 11, F(600, 9.5), S.dark ? '#e8be66' : '#8c5e12');
+    ctx.fillStyle = S.dark ? '#0f1219' : '#fafaf8'; ctx.fillRect(x0, 0, S.LW, S.AX);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#f4f4f0'; ctx.fillRect(x0, S.H - S.CAL, S.LW, S.CAL);
+    text('سال میلادی', W - 12, S.AX - 12, F(700, 10.5), S.C.ink);
+    text('خورشیدی · قمری', W - 12, S.H - S.CAL + 11, F(600, 9.5), S.C.ink2);
     ctx.textAlign = 'center';
   }
 
