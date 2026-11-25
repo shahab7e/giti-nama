@@ -393,7 +393,7 @@
   }
 
   function topPowersHTML(y) {
-    const active = TL.polities.filter(p => p.k !== 'culture' && !p.of && y >= p.s && y <= p.e && TL.extent[p.id]);
+    const active = TL.polities.filter(p => p.k !== 'culture' && !p.of && y >= p.s && y <= p.e && TL.extent[p.id] && (p.r === 'iran' || !S.show || S.show.has(p.r)));
     const ranked = active.map(p => ({ p, a: p.prof ? R.areaAt(p, y) : 0 })).filter(x => x.a >= 0.5).sort((a, b) => b.a - a.a).slice(0, 5);
     if (!ranked.length) return '';
     const maxA = ranked[0].a;
@@ -669,7 +669,8 @@
     const n = TL.regions.length, lh = (mH - 16) / n;
     TL.polities.forEach(p => {
       const ri = TL.regionById[p.r].order, xa = mx(p.s), xb = mx(Math.min(p.e, TL.NOW));
-      mctx.fillStyle = p.base || S.C.muted; mctx.globalAlpha = p.ir ? 0.92 : 0.55;
+      const dim = S.show && p.r !== 'iran' && !S.show.has(p.r);
+      mctx.fillStyle = p.base || S.C.muted; mctx.globalAlpha = dim ? 0.08 : (p.ir ? 0.92 : 0.55);
       mctx.fillRect(Math.min(xa, xb), 2 + ri * lh, Math.max(Math.abs(xb - xa), 1), Math.max(lh - 0.6, 0.7));
     });
     mctx.globalAlpha = 1;

@@ -567,10 +567,11 @@
     return `hsl(${h} ${s}% ${l}%)`;
   }
 
-  function nearestRegion(lon, lat) {
+  function nearestRegion(lon, lat, excludeIran) {
     const anc = TL.MAP && TL.MAP.anchors; if (!anc) return null;
     let best = null, bd = 1e9;
     for (const rid of Object.keys(anc)) {
+      if (excludeIran && rid === 'iran') continue;
       const a = anc[rid], d = Math.hypot(lon - a[0], (lat - a[1]) * 1.2);
       if (d < bd) { bd = d; best = rid; }
     }
@@ -658,6 +659,15 @@
     if (focusEmp) { focusIds.add(focusEmp.id); if (focusEmp.dom) focusEmp.dom.forEach(d => focusIds.add(d.id)); }
     const hasFocus = focusIds.size > 0;
 
+    // Unified region-filter check used identically during morphing, at rest, and in labels/capitals!
+    const isEntFilteredOut = (ent, effPid, lon, lat) => {
+      if (!S.show || ent.isIr) return false;
+      const pol = effPid ? TL.polityById[effPid] : null;
+      if (pol && pol.r === 'iran') return false;
+      const rid = pol ? pol.r : nearestRegion(lon, lat, true);
+      return !!(rid && !S.show.has(rid));
+    };
+
     const curSmooth = borderSmooth(MS.snapYear);
     const morphing = MS.trans < 0.995 && MS.morphPlan;
 
@@ -677,6 +687,10 @@
         const modeAlpha = mp.mode === 'shrink' ? (1 - e) : (mp.mode === 'grow' ? e : 1);
         if (modeAlpha < 0.02) continue;
 
+        const isFocus = !!(mp.effPid && focusIds.has(mp.effPid));
+        const filterDim = isEntFilteredOut(mp.ent, mp.effPid, lerp(mp.cxA, mp.cxB, e), lerp(mp.cyA, mp.cyB, e));
+        const dimmed = (hasFocus && !isFocus) || filterDim;
+
         ctx.save();
         ctx.beginPath();
         if (mp.mode === 'static' && mp.staticRings) {
@@ -685,18 +699,19 @@
           traceMorphedRing(mp.ringA, mp.ringB, e, mSmooth, proj);
         }
 
-        ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * modeAlpha;
+        ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim ? 0.06 : (dimmed ? T.dimAlpha : 1)) * modeAlpha;
         ctx.fillStyle = col; ctx.fill();
 
-        // Soft watercolor wash ONLY for organic pre-modern eras; fades out as borders lock into modern straight lines!
-        if (mSmooth > 0.05) {
-          ctx.globalAlpha = T.borderAlpha * 0.30 * mSmooth * modeAlpha;
+        const bAlpha = T.borderAlpha * (filterDim ? 0.08 : (dimmed ? 0.20 : 1)) * modeAlpha;
+        // Soft watercolor wash ONLY for organic pre-modern eras and non-dimmed entities
+        if (!dimmed && mSmooth > 0.05) {
+          ctx.globalAlpha = bAlpha * 0.30 * mSmooth;
           ctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
           ctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + (mp.mode === 'static' ? 0 : shimmer * 2.2 * mSmooth);
           ctx.stroke();
         }
 
-        ctx.globalAlpha = T.borderAlpha * (mSmooth <= 0.05 ? 1.0 : 0.92) * modeAlpha;
+        ctx.globalAlpha = bAlpha * (mSmooth <= 0.05 ? 1.0 : 0.92);
         ctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.42)' : 'rgba(20,20,24,.34)');
         ctx.lineWidth = mp.isIr ? 1.5 : 0.8;
         ctx.stroke();
@@ -715,11 +730,7 @@
         const pol = effPid ? TL.polityById[effPid] : null;
         const isFocus = !!(effPid && focusIds.has(effPid));
         const isHover = !!(MS.hover && MS.hover.type === 'hist' && MS.hover.ent === ent);
-        let filterDim = false;
-        if (S.show && !ent.isIr) {
-          const rid = pol ? pol.r : nearestRegion(ent.cx, ent.cy);
-          if (rid && !S.show.has(rid)) filterDim = true;
-        }
+        const filterDim = isEntFilteredOut(ent, effPid, ent.cx, ent.cy);
         const dimmed = (hasFocus && !isFocus && !isHover) || filterDim;
         const col = entColor({ ...ent, pid: effPid }, MS.dark);
 
@@ -731,10 +742,10 @@
           if (sr) screenRings.push(sr);
         }
 
-        ctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1));
+        ctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim && !isHover ? 0.06 : (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1)));
         ctx.fillStyle = col; ctx.fill();
 
-        const bAlpha = T.borderAlpha * (dimmed ? 0.20 : 1);
+        const bAlpha = T.borderAlpha * (filterDim && !isHover ? 0.08 : (dimmed ? 0.20 : 1));
         // Watercolor frontier wash ONLY for pre-modern eras; modern surveyed borders stay razor-crisp!
         if (!dimmed && curSmooth > 0.05) {
           ctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22) * curSmooth;
@@ -789,6 +800,7 @@
         const p = M.primaryPolity(reg.id, y);
         const lord = p ? TL.overlord(p, y, y) : null;
         if (!lord || lord.r === reg.id) return;
+        if (S.show && reg.id !== 'iran' && !S.show.has(reg.id) && lord.r !== 'iran' && !S.show.has(lord.r)) return;
         const aFrom = mapData.anchors[lord.r], aTo = mapData.anchors[reg.id];
         if (!aFrom || !aTo) return;
         const isFoc = focusIds.has(lord.id) || focusIds.has(p.id);
@@ -887,6 +899,7 @@
         if (lx < 24 || lx > W - 24 || ly < 42 || ly > H - 46) continue;
         const isFoc = !!(effPid && focusIds.has(effPid));
         const isHov = !!(MS.hover && MS.hover.type === 'hist' && MS.hover.ent === ent);
+        if (isEntFilteredOut(ent, effPid, lon, lat) && !isFoc && !isHov) continue;
         const fs = ent.isIr ? (MS.zoom < 0.68 ? 12 : 14) : (ent.area > 120 ? 11.8 : (ent.area > 30 ? 10.5 : 9.4));
         ctx.font = `${ent.isIr || isFoc ? 800 : 700} ${fs}px ${UI}`;
         const tw = ctx.measureText(effFa).width;
@@ -912,6 +925,7 @@
     // 12. Active Historical Capitals
     const drawnCaps = new Set();
     TL.regions.forEach(reg => {
+      if (S.show && reg.id !== 'iran' && !S.show.has(reg.id)) return;
       const p = M.primaryPolity(reg.id, y); if (!p) return;
       const cap = resolveCapital(p); if (!cap || drawnCaps.has(cap.name)) return;
       drawnCaps.add(cap.name);

@@ -594,7 +594,6 @@
       let name = L.reg.n; while (tw(name, font) > S.LW - 22 && name.length > 4) name = name.slice(0, -2);
       if (name !== L.reg.n) name += '…';
       text(name, W - 12, cy, font, L.iranX ? (S.dark ? '#8bb0ec' : '#1d4496') : S.C.ink);
-      if (L.h > 38 && S.W >= 640) { ctx.direction = 'ltr'; text(L.reg.en, W - 12, cy + 14, F(400, 9), S.C.muted); ctx.direction = 'rtl'; }
       ctx.fillStyle = S.C.line; ctx.fillRect(x0, top + L.h - 1, S.LW, 1);
       hit(x0, top, W, top + L.h, L.reg, 'region');
     });
