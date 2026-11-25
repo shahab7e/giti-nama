@@ -209,7 +209,7 @@
     setActiveYear(targetY, false, true);
     // Fly map cleanly to the item's EXACT birthplace/battlefield (or region anchor)!
     if (type === 'person' && TL.personGeo) {
-      const g = TL.personGeo(item); if (g) M.flyTo(g[0], g[1], 1.9);
+      const g = TL.personGeo(item, S.pinYear); if (g) M.flyTo(g[0], g[1], 1.9);
     } else if (type === 'event' && TL.eventGeo) {
       const g = TL.eventGeo(item); if (g) M.flyTo(g[0], g[1], 1.9);
     } else {
@@ -336,8 +336,10 @@
     }
     if (t === 'person') {
       const g = TL.personGeo ? TL.personGeo(it) : null;
-      const age = S.pinYear != null && S.pinYear >= it.s && S.pinYear <= it.e ? ` (${TL.fa(Math.floor(S.pinYear - it.s))} ساله در این سال)` : '';
-      sub = (TL.PKIND[it.k] || '') + (g && g[2] ? ' · زادگاه: ' + g[2] : '') + age;
+      const alive = S.pinYear != null && S.pinYear >= it.s && S.pinYear <= it.e;
+      const here = alive && TL.personGeo ? TL.personGeo(it, S.pinYear) : null;
+      const age = alive ? ` (${TL.fa(Math.floor(S.pinYear - it.s))} ساله در این سال)` : '';
+      sub = (TL.PKIND[it.k] || '') + (g && g[2] ? ' · زادگاه: ' + g[2] : '') + (here && g && here[2] !== g[2] ? ' · در این سال در ' + here[2] : '') + age;
     }
     const dur = t !== 'event' ? ` · ${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال` : '';
     return `<h4>${esc(it.n)}</h4>${it.en ? `<div class="en">${esc(it.en)}</div>` : ''}<div class="yr">${itemYears(it, t)}${dur}</div>` +
@@ -356,20 +358,23 @@
   function showMapTip(h, cx, cy) {
     if (h.type === 'event' || h.type === 'person') { showTip(h, cx, cy); return; }
     const y = Math.floor(MS.year), p = h.item, ent = h.ent;
+    // Capital, government and head of state, from the timeline polity or data/map-info.js
+    const f = TL.mapFacts ? TL.mapFacts(ent ? ent.en : '', p ? p.id : '', y)
+      : { cap: p ? p.cap : '', g: '', rul: p ? M.activeRulers(p.id, y) : [], kind: '' };
+    const facts = (f.rul.length ? `<p>فرمانروا در این سال: <b>${esc(f.rul.map(r => r.n + (r.t ? ` (${r.t})` : '')).join('، '))}</b>${f.rul.some(r => r.a) ? ' · تاریخ تقریبی' : ''}</p>` : '') +
+      (f.cap || f.g ? `<p>${f.cap ? 'پایتخت: ' + esc(f.cap) : ''}${f.cap && f.g ? ' · ' : ''}${esc(f.g)}</p>` : '') +
+      (f.kind === 'people' ? '<p>فرهنگ / قوم، بدون حکومت متمرکز</p>' : f.kind === 'group' ? '<p>چند حکومت کوچک، بدون پایتخت واحد</p>' : '');
     if (p) {
-      const ruls = M.activeRulers(p.id, y);
       const area = p.prof ? R.areaAt(p, y) : 0;
       const regN = TL.regionById[p.r] ? TL.regionById[p.r].n : '';
       tip.innerHTML = `<h4>${esc(h.effFa || p.n)}</h4><div class="en">${esc(ent.en || p.en || regN)}</div>` +
         `<div class="yr">${TL.spanLabel(p.s, p.e, p.a)}${area >= 0.4 ? ' · حدود ' + TL.fa(area.toFixed(1)) + ' م.ک²' : ''}</div>` +
-        (ruls.length ? `<p>فرمانروا در این سال: <b>${esc(ruls.map(r => r.n).join('، '))}</b></p>` : '') +
-        (p.cap ? `<p>مرکز: ${esc(p.cap)}</p>` : '') +
-        (p.d ? `<p>${esc(p.d)}</p>` : '');
+        facts + (p.d ? `<p>${esc(p.d)}</p>` : '');
     } else if (ent) {
       const sy = h.sy != null ? h.sy : MS.snapYear; // the era of the shape under the pointer
       const precTxt = sy === 2010 ? 'مرز دقیق کنونی (Natural Earth 50m)' : (sy >= 1914 ? 'مرز دقیق نقشه‌برداری‌شده' : (ent.prec === 1 ? 'مرز تقریبی تاریخی' : 'مرز تاریخی مستند'));
       tip.innerHTML = `<h4>${esc(h.effFa || ent.fa)}</h4>${ent.en && ent.en !== h.effFa ? `<div class="en">${esc(ent.en)}</div>` : ''}` +
-        `<div class="yr">${sy === 2010 ? precTxt : `نقشهٔ دورهٔ ${TL.yearLabel(sy)} · ${precTxt}`}</div>`;
+        `<div class="yr">${sy === 2010 ? precTxt : `نقشهٔ دورهٔ ${TL.yearLabel(sy)} · ${precTxt}`}</div>` + facts;
     }
     tip.hidden = false; placeTip(cx, cy);
   }

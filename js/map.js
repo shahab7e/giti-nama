@@ -190,11 +190,14 @@
     const raw = snapByYear.get(sy) || [];
     const S_STR = TL.HIST.s;
     const q = (TL.HIST.q && TL.HIST.q[sy]) || 10;
+    const syEnd = (SNAP_CUTS.find(c => c[1] === sy) || [sy + 1])[0];
     const list = raw.map(row => {
       const [faI, enI, pidI, flags, cx10, cy10, area10, rings] = row;
       const fa = S_STR[faI] || '';
       const en = enI >= 0 ? S_STR[enI] : fa;
-      const pid = pidI >= 0 ? S_STR[pidI] : '';
+      let pid = pidI >= 0 ? S_STR[pidI] : '';
+      // Unlinked map countries that are a timeline polity (data/map-info.js) get its id, colour, rulers and click-through.
+      if (!TL.polityById[pid] && TL.mapAlias) pid = TL.mapAlias(en, sy, syEnd) || pid;
       return {
         fa, en, pid, isIr: !!(flags & 4), prec: flags & 3, uid: sy + ':' + faI + ':' + cx10 + ':' + cy10,
         cx: cx10 / 10, cy: cy10 / 10, area: area10 / 10,
@@ -1161,7 +1164,7 @@
         const fs = ent.isIr ? (MS.zoom < 0.68 ? 12 : 14) : (ent.area > 120 ? 11.8 : (ent.area > 30 ? 10.5 : 9.4));
         ctx.font = `${ent.isIr || isFoc ? 800 : 700} ${fs}px ${UI}`;
         const tw = ctx.measureText(effFa).width;
-        const ruls = effPid ? M.activeRulers(effPid, y) : [];
+        const ruls = TL.mapFacts ? TL.mapFacts(ent.en, effPid, y).rul : (effPid ? M.activeRulers(effPid, y) : []);
         const showRul = MS.zoom >= 0.85 && (ent.isIr || isFoc || MS.zoom >= 1.5) && ruls.length > 0;
         if (!tryPlace(lx, ly + (showRul ? 2 : -2), tw, showRul ? 24 : 15, ent.isIr || isFoc || isHov)) continue;
         seenNames.add(effFa);
@@ -1267,7 +1270,7 @@
       });
       const seenCity = {};
       alive.forEach(p => {
-        const geo = TL.personGeo ? TL.personGeo(p) : null;
+        const geo = TL.personGeo ? TL.personGeo(p, y) : null; // where they lived in this year
         if (!geo) return;
         const key = Math.round(geo[0] * 2) + ',' + Math.round(geo[1] * 2);
         const dup = (seenCity[key] = (seenCity[key] || 0) + 1) - 1;
