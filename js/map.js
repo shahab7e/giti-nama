@@ -1,15 +1,15 @@
-/* Real Time-Varying Historical World Map engine (window.M) with TRUE POLYGON MORPHING.
+/* Real Time-Varying Historical World Map engine (window.M).
    - Borderless Natural Earth 50m physical landmass, lakes, and rivers (ZERO modern borders).
    - 50 historically-audited world border snapshots (10,000 BC – 2010 AD) from TL.HIST.
-   - True vertex-to-vertex geometric polygon morphing (CCW resampled + optimal cyclic alignment)
-     between consecutive historical epochs — borders physically stretch, flow, and reshape!
+   - Era changes bleed in like ink in water: the old and new maps are both drawn exactly and the new one
+     seeps through swirling soft-edged blots, so only the territory that actually changes moves.
    - Smooth quadratic midpoint spline borders with soft layered editorial strokes.
    - Exact geographic coordinates for all ~255 historical figures (birthplaces) & 474 battles/events. */
 (function () {
   const M = {}; window.M = M;
   const UI = '"Vazirmatn", Tahoma, "Segoe UI", sans-serif';
   const DISPLAY = '"Gulzar", "Vazirmatn", serif';
-  let cv, ctx, fillCv = null, fctx = null, paperPatLight = null, paperPatDark = null;
+  let cv, ctx, paperPatLight = null, paperPatDark = null;
 
   const MS = M.S = {
     W: 0, H: 0, dpr: 1,
@@ -17,9 +17,7 @@
     tLon: 50, tLat: 33, tZoom: 1.45,
     year: -480, tYear: -480,
     snapYear: -500,
-    // Geometric morph state
-    morphPlan: null, // array of { ringA, ringB, colA, colB, cxA, cyA, cxB, cyB, isIr, prec, effFa, effPid, ent }
-    trans: 1,
+    blend: null, // { f, t, hitsA, hitsB } while two eras are blended
     layers: { routes: true, campaigns: true, rivers: true, domArcs: true, events: true, people: true, labels: true },
     hover: null,
     polyHits: [],
@@ -64,11 +62,13 @@
 
   // Restrained Swiss-editorial muted hues (distinct yet harmonious)
   const SWISS_HUES = [214, 34, 158, 350, 22, 248, 184, 42, 140, 332, 198, 14];
-  const MORPH_N = 64;
+  const INK_DS = 2;         // owner ids + ink mask at 1/2 resolution (upscaling softens the wet edge)
+  const INK_SOFT = 0.12;    // width of the wet ink edge, in flood-distance units
+  const INK_ANIM = 1.1;     // seconds for one transfer of land to flood over once time passes its date
 
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const smooth01 = (t) => t * t * (3 - 2 * t);
 
   // Seamless 256x256 procedural antique rag-paper texture (laid fibers + organic mottling + mineral flecks)
   function makePaperPattern(dark) {
@@ -169,291 +169,6 @@
     return out;
   }
 
-  // ---------- TRUE GEOMETRIC POLYGON MORPHING MATH ----------
-  function signedRingArea(ring) {
-    let a = 0; const n = ring.length;
-    for (let i = 0; i < n; i += 2) {
-      const nx = ring[(i + 2) % n], ny = ring[(i + 3) % n];
-      a += ring[i] * ny - nx * ring[i + 1];
-    }
-    return a * 0.5;
-  }
-
-  // Resample any Float32Array ring into N evenly-spaced CCW perimeter vertices
-  function resampleRing(ring, N) {
-    let n = ring.length, src = ring;
-    // Enforce consistent CCW winding so morphs NEVER turn inside-out!
-    if (signedRingArea(ring) < 0) {
-      src = new Float32Array(n);
-      for (let i = 0; i < n; i += 2) { src[i] = ring[n - 2 - i]; src[i + 1] = ring[n - 1 - i]; }
-    }
-    const pts = n / 2, cum = new Float32Array(pts + 1);
-    for (let i = 0; i < pts; i++) {
-      const x0 = src[i * 2], y0 = src[i * 2 + 1];
-      const x1 = src[((i + 1) % pts) * 2], y1 = src[((i + 1) % pts) * 2 + 1];
-      cum[i + 1] = cum[i] + Math.hypot(x1 - x0, y1 - y0);
-    }
-    const total = cum[pts] || 1, out = new Float32Array(N * 2);
-    let seg = 0;
-    for (let k = 0; k < N; k++) {
-      const target = (k / N) * total;
-      while (seg < pts - 1 && cum[seg + 1] < target) seg++;
-      const len = (cum[seg + 1] - cum[seg]) || 1, f = (target - cum[seg]) / len;
-      const x0 = src[seg * 2], y0 = src[seg * 2 + 1];
-      const x1 = src[((seg + 1) % pts) * 2], y1 = src[((seg + 1) % pts) * 2 + 1];
-      out[k * 2] = x0 + (x1 - x0) * f;
-      out[k * 2 + 1] = y0 + (y1 - y0) * f;
-    }
-    return out;
-  }
-
-  // Gently contracted version of a ring around its own centroid (clean in-place unfold/dissolve, no flying bubbles!)
-  function scaleRing(ring, cx, cy, f) {
-    const out = new Float32Array(ring.length);
-    for (let i = 0; i < ring.length; i += 2) {
-      out[i] = cx + (ring[i] - cx) * f;
-      out[i + 1] = cy + (ring[i + 1] - cy) * f;
-    }
-    return out;
-  }
-
-  // Find exact cyclic vertex rotation of ringB minimizing squared distance to ringA (prevents any twist!)
-  function alignRing(ringA, ringB) {
-    const N = ringA.length / 2;
-    let bestShift = 0, bestCost = 1e18;
-    for (let sh = 0; sh < N; sh++) {
-      let cost = 0;
-      for (let i = 0; i < N; i += 2) {
-        const bi = ((i + sh) % N) * 2;
-        const dx = ringA[i * 2] - ringB[bi], dy = ringA[i * 2 + 1] - ringB[bi + 1];
-        cost += dx * dx + dy * dy;
-      }
-      if (cost < bestCost) { bestCost = cost; bestShift = sh; }
-    }
-    if (bestShift === 0) return ringB;
-    const out = new Float32Array(ringB.length);
-    for (let i = 0; i < N; i++) {
-      const bi = ((i + bestShift) % N) * 2;
-      out[i * 2] = ringB[bi]; out[i * 2 + 1] = ringB[bi + 1];
-    }
-    return out;
-  }
-
-  // Cache primary ring + its own exact bounding box, centroid & area (prevents colonial/multi-ring jumps!)
-  function ringMetaOf(ent) {
-    if (ent._rm) return ent._rm;
-    let best = ent.rings[0], ba = -1;
-    for (let i = 0; i < ent.rings.length; i++) {
-      const a = Math.abs(signedRingArea(ent.rings[i]));
-      if (a > ba) { ba = a; best = ent.rings[i]; }
-    }
-    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, sx = 0, sy = 0;
-    const n = best.length;
-    for (let i = 0; i < n; i += 2) {
-      const x = best[i], y = best[i + 1];
-      if (x < minX) minX = x; if (x > maxX) maxX = x;
-      if (y < minY) minY = y; if (y > maxY) maxY = y;
-      sx += x; sy += y;
-    }
-    const pts = (n / 2) || 1;
-    ent._rm = {
-      ring: resampleRing(best, MORPH_N),
-      box: [minX, minY, maxX, maxY],
-      rcx: sx / pts, rcy: sy / pts,
-      rArea: Math.max(0.05, ba)
-    };
-    return ent._rm;
-  }
-
-  function boxOverlapMetrics(a, b) {
-    const ix = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]));
-    const iy = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
-    const inter = ix * iy;
-    if (inter <= 0) return { ratio: 0, iou: 0 };
-    const areaA = Math.max(1e-4, (a[2] - a[0]) * (a[3] - a[1]));
-    const areaB = Math.max(1e-4, (b[2] - b[0]) * (b[3] - b[1]));
-    return { ratio: inter / Math.min(areaA, areaB), iou: inter / (areaA + areaB - inter) };
-  }
-
-  function canMorphPair(ma, mb, minOverlap, maxDist) {
-    const ov = boxOverlapMetrics(ma.box, mb.box);
-    if (ov.ratio < minOverlap) return null;
-    const d = Math.hypot(ma.rcx - mb.rcx, ma.rcy - mb.rcy);
-    const sizeCap = Math.max(4.5, Math.min(maxDist, (Math.sqrt(ma.rArea) + Math.sqrt(mb.rArea)) * 0.72));
-    if (d > sizeCap) return null;
-    return { d, ratio: ov.ratio, iou: ov.iou };
-  }
-
-  // Color parsing to RGB for smooth color morphing
-  const rgbCache = new Map();
-  function hslToRgb(h, s, l) {
-    h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
-    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
-    let r = 0, g = 0, b = 0;
-    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
-    else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
-    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
-  }
-  function parseColorRgb(str) {
-    if (rgbCache.has(str)) return rgbCache.get(str);
-    let out = [80, 120, 180];
-    if (str[0] === '#') {
-      const v = parseInt(str.slice(1), 16);
-      out = [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-    } else {
-      const m = str.match(/hsl\(\s*([\d.]+)[\s,]+([\d.]+)%[\s,]+([\d.]+)%/);
-      if (m) out = hslToRgb(+m[1], +m[2], +m[3]);
-    }
-    rgbCache.set(str, out);
-    return out;
-  }
-  function blendRgb(a, b, t) {
-    return `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`;
-  }
-
-  // Build spatially-verified geometric morph plan: ZERO cross-continent jumps, static lock for unchanged countries!
-  function buildMorphPlan(prevSnap, prevSy, curSnap, curSy, y) {
-    const usedPrev = new Set(), usedCur = new Set();
-    const pairs = [];
-    const metaA = prevSnap.map(ringMetaOf);
-    const metaB = curSnap.map(ringMetaOf);
-
-    const effOf = (ent, sy) => {
-      if (ent.isIr && sy === 1960 && y >= 1979) return { pid: 'iri', fa: 'ایران (جمهوری اسلامی)' };
-      return { pid: ent.pid, fa: ent.fa };
-    };
-    const addPair = (iA, iB, sameName) => {
-      const pa = iA >= 0 ? prevSnap[iA] : null;
-      const pb = iB >= 0 ? curSnap[iB] : null;
-      const ma = iA >= 0 ? metaA[iA] : null;
-      const mb = iB >= 0 ? metaB[iB] : null;
-      const ea = pa ? effOf(pa, prevSy) : null, eb = pb ? effOf(pb, curSy) : null;
-      const colA = parseColorRgb(pa ? entColor({ ...pa, pid: ea.pid }, MS.dark) : entColor({ ...pb, pid: eb.pid }, MS.dark));
-      const colB = parseColorRgb(pb ? entColor({ ...pb, pid: eb.pid }, MS.dark) : entColor({ ...pa, pid: ea.pid }, MS.dark));
-
-      // Lock unchanged states so they NEVER wobble, jump, or blink secondary islands!
-      let mode = pa && pb ? 'morph' : (pb ? 'grow' : 'shrink');
-      let rA = null, alignedB = null;
-      if (pa && pb) {
-        const ov = boxOverlapMetrics(ma.box, mb.box);
-        const cd = Math.hypot(ma.rcx - mb.rcx, ma.rcy - mb.rcy);
-        const areaDiff = Math.abs(ma.rArea - mb.rArea) / Math.max(ma.rArea, mb.rArea);
-        const isUnchanged = sameName
-          ? (ov.iou >= 0.72 && cd < 1.5 && areaDiff < 0.18)
-          : (ov.iou >= 0.86 && cd < 0.85 && areaDiff < 0.12);
-        if (isUnchanged) {
-          mode = 'static';
-        } else {
-          rA = ma.ring;
-          alignedB = alignRing(ma.ring, mb.ring);
-        }
-      } else if (pb) {
-        rA = scaleRing(mb.ring, mb.rcx, mb.rcy, 0.72);
-        alignedB = mb.ring;
-      } else {
-        rA = ma.ring;
-        alignedB = scaleRing(ma.ring, ma.rcx, ma.rcy, 0.72);
-      }
-
-      pairs.push({
-        ringA: rA, ringB: alignedB,
-        staticRings: mode === 'static' ? pb.rings : null,
-        colA, colB,
-        cxA: ma ? ma.rcx : mb.rcx, cyA: ma ? ma.rcy : mb.rcy,
-        cxB: mb ? mb.rcx : ma.rcx, cyB: mb ? mb.rcy : ma.rcy,
-        isIr: !!((pb && pb.isIr) || (pa && pa.isIr)),
-        prec: pb ? pb.prec : pa.prec,
-        area: pb ? pb.area : pa.area,
-        effFa: eb ? eb.fa : ea.fa,
-        effPid: eb ? eb.pid : ea.pid,
-        ent: pb || pa,
-        mode
-      });
-    };
-
-    // Count pid occurrences so grouped modern pids (africa_states, sa_states, ca_states, etc.) NEVER mismatch countries!
-    const pidCntA = {}, pidCntB = {};
-    prevSnap.forEach(e => { if (e.pid) pidCntA[e.pid] = (pidCntA[e.pid] || 0) + 1; });
-    curSnap.forEach(e => { if (e.pid) pidCntB[e.pid] = (pidCntB[e.pid] || 0) + 1; });
-
-    // Pass 1: Exact country/empire name match WITH strict geographic overlap check!
-    for (let j = 0; j < curSnap.length; j++) {
-      const b = curSnap[j];
-      let bestI = -1, bestIou = -1;
-      for (let i = 0; i < prevSnap.length; i++) {
-        if (usedPrev.has(i)) continue;
-        const a = prevSnap[i];
-        const sameName = (a.en && b.en && a.en === b.en) || (a.fa && b.fa && a.fa === b.fa);
-        if (!sameName) continue;
-        const ok = canMorphPair(metaA[i], metaB[j], 0.18, 12);
-        if (ok && ok.iou > bestIou) { bestIou = ok.iou; bestI = i; }
-      }
-      if (bestI >= 0) { usedPrev.add(bestI); usedCur.add(j); addPair(bestI, j, true); }
-    }
-
-    // Pass 2: Unique 1-to-1 polity ID continuity (e.g. Persia -> Iran, Siam -> Thailand), NEVER grouped pids!
-    for (let j = 0; j < curSnap.length; j++) {
-      if (usedCur.has(j)) continue;
-      const b = curSnap[j];
-      if (!b.pid || pidCntB[b.pid] !== 1 || pidCntA[b.pid] !== 1) continue;
-      for (let i = 0; i < prevSnap.length; i++) {
-        if (usedPrev.has(i) || prevSnap[i].pid !== b.pid) continue;
-        if (canMorphPair(metaA[i], metaB[j], 0.22, 12)) {
-          usedPrev.add(i); usedCur.add(j); addPair(i, j, true); break;
-        }
-      }
-    }
-
-    // Pass 3: Iranian historical dynasty continuity (Achaemenid -> Parthian -> Sasanian -> Safavid -> Qajar -> Pahlavi)
-    // Runs ONLY if Iran was not already matched in Pass 1 or Pass 2!
-    const irAlreadyA = prevSnap.some((e, i) => e.isIr && usedPrev.has(i));
-    const irAlreadyB = curSnap.some((e, j) => e.isIr && usedCur.has(j));
-    if (!irAlreadyA && !irAlreadyB) {
-      const findIran = (arr, used) => {
-        let best = -1, ba = -1;
-        for (let i = 0; i < arr.length; i++) {
-          if (used.has(i)) continue;
-          const e = arr[i];
-          if (e.isIr && e.area > ba) { ba = e.area; best = i; }
-        }
-        return best;
-      };
-      const irA = findIran(prevSnap, usedPrev), irB = findIran(curSnap, usedCur);
-      if (irA >= 0 && irB >= 0 && boxOverlapMetrics(metaA[irA].box, metaB[irB].box).ratio >= 0.20) {
-        usedPrev.add(irA); usedCur.add(irB); addPair(irA, irB);
-      }
-    }
-
-    // Pass 4: Best-first spatial successor morphing sorted by highest IoU overlap (Rome->Byzantium->Ottoman, USSR->Russia, Ming->Qing)
-    const cands = [];
-    for (let j = 0; j < curSnap.length; j++) {
-      if (usedCur.has(j) || curSnap[j].area < 6) continue;
-      for (let i = 0; i < prevSnap.length; i++) {
-        if (usedPrev.has(i) || prevSnap[i].area < 6) continue;
-        const ratioArea = Math.max(metaA[i].rArea, metaB[j].rArea) / Math.min(metaA[i].rArea, metaB[j].rArea);
-        if (ratioArea > 12) continue;
-        const ok = canMorphPair(metaA[i], metaB[j], 0.36, 11);
-        if (ok && ok.iou >= 0.22) cands.push({ i, j, iou: ok.iou });
-      }
-    }
-    cands.sort((x, y) => y.iou - x.iou);
-    for (const c of cands) {
-      if (usedPrev.has(c.i) || usedCur.has(c.j)) continue;
-      usedPrev.add(c.i); usedCur.add(c.j); addPair(c.i, c.j);
-    }
-
-    // Pass 5: Remaining genuinely emerging / vanishing states unfold or dissolve cleanly right in place!
-    for (let j = 0; j < curSnap.length; j++) {
-      if (!usedCur.has(j) && curSnap[j].area >= 1.0) addPair(-1, j);
-    }
-    for (let i = 0; i < prevSnap.length; i++) {
-      if (!usedPrev.has(i) && prevSnap[i].area >= 1.2) addPair(i, -1);
-    }
-
-    pairs.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0) || b.area - a.area);
-    return pairs;
-  }
-
   let landDecoded = null, lakesDecoded = null, caspianDecoded = null;
   const snapByYear = new Map();
   const decodedSnaps = new Map();
@@ -468,11 +183,6 @@
     }
   }
 
-  function pickSnapYear(y) {
-    for (let i = 0; i < SNAP_CUTS.length; i++) if (y < SNAP_CUTS[i][0]) return SNAP_CUTS[i][1];
-    return 2010;
-  }
-  M.snapYearFor = pickSnapYear;
 
   function loadSnapshot(sy) {
     ensureBaseDecoded();
@@ -486,7 +196,7 @@
       const en = enI >= 0 ? S_STR[enI] : fa;
       const pid = pidI >= 0 ? S_STR[pidI] : '';
       return {
-        fa, en, pid, isIr: !!(flags & 4), prec: flags & 3,
+        fa, en, pid, isIr: !!(flags & 4), prec: flags & 3, uid: sy + ':' + faI + ':' + cx10 + ':' + cy10,
         cx: cx10 / 10, cy: cy10 / 10, area: area10 / 10,
         rings: rings.map(r => decodeDeltaRing(r, q))
       };
@@ -496,6 +206,378 @@
     decodedSnaps.set(sy, list);
     return list;
   }
+
+
+  // ---------- LIVE ERA BLENDING ----------
+  // The year drives the borders. Between two snapshots (years a < b) every transfer of land, i.e. one
+  // (new owner, old owner) pair such as Byzantium → Ottomans, is a single event with its own date: the real one when
+  // the data has it (the loser's fall or the winner's founding inside the interval), otherwise staggered around the
+  // hand-tuned SNAP_CUTS year. A paused map is therefore always definite: each transfer has happened or not, drawn
+  // pixel-exact from both eras. Only while time crosses an event does its land flood over like ink in water, from the
+  // winner's side (a new state spreads from its core; land that falls to nobody dissolves from its edges).
+  const GRID = 0.5, GW = 720, GH = 360;
+  const SNAP_YEARS = [...new Set(SNAP_CUTS.map(c => c[1]))].sort((a, b) => a - b);
+
+  function eraAt(y) {
+    const Y = SNAP_YEARS;
+    if (y <= Y[0]) return { a: Y[0], b: Y[0], t: 0 };
+    for (let i = 0; i < Y.length - 1; i++) if (y < Y[i + 1]) return { a: Y[i], b: Y[i + 1], t: (y - Y[i]) / (Y[i + 1] - Y[i]) };
+    const L = Y[Y.length - 1];
+    return { a: L, b: L, t: 0 };
+  }
+  M.eraAt = eraAt;
+
+  // Domain-warped value noise on the geo grid: makes flood fronts swirl like ink instead of growing as polygons
+  let geoNoise = null;
+  function noiseGrid() {
+    if (geoNoise) return geoNoise;
+    let s = 7919;
+    const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const lat = new Float32Array(4096);
+    for (let i = 0; i < 4096; i++) lat[i] = rnd();
+    const vn = (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), u = x - xi, v = y - yi;
+      const su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+      const i0 = (yi & 63) * 64, i1 = ((yi + 1) & 63) * 64, x0 = xi & 63, x1 = (xi + 1) & 63;
+      const a = lat[i0 + x0], b = lat[i0 + x1], c = lat[i1 + x0], d = lat[i1 + x1];
+      return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
+    };
+    const fbm = (x, y) => vn(x, y) * 0.55 + vn(x * 2.1 + 5.2, y * 2.1 + 1.3) * 0.28 + vn(x * 4.3 + 9.1, y * 4.3 + 7.7) * 0.17;
+    geoNoise = new Float32Array(GW * GH);
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        const x = gx / 14, y = gy / 14;
+        const wx = fbm(x + 3.7, y + 1.9) * 2.4, wy = fbm(x + 8.3, y + 2.8) * 2.4;
+        geoNoise[gy * GW + gx] = fbm(x + wx, y + wy) - 0.5;
+      }
+    }
+    return geoNoise;
+  }
+
+  // Which polity of snapshot sy owns each 0.5° cell (nonzero winding like ctx.fill; later entries win like the carve-out)
+  const ownerCache = new Map();
+  function ownerGrid(sy) {
+    if (ownerCache.has(sy)) return ownerCache.get(sy);
+    const snap = loadSnapshot(sy), own = new Int16Array(GW * GH).fill(-1), cr = [];
+    snap.forEach((ent, idx) => {
+      let minY = 90, maxY = -90;
+      for (const r of ent.rings) for (let i = 1; i < r.length; i += 2) { if (r[i] < minY) minY = r[i]; if (r[i] > maxY) maxY = r[i]; }
+      const gy0 = Math.max(0, Math.floor((90 - maxY) / GRID)), gy1 = Math.min(GH - 1, Math.floor((90 - minY) / GRID));
+      for (let gy = gy0; gy <= gy1; gy++) {
+        const L = 90 - (gy + 0.5) * GRID;
+        cr.length = 0;
+        for (const r of ent.rings) {
+          const n = r.length;
+          for (let i = 0, j = n - 2; i < n; j = i, i += 2) {
+            const y1 = r[j + 1], y2 = r[i + 1];
+            if ((y1 <= L) !== (y2 <= L)) cr.push([r[j] + (L - y1) * (r[i] - r[j]) / (y2 - y1), y2 > y1 ? 1 : -1]);
+          }
+        }
+        cr.sort((p, q) => p[0] - q[0]);
+        let w = 0;
+        for (let k = 0; k < cr.length - 1; k++) {
+          w += cr[k][1];
+          if (!w) continue;
+          const gx0 = Math.max(0, Math.ceil((cr[k][0] + 180) / GRID - 0.5));
+          const gx1 = Math.min(GW - 1, Math.floor((cr[k + 1][0] + 180) / GRID - 0.5));
+          for (let gx = gx0; gx <= gx1; gx++) own[gy * GW + gx] = idx;
+        }
+      }
+    });
+    if (ownerCache.size > 6) ownerCache.delete(ownerCache.keys().next().value);
+    ownerCache.set(sy, own);
+    return own;
+  }
+
+  const nameKey = (e) => e.en || e.fa;
+  const fieldCache = new Map();
+  let polByName = null;
+  function eraField(a, b) {
+    const key = a + '|' + b;
+    if (fieldCache.has(key)) return fieldCache.get(key);
+    const A = loadSnapshot(a), B = loadSnapshot(b), oA = ownerGrid(a), oB = ownerGrid(b), nz = noiseGrid();
+    const N = GW * GH, NA = A.length, NB = B.length, W1 = NA + 1, K = 2048;
+    const pidCnt = (list) => { const c = {}; list.forEach(e => { if (e.pid) c[e.pid] = (c[e.pid] || 0) + 1; }); return c; };
+    const cA = pidCnt(A), cB = pidCnt(B);
+
+    // 1. Identity: which a-polity does each b-polity continue? (name, then a unique pid, then >=40% of its land)
+    const cellsA = new Int32Array(NA), cellsB = new Int32Array(NB), ov = new Map();
+    for (let x = 0; x < N; x++) {
+      const j = oB[x], i = oA[x];
+      if (i >= 0) cellsA[i]++;
+      if (j < 0) continue;
+      cellsB[j]++;
+      if (i >= 0) ov.set(j * K + i, (ov.get(j * K + i) || 0) + 1);
+    }
+    const match = new Int32Array(NB).fill(-1);
+    B.forEach((eb, j) => {
+      let best = -1, bs = -1;
+      A.forEach((ea, i) => {
+        if (nameKey(ea) !== nameKey(eb) && ea.fa !== eb.fa) return;
+        const sc = (ov.get(j * K + i) || 0) + 1;
+        if (sc > bs) { bs = sc; best = i; }
+      });
+      if (best < 0 && eb.pid && cB[eb.pid] === 1 && cA[eb.pid] === 1) best = A.findIndex(ea => ea.pid === eb.pid);
+      if (best < 0 && cellsB[j]) {
+        A.forEach((ea, i) => { const sc = ov.get(j * K + i) || 0; if (sc > bs) { bs = sc; best = i; } });
+        if (bs < cellsB[j] * 0.4) best = -1;
+      }
+      match[j] = best;
+    });
+
+    // 2. Transfer events, one per (new owner j, old owner i) whose land looks different, each with its date
+    const span = b - a, modern = a >= 1914;
+    const cut = SNAP_CUTS.find(c => c[1] === a), cutF = cut ? clamp((cut[0] - a) / span, 0, 1) : 0.5;
+    const frac = (yr) => (yr > a && yr < b ? (yr - a) / span : null);
+    // The timeline polity behind a map entity: its own unique pid, else a unique same-named polity alive in this interval
+    if (!polByName) {
+      polByName = new Map();
+      TL.polities.forEach(p => [p.n, p.en].forEach(n => { if (n) (polByName.get(n) || polByName.set(n, []).get(n)).push(p); }));
+    }
+    const polOf = (e, cnt) => {
+      if (e.pid && cnt[e.pid] === 1) return TL.polityById[e.pid];
+      const c = [...new Set([...(polByName.get(e.fa) || []), ...(polByName.get(e.en) || [])])].filter(p => p.s <= b + 30 && p.e >= a - 30);
+      return c.length === 1 ? c[0] : null;
+    };
+    // Where a state starts from: its first listed capital, else its centroid
+    const cities = TL.MAP.cities || {};
+    const originOf = (p, e) => {
+      if (p && p.cap) for (const part of p.cap.split(/[،,]/)) for (const k in cities) if (part.includes(k)) return cities[k];
+      return [e.cx, e.cy];
+    };
+    const f = {
+      a, b, A, B, NA, oA, oB, match, cellsA, cellsB,
+      pair: new Int32Array((NB + 1) * W1).fill(-3), // -3 not seen yet, -1 looks the same in both eras, else event id
+      gB: [], gA: [], gTau: [], gCells: [], prog: [], evB: Array.from({ length: NB }, () => []), evA: Array.from({ length: NA }, () => []),
+      dn: new Float32Array(N), clock: null
+    };
+    f.pair[0] = -1; // nobody's land stays nobody's
+    B.forEach((eb, j) => { const i = match[j]; if (i >= 0 && nameKey(A[i]) === nameKey(eb)) f.pair[(j + 1) * W1 + i + 1] = -1; });
+    // Date of the transfer j <- i as a fraction of the interval. rank (0..1) orders a founding state's transfers by
+    // distance from its first capital, so it spreads outward from where it began.
+    const tauOf = (j, i, rank) => {
+      const q = i >= 0 ? polOf(A[i], cA) : null, fe = q ? frac(q.e) : null;
+      const p = j >= 0 ? polOf(B[j], cB) : null, fs = p ? frac(p.s) : null;
+      const h = (TL.hash((j >= 0 ? nameKey(B[j]) : '-') + '>' + (i >= 0 ? nameKey(A[i]) : '-')) % 1000) / 1000;
+      const r = rank == null ? h : rank;
+      let tau;
+      if (fs != null && fe != null) {                         // e.g. Seljuks (1037) take Buyid land before the Buyids fall (1062)
+        const lo = Math.min(fs, fe), hi = Math.max(fs, fe);
+        tau = lo + (hi - lo) * (0.03 + 0.9 * r);
+      } else if (fs != null) tau = fs + Math.min(0.3, 0.98 - fs) * r;  // a new state spreads from its founding
+      else if (fe != null) tau = fe - Math.min(0.2, fe) * h;          // the old owner's land is gone by its fall
+      else tau = cutF + (h - 0.5) * (modern ? 0.06 : 0.5);           // undated: around the tuned cut year, staggered
+      return clamp(tau, 0.01, 0.99);
+    };
+    f.event = (j, i) => {
+      const g = f.gTau.length;
+      f.gB.push(j); f.gA.push(i); f.gTau.push(tauOf(j, i, null)); f.gCells.push(0); f.prog.push(-1);
+      if (j >= 0) f.evB[j].push(g);
+      if (i >= 0) f.evA[i].push(g);
+      f.pair[(j + 1) * W1 + i + 1] = g;
+      return g;
+    };
+    const grp = new Int32Array(N).fill(-1);
+    for (let x = 0; x < N; x++) {
+      let g = f.pair[(oB[x] + 1) * W1 + oA[x] + 1];
+      if (g === -1) continue;
+      if (g === -3) g = f.event(oB[x], oA[x]);
+      grp[x] = g; f.gCells[g]++;
+    }
+    // Re-date each founding state's transfers in order of distance from its first capital
+    {
+      const csx = new Float64Array(f.gTau.length), csy = new Float64Array(f.gTau.length);
+      for (let x = 0; x < N; x++) { const g = grp[x]; if (g >= 0) { csx[g] += -180 + (x % GW + 0.5) * GRID; csy[g] += 90 - (((x / GW) | 0) + 0.5) * GRID; } }
+      f.evB.forEach((ev, j) => {
+        if (!ev.length) return;
+        const o = originOf(polOf(B[j], cB), B[j]);
+        const dist = (g) => (f.gCells[g] ? Math.hypot(csx[g] / f.gCells[g] - o[0], csy[g] / f.gCells[g] - o[1]) : 1e9);
+        const order = [...ev].sort((p, q) => dist(p) - dist(q));
+        order.forEach((g, k) => { f.gTau[g] = tauOf(j, f.gA[g], order.length > 1 ? k / (order.length - 1) : 0); });
+      });
+    }
+
+    // 3. Shape of each flood: chamfer distance (2/3, wraps the date line) from where it starts, inside its own land
+    const G = f.gTau.length, INF = 1 << 30, d = new Int32Array(N).fill(INF), buckets = [];
+    const push = (x, dv) => { d[x] = dv; (buckets[dv] || (buckets[dv] = [])).push(x); };
+    const NBR = [[1, 0, 2], [-1, 0, 2], [0, 1, 2], [0, -1, 2], [1, 1, 3], [1, -1, 3], [-1, 1, 3], [-1, -1, 3]];
+    const seeded = new Uint8Array(G), sx = new Float64Array(G), sy = new Float64Array(G);
+    for (let x = 0; x < N; x++) {
+      const g = grp[x];
+      if (g < 0) continue;
+      const gx = x % GW, gy = (x / GW) | 0, j = f.gB[g];
+      sx[g] += gx; sy[g] += gy;
+      for (const [dx, dy] of NBR) {
+        const ny = gy + dy;
+        if (ny < 0 || ny >= GH) continue;
+        const n = ny * GW + (gx + dx + GW) % GW;
+        // from the winner's other land (a conquest front), or from the edges for land that falls to nobody
+        if (grp[n] !== g && (j < 0 || oB[n] === j)) { push(x, 0); seeded[g] = 1; break; }
+      }
+    }
+    const core = new Int32Array(G).fill(-1), coreD = new Float64Array(G).fill(Infinity);
+    for (let x = 0; x < N; x++) {
+      const g = grp[x];
+      if (g < 0 || seeded[g]) continue;
+      const dd = (x % GW - sx[g] / f.gCells[g]) ** 2 + (((x / GW) | 0) - sy[g] / f.gCells[g]) ** 2;
+      if (dd < coreD[g]) { coreD[g] = dd; core[g] = x; }
+    }
+    for (let g = 0; g < G; g++) if (core[g] >= 0) push(core[g], 0); // a brand-new state grows from its core
+    for (let dv = 0; dv < buckets.length; dv++) {
+      const bk = buckets[dv];
+      if (!bk) continue;
+      for (let k = 0; k < bk.length; k++) {
+        const x = bk[k];
+        if (d[x] !== dv) continue;
+        const gx = x % GW, gy = (x / GW) | 0, g = grp[x];
+        for (const [dx, dy, c] of NBR) {
+          const ny = gy + dy;
+          if (ny < 0 || ny >= GH) continue;
+          const n = ny * GW + (gx + dx + GW) % GW;
+          if (grp[n] === g && d[n] > dv + c) push(n, dv + c);
+        }
+      }
+      buckets[dv] = null;
+    }
+    const maxD = new Int32Array(G);
+    for (let x = 0; x < N; x++) { const g = grp[x]; if (g >= 0 && d[x] < INF && d[x] > maxD[g]) maxD[g] = d[x]; }
+    for (let x = 0; x < N; x++) {
+      const g = grp[x];
+      if (g < 0) continue;
+      f.dn[x] = clamp((d[x] < INF && maxD[g] ? d[x] / maxD[g] : 0.5) + nz[x] * 0.45, 0, 1);
+    }
+    if (fieldCache.size > 4) fieldCache.delete(fieldCache.keys().next().value);
+    fieldCache.set(key, f);
+    return f;
+  }
+
+  // Advance every event toward its state at year-fraction t (done once t passes its date); a running event floods over
+  // INK_ANIM seconds. Returns whether any is mid-flood plus a signature of which are done (to reuse a settled frame).
+  function inkStep(f, t) {
+    const dt = f.clock == null ? Infinity : MS.t - f.clock;
+    f.clock = MS.t;
+    let moving = false, sig = 0, any = false, all = true;
+    for (let g = 0; g < f.prog.length; g++) {
+      const target = t >= f.gTau[g] ? 1 : 0;
+      let p = f.prog[g];
+      if (p < 0 || dt > 0.5) p = target; // first sight, or the map was not being drawn: no replay
+      else if (p < target) p = Math.min(1, p + dt / INK_ANIM);
+      else if (p > target) p = Math.max(0, p - dt / INK_ANIM);
+      f.prog[g] = p;
+      if (p > 0 && p < 1) moving = true;
+      if (p > 0) any = true;
+      if (p < 1) all = false;
+      if (p === 1) sig = (sig * 31 + g + 1) | 0;
+    }
+    return { moving, sig, any, all };
+  }
+
+  // Share of an entity's land currently drawn from its own era (for labels)
+  function shareB(f, j) {
+    const ev = f.evB[j];
+    if (!f.cellsB[j]) return ev.length ? Math.max(0, ...ev.map(g => f.prog[g])) : 1;
+    let s = f.cellsB[j];
+    for (const g of ev) s -= f.gCells[g] * (1 - Math.max(0, f.prog[g]));
+    return s / f.cellsB[j];
+  }
+  function shareA(f, i) {
+    const ev = f.evA[i];
+    if (!f.cellsA[i]) return ev.length ? 1 - Math.max(0, ...ev.map(g => f.prog[g])) : 1;
+    let s = f.cellsA[i];
+    for (const g of ev) s -= f.gCells[g] * Math.max(0, f.prog[g]);
+    return s / f.cellsA[i];
+  }
+
+  // Pixel-exact owner ids of an era for the current view (same paths, fill order and smoothing as its border layer)
+  // at 1/INK_DS resolution; anti-aliased edge pixels fail the checksum and fall back to the 0.5° grid.
+  // Cached by view geometry only, so hovering never repaints them.
+  const idCache = new Map();
+  let idCv = null, idG = null;
+  function idsFor(sy, geoKey) {
+    const key = geoKey + '|' + sy;
+    if (idCache.has(key)) return idCache.get(key);
+    const w = Math.ceil(MS.W / INK_DS), h = Math.ceil(MS.H / INK_DS), snap = loadSnapshot(sy), smooth = borderSmooth(sy);
+    if (!idCv) { idCv = document.createElement('canvas'); idG = idCv.getContext('2d', { willReadFrequently: true }); }
+    if (idCv.width !== w || idCv.height !== h) { idCv.width = w; idCv.height = h; }
+    const g = idG;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.setTransform(1 / INK_DS, 0, 0, 1 / INK_DS, 0, 0);
+    snap.forEach((ent, idx) => {
+      const v = idx + 1, r = v & 255, gr = v >> 8;
+      g.beginPath();
+      for (const ring of ent.rings) traceEraRing(g, ring, M.proj, smooth, false);
+      g.fillStyle = `rgb(${r},${gr},${(r * 89 + gr * 31 + 7) & 255})`;
+      g.fill();
+    });
+    const px = g.getImageData(0, 0, w, h).data, ids = new Int16Array(w * h);
+    for (let k = 0; k < w * h; k++) {
+      const r = px[k * 4], gr = px[k * 4 + 1], bl = px[k * 4 + 2], al = px[k * 4 + 3];
+      ids[k] = al === 0 ? -1 : (al === 255 && bl === ((r * 89 + gr * 31 + 7) & 255) && (r || gr) ? r + (gr << 8) - 1 : -2);
+    }
+    const out = { ids, w, h };
+    if (idCache.size > 3) idCache.delete(idCache.keys().next().value);
+    idCache.set(key, out);
+    return out;
+  }
+
+  // Ink mask (1 = draw the b-era) and rim mask for the current view, per pixel of the id buffers
+  let maskCv = null, maskG = null, rimCv = null, rimG = null, maskImg = null, rimImg = null;
+  function buildMasks(f, IA, IB, t) {
+    const mw = IA.w, mh = IA.h;
+    if (!maskCv) {
+      maskCv = document.createElement('canvas'); maskG = maskCv.getContext('2d');
+      rimCv = document.createElement('canvas'); rimG = rimCv.getContext('2d');
+    }
+    if (maskCv.width !== mw || maskCv.height !== mh) {
+      maskCv.width = rimCv.width = mw; maskCv.height = rimCv.height = mh;
+      maskImg = maskG.createImageData(mw, mh); rimImg = rimG.createImageData(mw, mh);
+    }
+    const md = maskImg.data, rd = rimImg.data, iA = IA.ids, iB = IB.ids, pair = f.pair, W1 = f.NA + 1, nz = noiseGrid();
+    const sc = M.scale(), lon0 = MS.lon - MS.W * 0.5 / sc, lat0 = MS.lat + MS.H * 0.52 / (sc * 1.22);
+    for (let py = 0; py < mh; py++) {
+      const lat = lat0 - (py * INK_DS + INK_DS / 2) / (sc * 1.22);
+      const fy = clamp((90 - lat) / GRID - 0.5, 0, GH - 1.001), y0 = fy | 0, ty = fy - y0;
+      const r0 = y0 * GW, r1 = Math.min(GH - 1, y0 + 1) * GW, rn = Math.round(fy) * GW, fr = (((fy * 5) | 0) % GH) * GW;
+      for (let px = 0; px < mw; px++) {
+        const k = py * mw + px;
+        let ia = iA[k], ib = iB[k];
+        let fx = (lon0 + (px * INK_DS + INK_DS / 2) / sc + 180) / GRID - 0.5;
+        fx = ((fx % GW) + GW) % GW;
+        if (ia === -2 || ib === -2) { // anti-aliased edge: take the owner from the 0.5° grid
+          const c = rn + (Math.round(fx) % GW);
+          if (ia === -2) ia = f.oA[c];
+          if (ib === -2) ib = f.oB[c];
+        }
+        let g = pair[(ib + 1) * W1 + ia + 1];
+        if (g === -3) { g = f.event(ib, ia); f.prog[g] = t >= f.gTau[g] ? 1 : 0; } // too small for the grid
+        let m = 0;
+        if (g >= 0) {
+          const p = f.prog[g];
+          if (p >= 1) m = 1;
+          else if (p > 0) {
+            const x0 = fx | 0, tx = fx - x0, x1 = (x0 + 1) % GW, dn = f.dn;
+            const dv = (dn[r0 + x0] * (1 - tx) + dn[r0 + x1] * tx) * (1 - ty) + (dn[r1 + x0] * (1 - tx) + dn[r1 + x1] * tx) * ty
+              + nz[fr + ((fx * 5) | 0) % GW] * 0.06; // fine geo-anchored jitter feathers the wet edge
+            m = smooth01(clamp((p * (1 + INK_SOFT) - dv) / INK_SOFT, 0, 1));
+          }
+        }
+        md[k * 4 + 3] = m * 255;
+        rd[k * 4 + 3] = 4 * m * (1 - m) * 255;
+      }
+    }
+    maskG.putImageData(maskImg, 0, 0);
+    rimG.putImageData(rimImg, 0, 0);
+  }
+
+  // Two cached full-res border layers (repainted only when the view, hover, focus, filter or theme changes)
+  const layerSlots = [{ cv: null, g: null, key: '', hits: [] }, { cv: null, g: null, key: '', hits: [] }];
+  let compCv = null, compG = null, tmpCv = null, tmpG = null, fadeCv = null, fadeG = null, compKey = '';
+  const fullCanvas = (o) => {
+    if (!o.cv) { o.cv = document.createElement('canvas'); o.g = o.cv.getContext('2d'); }
+    if (o.cv.width !== cv.width || o.cv.height !== cv.height) { o.cv.width = cv.width; o.cv.height = cv.height; o.key = ''; }
+    return o;
+  };
 
   // Projection
   M.scale = () => (Math.min(MS.W, MS.H * 1.92) / 136) * MS.zoom;
@@ -567,7 +649,7 @@
   // Trace a ring with continuous era-adaptive smoothness:
   //   smooth = 0   -> exact straight vertex-to-vertex polyline (modern surveyed borders, ZERO curving!)
   //   smooth = 1   -> full quadratic midpoint spline (organic pre-modern frontiers)
-  //   0 < s < 1    -> straight segments with gently eased corners (19th-c. treaty era & morph transitions)
+  //   0 < s < 1    -> straight segments with gently eased corners (19th-c. treaty era)
   function traceScreenPoly(c, sp, smooth) {
     const n = sp.length;
     if (smooth <= 0.01) {
@@ -608,18 +690,6 @@
     }
     traceScreenPoly(c, sp, smooth);
     return collectScreen ? sp : null;
-  }
-
-  function traceMorphedRing(c, ringA, ringB, e, smooth, proj) {
-    const n = ringA.length; if (n < 6) return;
-    const sp = new Float32Array(n);
-    for (let i = 0; i < n; i += 2) {
-      const lon = ringA[i] + (ringB[i] - ringA[i]) * e;
-      const lat = ringA[i + 1] + (ringB[i + 1] - ringA[i + 1]) * e;
-      const [sx, sy] = proj(lon, lat);
-      sp[i] = sx; sp[i + 1] = sy;
-    }
-    traceScreenPoly(c, sp, smooth);
   }
 
   function traceOpenPts(pts, proj, isTenths) {
@@ -688,16 +758,8 @@
     const proj = M.proj;
     const mapData = TL.MAP;
 
-    // Trigger TRUE GEOMETRIC POLYGON MORPH whenever historical snapshot changes!
-    const nextSy = pickSnapYear(y);
-    if (nextSy !== MS.snapYear) {
-      const prevSnap = loadSnapshot(MS.snapYear);
-      const nextSnap = loadSnapshot(nextSy);
-      MS.morphPlan = buildMorphPlan(prevSnap, MS.snapYear, nextSnap, nextSy, y);
-      MS.morphSmooth = [borderSmooth(MS.snapYear), borderSmooth(nextSy)];
-      MS.snapYear = nextSy;
-      MS.trans = 0;
-    }
+    // Live era: the year picks two neighbouring snapshots and how far between them it is
+    const era = eraAt(y);
 
     MS.polyHits = [];
     MS.pinHits = [];
@@ -743,8 +805,7 @@
       ctx.restore();
     }
 
-    // 4. HISTORICAL BORDERS — TRUE VERTEX MORPH DURING TRANSITIONS, FULL MULTI-RING AT REST!
-    const curSnap = loadSnapshot(MS.snapYear);
+    // 4. HISTORICAL BORDERS — both neighbouring eras drawn exactly, blended live by the year (ink mask)
     const focusItem = S.focus ? S.focus.item : null;
     const focusPol = S.focus && S.focus.type === 'polity' ? focusItem
       : (S.focus && S.focus.type === 'ruler' ? TL.polityById[focusItem.pid] : null);
@@ -754,7 +815,7 @@
     if (focusEmp) { focusIds.add(focusEmp.id); if (focusEmp.dom) focusEmp.dom.forEach(d => focusIds.add(d.id)); }
     const hasFocus = focusIds.size > 0;
 
-    // Unified region-filter check used identically during morphing, at rest, and in labels/capitals!
+    // Unified region-filter check used identically by borders, labels and capitals!
     const isEntFilteredOut = (ent, effPid, lon, lat) => {
       if (!S.show || ent.isIr) return false;
       const pol = effPid ? TL.polityById[effPid] : null;
@@ -763,77 +824,25 @@
       return !!(rid && !S.show.has(rid));
     };
 
-    const curSmooth = borderSmooth(MS.snapYear);
-    const morphing = MS.trans < 0.995 && MS.morphPlan;
+    const hoverEnt = MS.hover && MS.hover.type === 'hist' ? MS.hover.ent : null;
+    const viewKey = [cv.width, cv.height, MS.lon.toFixed(5), MS.lat.toFixed(5), MS.zoom.toFixed(5), MS.dark,
+      hoverEnt ? hoverEnt.uid : '', [...focusIds].join(','), S.show ? [...S.show].join(',') : '*', y >= 1979].join('|');
 
-    // Offscreen carve-out layer guarantees ZERO overlapping border seams, ZERO double-tinting, and clean enclaves!
-    if (!fillCv) { fillCv = document.createElement('canvas'); fctx = fillCv.getContext('2d'); }
-    if (fillCv.width !== cv.width || fillCv.height !== cv.height) { fillCv.width = cv.width; fillCv.height = cv.height; }
-    fctx.setTransform(1, 0, 0, 1, 0, 0);
-    fctx.clearRect(0, 0, fillCv.width, fillCv.height);
-    fctx.setTransform(MS.dpr, 0, 0, MS.dpr, 0, 0);
-
-    if (morphing) {
-      const e = easeInOutCubic(clamp(MS.trans, 0, 1));
-      const shimmer = Math.sin(MS.trans * Math.PI);
-      const smA = MS.morphSmooth ? MS.morphSmooth[0] : curSmooth;
-      const smB = MS.morphSmooth ? MS.morphSmooth[1] : curSmooth;
-      const mSmooth = lerp(smA, smB, e);
-      fctx.lineJoin = mSmooth <= 0.05 ? 'miter' : 'round';
-      fctx.miterLimit = 2.4;
-      fctx.lineCap = mSmooth <= 0.05 ? 'butt' : 'round';
-
-      for (let i = 0; i < MS.morphPlan.length; i++) {
-        const mp = MS.morphPlan[i];
-        const col = blendRgb(mp.colA, mp.colB, e);
-        const modeAlpha = mp.mode === 'shrink' ? (1 - e) : (mp.mode === 'grow' ? e : 1);
-        if (modeAlpha < 0.02) continue;
-
-        const isFocus = !!(mp.effPid && focusIds.has(mp.effPid));
-        const filterDim = isEntFilteredOut(mp.ent, mp.effPid, lerp(mp.cxA, mp.cxB, e), lerp(mp.cyA, mp.cyB, e));
-        const dimmed = (hasFocus && !isFocus) || filterDim;
-
-        fctx.save();
-        fctx.beginPath();
-        if (mp.mode === 'static' && mp.staticRings) {
-          for (let r = 0; r < mp.staticRings.length; r++) traceEraRing(fctx, mp.staticRings[r], proj, mSmooth, false);
-        } else {
-          traceMorphedRing(fctx, mp.ringA, mp.ringB, e, mSmooth, proj);
-        }
-
-        // Carve out any lower-priority territory/border underneath this polygon so zero overlap seams ever show!
-        fctx.globalCompositeOperation = 'destination-out';
-        fctx.globalAlpha = modeAlpha;
-        fctx.fillStyle = '#000'; fctx.fill();
-
-        fctx.globalCompositeOperation = 'source-over';
-        fctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim ? 0.06 : (dimmed ? T.dimAlpha : 1)) * modeAlpha;
-        fctx.fillStyle = col; fctx.fill();
-
-        const bAlpha = T.borderAlpha * (filterDim ? 0.08 : (dimmed ? 0.20 : 1)) * modeAlpha;
-        if (!dimmed && mSmooth > 0.05) {
-          fctx.globalAlpha = bAlpha * 0.30 * mSmooth;
-          fctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-          fctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + (mp.mode === 'static' ? 0 : shimmer * 2.2 * mSmooth);
-          fctx.stroke();
-        }
-
-        fctx.globalAlpha = bAlpha * (mSmooth <= 0.05 ? 1.0 : 0.92);
-        fctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.42)' : 'rgba(20,20,24,.34)');
-        fctx.lineWidth = mp.isIr ? 1.5 : 0.8;
-        fctx.stroke();
-        fctx.restore();
-      }
-    } else {
-      const isModern = curSmooth <= 0.01;
-      fctx.lineJoin = isModern ? 'miter' : 'round';
-      fctx.miterLimit = 2.4;
-      fctx.lineCap = isModern ? 'butt' : 'round';
-
-      for (let idx = 0; idx < curSnap.length; idx++) {
-        const ent = curSnap[idx];
+    // Carve-out painter: ZERO overlapping border seams, ZERO double-tinting, and clean enclaves!
+    const paintSnap = (g, sy, hits) => {
+      const snap = loadSnapshot(sy), curSmooth = borderSmooth(sy), isModern = curSmooth <= 0.01;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-over';
+      g.globalAlpha = 1;
+      g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+      g.setTransform(MS.dpr, 0, 0, MS.dpr, 0, 0);
+      g.lineJoin = isModern ? 'miter' : 'round';
+      g.miterLimit = 2.4;
+      g.lineCap = isModern ? 'butt' : 'round';
+      for (let idx = 0; idx < snap.length; idx++) {
+        const ent = snap[idx];
         let effPid = ent.pid, effFa = ent.fa;
-        if (ent.isIr && MS.snapYear === 1960 && y >= 1979) { effPid = 'iri'; effFa = 'ایران (جمهوری اسلامی)'; }
+        if (ent.isIr && sy === 1960 && y >= 1979) { effPid = 'iri'; effFa = 'ایران (جمهوری اسلامی)'; }
         const pol = effPid ? TL.polityById[effPid] : null;
         const isFocus = !!(effPid && focusIds.has(effPid));
         const isHover = !!(MS.hover && MS.hover.type === 'hist' && MS.hover.ent === ent);
@@ -842,47 +851,137 @@
         const col = entColor({ ...ent, pid: effPid }, MS.dark);
 
         const screenRings = [];
-        fctx.save();
-        fctx.beginPath();
+        g.save();
+        g.beginPath();
         for (let r = 0; r < ent.rings.length; r++) {
-          const sr = traceEraRing(fctx, ent.rings[r], proj, curSmooth, true);
+          const sr = traceEraRing(g, ent.rings[r], proj, curSmooth, true);
           if (sr) screenRings.push(sr);
         }
 
         // Carve out any lower-priority territory or ghost frontier lines underneath this polygon!
-        fctx.globalCompositeOperation = 'destination-out';
-        fctx.globalAlpha = 1;
-        fctx.fillStyle = '#000'; fctx.fill();
+        g.globalCompositeOperation = 'destination-out';
+        g.globalAlpha = 1;
+        g.fillStyle = '#000'; g.fill();
 
-        fctx.globalCompositeOperation = 'source-over';
-        fctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim && !isHover ? 0.06 : (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1)));
-        fctx.fillStyle = col; fctx.fill();
+        g.globalCompositeOperation = 'source-over';
+        g.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim && !isHover ? 0.06 : (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1)));
+        g.fillStyle = col; g.fill();
 
         const bAlpha = T.borderAlpha * (filterDim && !isHover ? 0.08 : (dimmed ? 0.20 : 1));
         if (!dimmed && curSmooth > 0.05) {
-          fctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22) * curSmooth;
-          fctx.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-          fctx.lineWidth = ent.isIr ? 4.0 : 2.6;
-          fctx.stroke();
+          g.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22) * curSmooth;
+          g.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
+          g.lineWidth = ent.isIr ? 4.0 : 2.6;
+          g.stroke();
         }
-        fctx.globalAlpha = bAlpha * (isHover ? 1.55 : (isFocus ? 1.4 : (isModern ? 1.05 : 0.85)));
-        if (ent.prec === 1 && !isModern && !isFocus && !isHover) fctx.setLineDash([4, 4]);
-        fctx.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
+        g.globalAlpha = bAlpha * (isHover ? 1.55 : (isFocus ? 1.4 : (isModern ? 1.05 : 0.85)));
+        if (ent.prec === 1 && !isModern && !isFocus && !isHover) g.setLineDash([4, 4]);
+        g.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
           : (isFocus ? T.gold : (ent.isIr ? (MS.dark ? '#e4c47a' : '#1d4496') : (MS.dark ? (isModern ? 'rgba(255,255,255,.46)' : 'rgba(255,255,255,.36)') : (isModern ? 'rgba(20,20,24,.38)' : 'rgba(20,20,24,.30)'))));
-        fctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? (isModern ? 1.45 : 1.35) : (isModern ? 0.82 : 0.72)));
-        if ((isFocus || isHover) && MS.dark) { fctx.shadowColor = ent.isIr ? '#d8b46c' : col; fctx.shadowBlur = 12; }
-        fctx.stroke();
-        fctx.setLineDash([]);
-        fctx.restore();
+        g.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? (isModern ? 1.45 : 1.35) : (isModern ? 0.82 : 0.72)));
+        if ((isFocus || isHover) && MS.dark) { g.shadowColor = ent.isIr ? '#d8b46c' : col; g.shadowBlur = 12; }
+        g.stroke();
+        g.setLineDash([]);
+        g.restore();
 
-        MS.polyHits.push({ ent, effPid, effFa, pol, screenRings });
+        hits.push({ ent, effPid, effFa, pol, screenRings, sy });
       }
+    };
+    const layerFor = (sy, avoid) => {
+      const key = viewKey + '|' + sy;
+      let L = layerSlots.find(o => o.key === key && o.cv && o.cv.width === cv.width && o.cv.height === cv.height);
+      if (!L) {
+        L = fullCanvas(layerSlots.find(o => o !== avoid));
+        L.hits = [];
+        paintSnap(L.g, sy, L.hits);
+        L.key = key;
+      }
+      return L;
+    };
+    const geoKey = [cv.width, cv.height, MS.lon.toFixed(5), MS.lat.toFixed(5), MS.zoom.toFixed(5)].join('|');
+
+    // Prepare the neighbouring intervals' fields while the browser is idle (each takes ~50 ms) so playback never hitches
+    if (!MS.prefetching && window.requestIdleCallback) {
+      const ys = SNAP_YEARS, k = ys.indexOf(era.a), todo = [[ys[k + 1], ys[k + 2]], [ys[k - 1], ys[k]]]
+        .filter(([p, q]) => p != null && q != null && !fieldCache.has(p + '|' + q));
+      if (todo.length) { MS.prefetching = true; requestIdleCallback(() => { eraField(todo[0][0], todo[0][1]); MS.prefetching = false; }); }
     }
 
-    // Composite clean non-overlapping territory layer onto landmass (multiply on Light parchment!)
+    // Moving to another interval (or jumping far): cross-fade from the last frame's territory, never a hard cut
+    const eraKey = era.a + '|' + era.b;
+    if (MS.lastEra && MS.lastEra !== eraKey && MS.lastTop) {
+      if (!fadeCv) { fadeCv = document.createElement('canvas'); fadeG = fadeCv.getContext('2d'); }
+      if (fadeCv.width !== cv.width || fadeCv.height !== cv.height) { fadeCv.width = cv.width; fadeCv.height = cv.height; }
+      fadeG.setTransform(1, 0, 0, 1, 0, 0); fadeG.globalCompositeOperation = 'copy'; fadeG.globalAlpha = 1;
+      fadeG.drawImage(MS.lastTop, 0, 0);
+      MS.fadeStart = MS.t;
+    }
+    MS.lastEra = eraKey;
+
+    let topCv;
+    const LA = layerFor(era.a, null);
+    MS.blend = null;
+    MS.polyHits = LA.hits;
+    MS.snapYear = era.a; // the era on screen (labels, tooltips)
+    topCv = LA.cv;
+    if (era.a !== era.b && era.t > 0) {
+      const f = eraField(era.a, era.b), st = inkStep(f, era.t);
+      MS.blend = { f, t: era.t, hitsA: LA.hits, hitsB: null, md: null, mw: 0 };
+      if (st.any) {
+        const LB = layerFor(era.b, LA);
+        MS.blend.hitsB = LB.hits;
+        if (st.all) { topCv = LB.cv; MS.polyHits = LB.hits; MS.snapYear = era.b; MS.blend = null; }
+        else {
+          if (!compCv) {
+            compCv = document.createElement('canvas'); compG = compCv.getContext('2d');
+            tmpCv = document.createElement('canvas'); tmpG = tmpCv.getContext('2d');
+          }
+          for (const c of [compCv, tmpCv]) if (c.width !== cv.width || c.height !== cv.height) { c.width = cv.width; c.height = cv.height; compKey = ''; }
+          const key = LA.key + '#' + LB.key + '#' + st.sig;
+          if (st.moving || key !== compKey) { // a settled, unchanged frame is reused as is
+            buildMasks(f, idsFor(era.a, geoKey), idsFor(era.b, geoKey), era.t);
+            const fw = cv.width, fh = cv.height;
+            for (const g of [compG, tmpG]) { g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.globalAlpha = 1; }
+            // the old era where the ink hasn't reached …
+            compG.globalCompositeOperation = 'source-over'; compG.clearRect(0, 0, fw, fh); compG.drawImage(LA.cv, 0, 0);
+            compG.globalCompositeOperation = 'destination-out'; compG.drawImage(maskCv, 0, 0, fw, fh);
+            // … plus the new era where it has ('lighter' adds premultiplied colour: an exact lerp, so unchanged land never flickers)
+            tmpG.globalCompositeOperation = 'source-over'; tmpG.clearRect(0, 0, fw, fh); tmpG.drawImage(LB.cv, 0, 0);
+            tmpG.globalCompositeOperation = 'destination-in'; tmpG.drawImage(maskCv, 0, 0, fw, fh);
+            compG.globalCompositeOperation = 'lighter'; compG.drawImage(tmpCv, 0, 0);
+            if (st.moving) { // a denser ink rim on a flood front that is still moving
+              tmpG.globalCompositeOperation = 'source-over'; tmpG.clearRect(0, 0, fw, fh); tmpG.drawImage(LB.cv, 0, 0);
+              tmpG.globalCompositeOperation = 'destination-in'; tmpG.drawImage(rimCv, 0, 0, fw, fh);
+              compG.globalCompositeOperation = 'source-over'; compG.globalAlpha = 0.55; compG.drawImage(tmpCv, 0, 0);
+              compG.globalAlpha = 1;
+            }
+            compKey = st.moving ? '' : key;
+          }
+          MS.blend.md = maskImg.data; MS.blend.mw = maskCv.width;
+          topCv = compCv;
+          MS.snapYear = era.t < 0.5 ? era.a : era.b;
+        }
+      }
+    }
+    MS.lastTop = topCv;
+
+    // Cross-fade still running after an interval change
+    const fadeE = MS.fadeStart != null ? (MS.t - MS.fadeStart) / 0.6 : 1;
+    if (fadeE < 1 && fadeCv) {
+      if (!tmpCv) { tmpCv = document.createElement('canvas'); tmpG = tmpCv.getContext('2d'); compCv = document.createElement('canvas'); compG = compCv.getContext('2d'); }
+      if (tmpCv.width !== cv.width || tmpCv.height !== cv.height) { tmpCv.width = cv.width; tmpCv.height = cv.height; }
+      const e = smooth01(clamp(fadeE, 0, 1));
+      tmpG.setTransform(1, 0, 0, 1, 0, 0);
+      tmpG.globalCompositeOperation = 'copy'; tmpG.globalAlpha = 1 - e; tmpG.drawImage(fadeCv, 0, 0);
+      tmpG.globalCompositeOperation = 'lighter'; tmpG.globalAlpha = e; tmpG.drawImage(topCv, 0, 0);
+      tmpG.globalAlpha = 1; tmpG.globalCompositeOperation = 'source-over';
+      topCv = tmpCv;
+    } else MS.fadeStart = null;
+
+    // Composite the territory layer onto the landmass (multiply on Light parchment!)
     ctx.save();
     if (!MS.dark) ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(fillCv, 0, 0, W, H);
+    ctx.drawImage(topCv, 0, 0, W, H);
     ctx.restore();
 
     // 5. Real Natural Earth 50m Rivers
@@ -1024,19 +1123,29 @@
       return true;
     };
 
-    // 11. Empire Labels (smoothly glide along morphed centroids during morph!)
+    // 11. Empire Labels — follow the live era: a continuing state's label glides from its old centre to its new one
+    //     as its own change happens (renamed: old name fades out, new fades in); new states fade in, fallen ones out
     if (MS.layers.labels) {
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
-      const eMorph = morphing ? easeInOutCubic(clamp(MS.trans, 0, 1)) : 1;
-      const queue = morphing
-        ? MS.morphPlan.filter(m => m.mode !== 'shrink').map(m => ({
-            ent: m.ent, effPid: m.effPid, effFa: m.effFa,
-            lon: lerp(m.cxA, m.cxB, eMorph), lat: lerp(m.cyA, m.cyB, eMorph),
-            alpha: m.mode === 'grow' ? eMorph : 1
-          }))
-        : MS.polyHits.slice().sort((a, b) => (b.ent.isIr ? 1 : 0) - (a.ent.isIr ? 1 : 0) || b.ent.area - a.ent.area).map(h => ({
-            ent: h.ent, effPid: h.effPid, effFa: h.effFa, lon: h.ent.cx, lat: h.ent.cy, alpha: 1
-          }));
+      const effOf = (ent, sy) => (ent.isIr && sy === 1960 && y >= 1979 ? { effPid: 'iri', effFa: 'ایران (جمهوری اسلامی)' } : { effPid: ent.pid, effFa: ent.fa });
+      const item = (ent, sy, extra) => ({ ent, ...effOf(ent, sy), lon: ent.cx, lat: ent.cy, alpha: 1, ...extra });
+      let queue;
+      if (!MS.blend) queue = loadSnapshot(MS.snapYear).map(e => item(e, MS.snapYear));
+      else {
+        // Labels follow how much of each state's land is currently drawn from its own era (definite when paused)
+        const { f } = MS.blend, used = new Set(), show = (v) => smooth01(clamp((v - 0.3) / 0.4, 0, 1));
+        queue = f.B.map((eb, j) => {
+          const p = shareB(f, j), i = f.match[j];
+          if (i < 0) return item(eb, f.b, { alpha: show(p) });
+          used.add(i);
+          const ea = f.A[i], renamed = effOf(ea, f.a).effFa !== effOf(eb, f.b).effFa;
+          return item(p < 0.5 ? ea : eb, p < 0.5 ? f.a : f.b,
+            { lon: lerp(ea.cx, eb.cx, p), lat: lerp(ea.cy, eb.cy, p), alpha: renamed ? clamp(Math.abs(2 * p - 1) * 3, 0, 1) : 1 });
+        });
+        f.A.forEach((ea, i) => { if (!used.has(i)) queue.push(item(ea, f.a, { alpha: show(shareA(f, i)) })); });
+        queue = queue.filter(q => q.alpha > 0.03);
+      }
+      queue.sort((a, b) => (b.ent.isIr ? 1 : 0) - (a.ent.isIr ? 1 : 0) || b.ent.area - a.ent.area);
 
       const seenNames = new Set();
       for (const item of queue) {
@@ -1170,6 +1279,23 @@
         const isHov = MS.hover && MS.hover.type === 'person' && MS.hover.item === p;
         const isFoc = S.focus && S.focus.type === 'person' && S.focus.item === p;
         const col = (TL.KIND[TL.PKINDK[p.k]] || TL.KIND.cul).c;
+        // Life journey so far (birthplace -> each place lived), only for the hovered or selected figure
+        const path = (isHov || isFoc) && TL.personPath ? TL.personPath(p, y) : [];
+        if (path.length > 1) {
+          const pts = path.map(q => proj(q[0], q[1]));
+          ctx.save();
+          ctx.strokeStyle = p.r === 'iran' || isFoc ? T.gold : col; ctx.fillStyle = ctx.strokeStyle;
+          ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]); ctx.lineDashOffset = -MS.t * 16;
+          if (MS.dark) { ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 8; }
+          ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) {
+            const [ax, ay] = pts[i - 1], [qx, qy] = pts[i];
+            ctx.quadraticCurveTo((ax + qx) / 2 - (qy - ay) * 0.15, (ay + qy) / 2 + (qx - ax) * 0.15, qx, qy);
+          }
+          ctx.stroke(); ctx.setLineDash([]);
+          pts.slice(0, -1).forEach(([sx, sy2]) => { ctx.beginPath(); ctx.arc(sx, sy2, 2.4, 0, Math.PI * 2); ctx.fill(); });
+          ctx.restore();
+        }
 
         ctx.save();
         const pCol = p.r === 'iran' || isFoc ? T.gold : col;
@@ -1235,11 +1361,18 @@
       const p = MS.pinHits[i];
       if (Math.hypot(x - p.x, y - p.y) <= p.r) return { type: p.type, item: p.item };
     }
-    for (let i = MS.polyHits.length - 1; i >= 0; i--) {
-      const h = MS.polyHits[i];
+    // While two eras are blended, test the one actually visible under the pointer
+    let hits = MS.polyHits;
+    const bl = MS.blend;
+    if (bl && bl.md && bl.hitsB) {
+      const k = (clamp(Math.floor(y / INK_DS), 0, bl.md.length / 4 / bl.mw - 1) * bl.mw + clamp(Math.floor(x / INK_DS), 0, bl.mw - 1)) * 4 + 3;
+      hits = bl.md[k] >= 128 ? bl.hitsB : bl.hitsA;
+    }
+    for (let i = hits.length - 1; i >= 0; i--) {
+      const h = hits[i];
       for (let j = 0; j < h.screenRings.length; j++) {
         if (pointInFlatPoly(x, y, h.screenRings[j])) {
-          return { type: 'hist', ent: h.ent, effFa: h.effFa, effPid: h.effPid, item: h.pol };
+          return { type: 'hist', ent: h.ent, effFa: h.effFa, effPid: h.effPid, item: h.pol, sy: h.sy };
         }
       }
     }
@@ -1257,14 +1390,11 @@
   };
   M.step = function (dt) {
     MS.t += dt;
-    // Silky 850ms vertex-to-vertex geometric polygon morph!
-    if (MS.trans < 1) {
-      MS.trans = Math.min(1, MS.trans + dt / 0.85);
-      if (MS.trans >= 1) MS.morphPlan = null;
-    }
-    MS.lon = lerp(MS.lon, MS.tLon, 0.14);
-    MS.lat = lerp(MS.lat, MS.tLat, 0.14);
-    MS.zoom = lerp(MS.zoom, MS.tZoom, 0.14);
-    MS.year = lerp(MS.year, MS.tYear, 0.25);
+    // Ease toward targets, then land exactly (a settled camera lets the border layers stay cached)
+    const ease = (v, to, k, eps) => (Math.abs(to - v) < eps ? to : lerp(v, to, k));
+    MS.lon = ease(MS.lon, MS.tLon, 0.14, 1e-4);
+    MS.lat = ease(MS.lat, MS.tLat, 0.14, 1e-4);
+    MS.zoom = ease(MS.zoom, MS.tZoom, 0.14, 1e-5);
+    MS.year = ease(MS.year, MS.tYear, 0.25, 1e-3);
   };
 })();

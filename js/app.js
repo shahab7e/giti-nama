@@ -45,8 +45,10 @@
     $('mapYearVal').textContent = TL.yearLabel(y);
     const ir = M.primaryPolity('iran', y);
     const rul = ir ? M.activeRulers(ir.id, y)[0] : null;
-    const sy = M.snapYearFor ? M.snapYearFor(y) : MS.snapYear;
-    const ep = sy != null ? (sy === 2010 && y >= 2005 ? ' · مرزهای دقیق کنونی' : ` · مرز تاریخی ${TL.yearLabel(sy)}`) : '';
+    // Borders are live: between two border snapshots the map is blending from one to the other
+    const era = M.eraAt(y);
+    const ep = era.a === 2010 ? ' · مرزهای دقیق کنونی'
+      : (era.a !== era.b && era.t > 0 ? ` · مرزها از ${TL.yearLabel(era.a)} تا ${TL.yearLabel(era.b)}` : ` · مرز تاریخی ${TL.yearLabel(era.a)}`);
     $('mapYearSub').textContent = (ir ? (ir.n + (rul ? ' · ' + rul.n : '')) : 'پیش از تاریخ') + ep;
     if (dial) updateDial();
   }
@@ -364,9 +366,10 @@
         (p.cap ? `<p>مرکز: ${esc(p.cap)}</p>` : '') +
         (p.d ? `<p>${esc(p.d)}</p>` : '');
     } else if (ent) {
-      const precTxt = MS.snapYear === 2010 && y >= 2005 ? 'مرز دقیق کنونی (Natural Earth 50m)' : (MS.snapYear >= 1914 ? 'مرز دقیق نقشه‌برداری‌شده' : (ent.prec === 1 ? 'مرز تقریبی تاریخی' : 'مرز تاریخی مستند'));
+      const sy = h.sy != null ? h.sy : MS.snapYear; // the era of the shape under the pointer
+      const precTxt = sy === 2010 ? 'مرز دقیق کنونی (Natural Earth 50m)' : (sy >= 1914 ? 'مرز دقیق نقشه‌برداری‌شده' : (ent.prec === 1 ? 'مرز تقریبی تاریخی' : 'مرز تاریخی مستند'));
       tip.innerHTML = `<h4>${esc(h.effFa || ent.fa)}</h4>${ent.en && ent.en !== h.effFa ? `<div class="en">${esc(ent.en)}</div>` : ''}` +
-        `<div class="yr">${MS.snapYear === 2010 && y >= 2005 ? precTxt : `نقشهٔ دورهٔ ${TL.yearLabel(MS.snapYear)} · ${precTxt}`}</div>`;
+        `<div class="yr">${sy === 2010 ? precTxt : `نقشهٔ دورهٔ ${TL.yearLabel(sy)} · ${precTxt}`}</div>`;
     }
     tip.hidden = false; placeTip(cx, cy);
   }
