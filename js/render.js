@@ -365,18 +365,8 @@
       const col = (TL.KIND[e.k] || TL.KIND.pol).c, focused = S.focus && S.focus.item === e, hovered = S.hoverItem === e;
       let x2 = x;
       if (e.y2 && e.y2 > e.y) { x2 = R.x(e.y2); ctx.fillStyle = col; ctx.globalAlpha = 0.28; rr(Math.min(x, x2), yMid - 2, Math.abs(x2 - x), 4, 2); ctx.fill(); ctx.globalAlpha = 1; }
-      ctx.save();
-      ctx.fillStyle = col;
-      if (e.k === 'war') {
-        ctx.translate(x, yMid); ctx.rotate(Math.PI / 4);
-        const s = r + (focused || hovered ? 1.4 : 0);
-        ctx.fillRect(-s, -s, s * 2, s * 2);
-        ctx.lineWidth = focused || hovered ? 1.8 : 1; ctx.strokeStyle = focused || hovered ? '#fff' : (S.dark ? '#090c14' : '#faf5eb'); ctx.strokeRect(-s, -s, s * 2, s * 2);
-      } else {
-        ctx.beginPath(); ctx.arc(x, yMid, r + (focused || hovered ? 1.4 : 0), 0, 7); ctx.fill();
-        ctx.lineWidth = focused || hovered ? 1.8 : 1.1; ctx.strokeStyle = focused || hovered ? '#fff' : (S.dark ? '#090c14' : '#faf5eb'); ctx.stroke();
-      }
-      ctx.restore();
+      const halo = focused || hovered ? '#fff' : (S.dark ? '#090c14' : '#f7f1e3');
+      TL.drawGlyph(ctx, e.k || 'pol', x, yMid, r + (focused || hovered ? 1.4 : 0), col, halo, S.dark);
       if (yMid > clipTop && yMid < clipBot) hit(Math.min(x, x2) - r - 3, yMid - r - 4, Math.max(x, x2) + r + 3, yMid + r + 4, e, 'event');
       if (e.w < (iran ? 2 : 3) && !(S.k > 12 && e.w >= 2)) return;
       const font = F(e.w >= 3 ? 700 : 500, iran ? 10 : 9.5), w = tw(e.n, font);

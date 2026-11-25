@@ -116,5 +116,111 @@
   TL.PKIND = { poet: 'شاعر و ادیب', sci: 'دانشمند', phil: 'فیلسوف و اندیشمند', rel: 'پیشوای دینی', art: 'هنرمند و معمار', pol: 'سیاستمدار', mil: 'فرمانده', exp: 'جهانگرد و کاشف' };
   TL.PKINDK = { poet: 'cul', sci: 'sci', phil: 'rel', rel: 'rel', art: 'cul', pol: 'pol', mil: 'war', exp: 'eco' };
 
+  // Shared crisp cartographic vector markers (distinct shapes for wars, figures, capitals & every event kind!)
+  // kind: 'capital' | 'person' | 'war' | 'pol' | 'cul' | 'sci' | 'rel' | 'dis' | 'eco'
+  TL.drawGlyph = function (ctx, kind, x, y, r, fill, halo, dark) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    const bg = halo || (dark ? '#0b0f17' : '#f7f1e2');
+
+    if (kind === 'war') {
+      // Classic antique atlas crossed blades inside a crisp crimson medallion
+      const br = r + 2.0;
+      ctx.beginPath(); ctx.arc(0, 0, br, 0, Math.PI * 2);
+      ctx.fillStyle = dark ? 'rgba(26,12,12,.86)' : 'rgba(252,246,236,.92)';
+      ctx.fill();
+      ctx.lineWidth = 1.25; ctx.strokeStyle = fill; ctx.stroke();
+      const b = r * 0.88, g = r * 0.42;
+      ctx.strokeStyle = fill; ctx.lineWidth = Math.max(1.35, r * 0.30);
+      ctx.beginPath();
+      ctx.moveTo(-b, -b); ctx.lineTo(b, b);
+      ctx.moveTo(b, -b); ctx.lineTo(-b, b);
+      ctx.stroke();
+      // Tiny sword crossguards near lower-left / lower-right hilts
+      ctx.lineWidth = Math.max(1.0, r * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(-g - 1.4, g - 1.4); ctx.lineTo(-g + 1.4, g + 1.4);
+      ctx.moveTo(g + 1.4, g - 1.4); ctx.lineTo(g - 1.4, g + 1.4);
+      ctx.stroke();
+    } else if (kind === 'person') {
+      // Crisp 5-point star for historical figures
+      const outer = r * 1.28, inner = r * 0.54;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        const rad = i % 2 === 0 ? outer : inner;
+        if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+        else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      ctx.closePath();
+      ctx.lineWidth = 2.2; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (kind === 'capital') {
+      // Classic atlas concentric bullseye ring for capital cities
+      ctx.beginPath(); ctx.arc(0, 0, r * 1.15, 0, Math.PI * 2);
+      ctx.fillStyle = bg; ctx.fill();
+      ctx.lineWidth = 1.3; ctx.strokeStyle = fill; ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, Math.max(1.4, r * 0.48), 0, Math.PI * 2);
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (kind === 'pol') {
+      // Upright diamond (political milestone / treaty)
+      const d = r * 1.15;
+      ctx.beginPath(); ctx.moveTo(0, -d); ctx.lineTo(d * 0.85, 0); ctx.lineTo(0, d); ctx.lineTo(-d * 0.85, 0); ctx.closePath();
+      ctx.lineWidth = 2.0; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (kind === 'cul') {
+      // 4-point quatrefoil star (culture, poetry, architecture)
+      const o = r * 1.24, inn = r * 0.42;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 4;
+        const rad = i % 2 === 0 ? o : inn;
+        if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+        else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      ctx.closePath();
+      ctx.lineWidth = 2.0; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (kind === 'sci') {
+      // Crisp hexagon (science & technology)
+      const h = r * 1.12;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 3;
+        if (i === 0) ctx.moveTo(Math.cos(a) * h, Math.sin(a) * h);
+        else ctx.lineTo(Math.cos(a) * h, Math.sin(a) * h);
+      }
+      ctx.closePath();
+      ctx.lineWidth = 2.0; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (kind === 'dis') {
+      // Crisp warning triangle (earthquake, plague, disaster)
+      const t = r * 1.22;
+      ctx.beginPath(); ctx.moveTo(0, -t); ctx.lineTo(t * 0.96, t * 0.78); ctx.lineTo(-t * 0.96, t * 0.78); ctx.closePath();
+      ctx.lineWidth = 2.0; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    } else if (kind === 'rel') {
+      // Sacred 4-arm rounded cross / rosette (religion & philosophy)
+      const arm = r * 1.05, th = Math.max(1.5, r * 0.42);
+      ctx.beginPath();
+      ctx.moveTo(-th, -arm); ctx.lineTo(th, -arm); ctx.lineTo(th, -th);
+      ctx.lineTo(arm, -th); ctx.lineTo(arm, th); ctx.lineTo(th, th);
+      ctx.lineTo(th, arm); ctx.lineTo(-th, arm); ctx.lineTo(-th, th);
+      ctx.lineTo(-arm, th); ctx.lineTo(-arm, -th); ctx.lineTo(-th, -th);
+      ctx.closePath();
+      ctx.lineWidth = 1.9; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    } else {
+      // Rounded square (economy, trade, exploration)
+      const s = r * 0.92;
+      ctx.beginPath(); ctx.rect(-s, -s, s * 2, s * 2);
+      ctx.lineWidth = 2.0; ctx.strokeStyle = bg; ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+    }
+    ctx.restore();
+  };
+
   window.TL = TL;
 })();

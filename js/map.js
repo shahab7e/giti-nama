@@ -1062,15 +1062,15 @@
       const isIr = reg.id === 'iran';
       if (!isIr && MS.zoom < 0.85 && p.lv > 1) return;
       ctx.save();
-      ctx.fillStyle = isIr ? T.gold : T.ink;
-      ctx.beginPath(); ctx.arc(cx, cy, isIr ? 3.0 : 2.0, 0, Math.PI * 2); ctx.fill();
+      TL.drawGlyph(ctx, 'capital', cx, cy, isIr ? 3.8 : 2.9, isIr ? T.gold : T.ink, null, MS.dark);
       if (MS.zoom >= 1.1 || isIr) {
         ctx.font = `${isIr ? 700 : 500} 9.5px ${UI}`;
         const tw = ctx.measureText(cap.name).width;
-        if (tryPlace(cx, cy + 11, tw, 12, false)) {
+        if (tryPlace(cx, cy + 12, tw, 12, false)) {
           ctx.fillStyle = isIr ? T.gold : T.sub; ctx.textAlign = 'center';
           if (MS.dark) { ctx.shadowColor = '#000'; ctx.shadowBlur = 5; }
-          ctx.fillText(cap.name, cx, cy + 11);
+          else { ctx.shadowColor = 'rgba(250,246,235,.92)'; ctx.shadowBlur = 4; }
+          ctx.fillText(cap.name, cx, cy + 12);
         }
       }
       ctx.restore();
@@ -1107,25 +1107,20 @@
           ctx.beginPath(); ctx.arc(ex, ey, wr, 0, Math.PI * 2); ctx.stroke();
           ctx.globalAlpha = alpha;
         }
-        ctx.fillStyle = col;
-        if (MS.dark) { ctx.shadowColor = col; ctx.shadowBlur = isHov || isFoc ? 14 : 6; }
-        if (e.k === 'war') {
-          ctx.save(); ctx.translate(ex, ey); ctx.rotate(Math.PI / 4);
-          const sz = isHov || isFoc ? 4.8 : 3.4; ctx.fillRect(-sz, -sz, sz * 2, sz * 2); ctx.restore();
-        } else {
-          ctx.beginPath(); ctx.arc(ex, ey, isHov || isFoc ? 5.2 : 3.6, 0, Math.PI * 2); ctx.fill();
-        }
+        if (MS.dark && (isHov || isFoc)) { ctx.shadowColor = col; ctx.shadowBlur = 12; }
+        const evR = isHov || isFoc ? 5.6 : (e.w >= 3 ? 4.6 : 3.9);
+        TL.drawGlyph(ctx, e.k || 'pol', ex, ey, evR, col, null, MS.dark);
         ctx.shadowBlur = 0;
         if (e.w >= 3 || isHov || isFoc || (e.r === 'iran' && MS.zoom >= 1.35)) {
           ctx.font = `${isFoc ? 800 : 600} 9.5px ${UI}`;
           const tw = ctx.measureText(e.n).width;
           let ly = null;
-          if (tryPlace(ex, ey - 11, tw, 13, false)) ly = ey - 11;
-          else if ((isHov || isFoc) && tryPlace(ex, ey + 13, tw, 13, true)) ly = ey + 13;
+          if (tryPlace(ex, ey - 13, tw, 13, false)) ly = ey - 13;
+          else if ((isHov || isFoc) && tryPlace(ex, ey + 15, tw, 13, true)) ly = ey + 15;
           if (ly != null) {
-            ctx.fillStyle = MS.dark ? '#fff' : '#141416'; ctx.textAlign = 'center';
+            ctx.fillStyle = MS.dark ? '#fff' : '#221a12'; ctx.textAlign = 'center';
             if (MS.dark) { ctx.shadowColor = '#000'; ctx.shadowBlur = 5; }
-            else { ctx.shadowColor = 'rgba(255,255,255,.92)'; ctx.shadowBlur = 4; }
+            else { ctx.shadowColor = 'rgba(250,246,235,.94)'; ctx.shadowBlur = 4; }
             ctx.fillText(e.n, ex, ly);
           }
         }
@@ -1156,21 +1151,21 @@
         const col = (TL.KIND[TL.PKINDK[p.k]] || TL.KIND.cul).c;
 
         ctx.save();
-        ctx.fillStyle = p.r === 'iran' || isFoc ? T.gold : col;
-        if (MS.dark) { ctx.shadowColor = p.r === 'iran' || isFoc ? T.gold : col; ctx.shadowBlur = isHov || isFoc ? 14 : 6; }
-        ctx.beginPath(); ctx.arc(px, py, isHov || isFoc ? 5.0 : 3.2, 0, Math.PI * 2); ctx.fill();
+        const pCol = p.r === 'iran' || isFoc ? T.gold : col;
+        if (MS.dark && (isHov || isFoc)) { ctx.shadowColor = pCol; ctx.shadowBlur = 12; }
+        TL.drawGlyph(ctx, 'person', px, py, isHov || isFoc ? 6.0 : 4.5, pCol, null, MS.dark);
         ctx.shadowBlur = 0;
         if (isFoc || isHov || (p.r === 'iran' && MS.zoom >= 1.2) || MS.zoom >= 1.45) {
-          const lbl = '★ ' + p.n;
+          const lbl = p.n;
           ctx.font = `${isFoc ? 800 : 600} 9.5px ${UI}`;
           const tw = ctx.measureText(lbl).width;
           let ly = null;
-          if (tryPlace(px, py - 11, tw, 13, false)) ly = py - 11;
-          else if ((isHov || isFoc) && tryPlace(px, py + 13, tw, 13, true)) ly = py + 13;
+          if (tryPlace(px, py - 12, tw, 13, false)) ly = py - 12;
+          else if ((isHov || isFoc) && tryPlace(px, py + 14, tw, 13, true)) ly = py + 14;
           if (ly != null) {
-            ctx.fillStyle = p.r === 'iran' || isFoc ? T.gold : T.ink; ctx.textAlign = 'center';
+            ctx.fillStyle = MS.dark ? (p.r === 'iran' || isFoc ? T.gold : T.ink) : '#1e160e'; ctx.textAlign = 'center';
             if (MS.dark) { ctx.shadowColor = '#000'; ctx.shadowBlur = 5; }
-            else { ctx.shadowColor = 'rgba(255,255,255,.92)'; ctx.shadowBlur = 4; }
+            else { ctx.shadowColor = 'rgba(250,246,235,.94)'; ctx.shadowBlur = 4; }
             ctx.fillText(lbl, px, ly);
           }
         }
