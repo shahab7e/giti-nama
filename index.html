@@ -15,14 +15,11 @@
   <header class="top">
     <div class="brand">
       <div class="brand-orb" aria-hidden="true"></div>
-      <div>
-        <h1 class="brand-title">جام <b>جهان‌نما</b></h1>
-        <p class="brand-sub">اطلس زندهٔ تاریخ ایران و جهان، از نوسنگی تا امروز</p>
-      </div>
+      <h1 class="brand-title">جام <b>جهان‌نما</b></h1>
     </div>
 
     <div class="search-wrap">
-      <input id="q" class="search" type="search" placeholder="جست‌وجو یا سال: ساسانیان، حافظ، ۵۵۰ پ.م، ۱۳۵۷ ش…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
+      <input id="q" class="search" type="search" placeholder="جست‌وجو: نام، زادگاه، نبرد یا سال (۵۵۰ پ.م، ۱۳۵۷ ش)…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
       <kbd class="skbd" aria-hidden="true">/</kbd>
       <ul id="qres" class="qres" hidden></ul>
     </div>
@@ -33,18 +30,15 @@
         <button class="vbtn" data-view="map" title="نقشهٔ تمام‌صفحه">نقشه</button>
         <button class="vbtn" data-view="timeline" title="نمودار زمانی کامل">نمودار</button>
       </div>
-      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="انتخاب سرزمین‌ها">سرزمین‌ها</button>
-      <button id="btnLayers" class="tbtn" aria-haspopup="true" aria-expanded="false" title="لایه‌های نقشه و نمودار">لایه‌ها</button>
-      <button id="btnScale" class="tbtn" title="تغییر مقیاس زمان">مقیاس: فشرده</button>
-      <button id="btnDir" class="tbtn" title="جهت گذر زمان">چپ←راست</button>
-      <button id="btnTheme" class="tbtn" title="پوستهٔ تیره / روشن">☀ روشن</button>
+      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
       <button id="btnPanel" class="tbtn tbtn-on" aria-controls="panel" aria-expanded="true">برش زمان</button>
-      <button id="btnAbout" class="tbtn" title="روش و منابع">؟</button>
+      <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن">☀</button>
+      <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" title="لایه‌ها و تنظیمات نمایش">⚙</button>
     </nav>
 
     <div id="regions" class="layers regions" hidden>
       <div class="rg-head">
-        <b>سرزمین‌هایی که روی نقشه و زیر ایران دیده شوند</b>
+        <b>فیلتر سرزمین‌ها</b>
         <span>
           <button type="button" class="lnk" id="rgAll">همه</button> ·
           <button type="button" class="lnk" id="rgNear">همسایگان ایران</button> ·
@@ -55,21 +49,41 @@
       <div id="rgList" class="rg-list"></div>
     </div>
 
-    <div id="layers" class="layers" hidden>
+    <div id="layers" class="layers settings-pop" hidden>
       <div class="ly-grp">لایه‌های نمودار</div>
       <label><input type="checkbox" id="lyRulers" checked> فرمانروایان</label>
-      <label><input type="checkbox" id="lyEvents" checked> رویدادها</label>
+      <label><input type="checkbox" id="lyEvents" checked> رویدادها و نبردها</label>
       <label><input type="checkbox" id="lyPeople" checked> چهره‌های ماندگار</label>
-      <label><input type="checkbox" id="lyLinks"> پیوند جانشینی دودمان‌های ایران</label>
-      <div class="ly-grp">لایه‌های نقشهٔ جهان</div>
+      <label><input type="checkbox" id="lyLinks"> پیوند جانشینی ایران</label>
+
+      <div class="ly-grp">لایه‌های نقشه</div>
       <label><input type="checkbox" id="lyRoutes" checked> راه شاهی و جادهٔ ابریشم</label>
       <label><input type="checkbox" id="lyCampaigns" checked> مسیر لشکرکشی‌های بزرگ</label>
       <label><input type="checkbox" id="lyDomArcs" checked> کمان‌های سیطرهٔ امپراتوری‌ها</label>
       <label><input type="checkbox" id="lyRivers" checked> رودهای تمدن‌ساز</label>
+
+      <div class="ly-grp">تنظیمات زمان</div>
+      <div class="set-row">
+        <span>مقیاس زمان</span>
+        <button id="btnScale" class="sbtn" type="button">فشرده</button>
+      </div>
+      <div class="set-row">
+        <span>جهت گذر زمان</span>
+        <button id="btnDir" class="sbtn" type="button">چپ←راست</button>
+      </div>
+      <div class="set-foot">
+        <button id="btnAbout" class="lnk" type="button">دربارهٔ جام جهان‌نما و منابع گاه‌شماری</button>
+      </div>
     </div>
   </header>
 
-  <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
+  <div class="eras-bar">
+    <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
+    <div class="era-more-wrap">
+      <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false">سایر دوره‌ها ▾</button>
+      <div id="moreEras" class="more-eras-pop" hidden></div>
+    </div>
+  </div>
 
   <div class="main" id="main">
     <div class="workspace" id="workspace">
@@ -103,7 +117,7 @@
 
       <section class="stage" id="stage">
         <canvas id="tl" aria-label="نمودار زمانی تعاملی تاریخ ایران و جهان" role="img"></canvas>
-        <div class="hint" id="hint">روی نقشه بکشید و زوم کنید · روی نمودار کلیک کنید تا نقشه و برش زمان به آن سال بروند</div>
+        <div class="hint" id="hint">روی نقشه بکشید و زوم کنید · روی نمودار کلیک کنید تا مرزها و برش زمان به آن سال بروند</div>
       </section>
 
       <div id="tip" class="tip" hidden></div>
@@ -148,6 +162,7 @@
 <script src="data/world-rulers.js"></script>
 <script src="data/world-events.js"></script>
 <script src="data/people.js"></script>
+<script src="data/geo-places.js"></script>
 <script src="data/dominion.js"></script>
 <script src="js/render.js"></script>
 <script src="js/map.js"></script>

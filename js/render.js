@@ -70,38 +70,53 @@
     mcache.clear(); R.colorize();
   };
   const hsl = (h, s, l, a) => (a == null ? `hsl(${h} ${s}% ${l}%)` : `hsl(${h} ${s}% ${l}% / ${a})`);
-  // ---------- Swiss Editorial minimal color palette (restrained architectural ink tones, no rainbow!) ----------
+  // ---------- Swiss Editorial minimal palette: restrained matte saturation WITH distinct hues per dynasty! ----------
   R.colorize = function () {
     const byReg = {};
     TL.polities.forEach(p => { (byReg[p.r] = byReg[p.r] || []).push(p); });
-    const H_SHIFT = [0, 6, -5, 10, -8, 3, -3, 8];
-    const L_CADENCE = [0, -5, 4, -3, 2, -6];
+    // 8 curated restrained Swiss/Bauhaus mineral hues for Iranian dynasties so consecutive dynasties are unmistakably distinct!
+    const IRAN_HUES = [216, 178, 348, 34, 244, 152, 282, 16];
+    // Crisp hue steps inside each world continent so consecutive dynasties never blend together!
+    const WORLD_SHIFT = [0, 32, -28, 54, -46, 18, -18, 40];
+    const L_STEP = [0, -4, 3, -2, 4, -5];
+
     const pass = () => Object.keys(byReg).forEach(rid => {
       const reg = TL.regionById[rid];
-      const grp = GRP[reg.grp] || { h: 210, s: 24 };
-      // Each region gets a subtle fixed offset from its continent's Swiss pigment family
-      const regShift = ((reg.order % 5) - 2) * 5;
+      const grp = GRP[reg.grp] || { h: 210, s: 28 };
+      const regShift = ((reg.order % 5) - 2) * 10;
+      let irIdx = 0;
       byReg[rid].sort((a, b) => a.s - b.s).forEach((p, i) => {
         p.ir = TL.isIranian(p);
         const foreignInIran = rid === 'iran' && !p.ir;
         const lord = p.of ? TL.overlord(p) : null;
-        // Restrained Swiss hue: Iran stays pure Prussian/Swiss Cobalt; dominions inherit overlord's Swiss hue; regions stay in continent family
-        let hue = p.ir ? (218 + (i % 3 - 1) * 5) : ((lord ? lord.hue : (grp.h + regShift + H_SHIFT[i % H_SHIFT.length])) + 360) % 360;
-        let s = p.ir ? (S.dark ? 54 : 52) : (lord ? (lord.ir ? 48 : 32) : grp.s);
-        let l = (S.dark ? (p.ir ? 44 : 40) : (p.ir ? 41 : 46)) + L_CADENCE[i % L_CADENCE.length];
-        if (foreignInIran) { hue = 220; s = 10; l = S.dark ? 36 : 56; }
-        if (p.k === 'culture') { s = Math.max(12, s - 10); l += S.dark ? 2 : 8; }
-        if (p.lv === 3) { s = Math.max(14, s - 8); l += S.dark ? 1 : 6; }
+        let hue, s, l;
+        if (foreignInIran) {
+          hue = 220; s = 10; l = S.dark ? 36 : 55;
+        } else if (p.ir) {
+          // If this is an Iranian dominion abroad, inherit its exact Iranian overlord's hue!
+          hue = lord && lord.ir ? lord.hue : IRAN_HUES[(irIdx++) % IRAN_HUES.length];
+          s = S.dark ? 44 : 46; // Restrained Swiss matte saturation, never neon!
+          l = (S.dark ? 44 : 42) + L_STEP[i % L_STEP.length];
+        } else if (lord && lord.hue != null) {
+          hue = lord.hue;
+          s = S.dark ? 36 : 38;
+          l = (S.dark ? 41 : 45) + L_STEP[i % L_STEP.length];
+        } else {
+          hue = (grp.h + regShift + WORLD_SHIFT[i % WORLD_SHIFT.length] + 360) % 360;
+          s = Math.min(40, grp.s + 6);
+          l = (S.dark ? 40 : 46) + L_STEP[i % L_STEP.length];
+        }
+        if (p.k === 'culture') { s = Math.max(14, s - 12); l += S.dark ? 3 : 8; }
+        if (p.lv === 3) { s = Math.max(16, s - 8); l += S.dark ? 1 : 6; }
         p.hue = hue;
         p.base = hsl(hue, s, l);
-        // Flat Swiss architectural fill (minimal tonal modulation, zero rainbow gradient)
-        p.g = [hsl(hue, s, l + 2), p.base, hsl(hue, s, l - 3)];
+        p.g = [p.base, p.base, p.base];
         p.light = l >= 62;
-        p.txt = p.light ? '#18181b' : '#f7f7f5';
+        p.txt = p.light ? '#141416' : '#f7f7f5';
       });
     });
     pass();
-    // Second pass so dominions inherit exact Swiss overlord color cleanly
+    // Second pass so dominions abroad inherit their overlord's exact Swiss hue!
     pass();
   };
 

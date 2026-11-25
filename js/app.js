@@ -204,9 +204,15 @@
       targetY = (type === 'polity' && item.p != null) ? item.p : (s + endCap) / 2;
     }
     setActiveYear(targetY, false, true);
-    // Fly map cleanly to the item's region!
-    const rid = type === 'ruler' ? (TL.polityById[item.pid] || {}).r : item.r;
-    if (rid) M.flyToRegion(rid, rid === 'iran' ? 1.65 : 1.35);
+    // Fly map cleanly to the item's EXACT birthplace/battlefield (or region anchor)!
+    if (type === 'person' && TL.personGeo) {
+      const g = TL.personGeo(item); if (g) M.flyTo(g[0], g[1], 1.9);
+    } else if (type === 'event' && TL.eventGeo) {
+      const g = TL.eventGeo(item); if (g) M.flyTo(g[0], g[1], 1.9);
+    } else {
+      const rid = type === 'ruler' ? (TL.polityById[item.pid] || {}).r : item.r;
+      if (rid) M.flyToRegion(rid, rid === 'iran' ? 1.65 : 1.35);
+    }
     if (zoom) { const pad = Math.max(12, (endCap - s) * 0.6); animateTo(s - pad, endCap + pad); }
     updatePanel(); redrawTL(); openPanel(true); syncHash();
   }
@@ -267,7 +273,7 @@
     else if (k === 'ArrowUp' || k === 'ArrowDown') { S.scrollY += k === 'ArrowDown' ? 80 : -80; R.clampView(); redrawTL(); }
     else if (k === '+' || k === '=') zoomAt(S.PW / 2, 1.35);
     else if (k === '-') zoomAt(S.PW / 2, 1 / 1.35);
-    else if (k === 'Escape') { S.focus = null; updatePanel(); redrawTL(); $('about').hidden = true; $('layers').hidden = true; $('regions').hidden = true; }
+    else if (k === 'Escape') { S.focus = null; updatePanel(); redrawTL(); $('about').hidden = true; $('layers').hidden = true; $('regions').hidden = true; $('moreEras').hidden = true; }
   });
 
   // ---------- tooltips ----------
@@ -280,10 +286,14 @@
     const it = h.item, t = h.type; let sub = '', extra = '';
     if (t === 'polity') { sub = TL.regionById[it.r].n; if (it.cap) extra += `<p>پایتخت: ${esc(it.cap)}</p>`; }
     if (t === 'ruler') { const p = TL.polityById[it.pid]; sub = p ? p.n : ''; if (it.t) sub = it.t + ' · ' + sub; }
-    if (t === 'event') sub = (TL.KIND[it.k] || TL.KIND.pol).n + ' · ' + (TL.regionById[it.r] ? TL.regionById[it.r].n : '');
+    if (t === 'event') {
+      const g = TL.eventGeo ? TL.eventGeo(it) : null;
+      sub = (TL.KIND[it.k] || TL.KIND.pol).n + ' · ' + (g && g[2] ? g[2] : (TL.regionById[it.r] ? TL.regionById[it.r].n : ''));
+    }
     if (t === 'person') {
+      const g = TL.personGeo ? TL.personGeo(it) : null;
       const age = S.pinYear != null && S.pinYear >= it.s && S.pinYear <= it.e ? ` (${TL.fa(Math.floor(S.pinYear - it.s))} ساله در این سال)` : '';
-      sub = (TL.PKIND[it.k] || '') + ' · ' + (TL.regionById[it.r] ? TL.regionById[it.r].n : '') + age;
+      sub = (TL.PKIND[it.k] || '') + (g && g[2] ? ' · زادگاه: ' + g[2] : '') + age;
     }
     const dur = t !== 'event' ? ` · ${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال` : '';
     return `<h4>${esc(it.n)}</h4>${it.en ? `<div class="en">${esc(it.en)}</div>` : ''}<div class="yr">${itemYears(it, t)}${dur}</div>` +
@@ -362,11 +372,15 @@
       meta += maxA >= 0.4 ? `<span>بیشینهٔ قلمرو: <b>${TL.fa(maxA.toFixed(1))} م.ک²</b></span>` : '';
       meta += `<span>مدت: <b>${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال</b></span>`;
     } else if (type === 'person' || type === 'ruler') {
-      // Show contemporaries!
+      const g = type === 'person' && TL.personGeo ? TL.personGeo(it) : null;
+      if (g && g[2]) meta += `<div class="feat-meta"><span>زادگاه: <b>${esc(g[2])}</b></span></div>`;
       const cont = TL.people.filter(p => p !== it && over(p.s, p.e, it.s, it.e)).slice(0, 6);
       if (cont.length) {
-        meta = `<div class="feat-cont"><b>هم‌روزگاران نامدار:</b>${cont.map(p => esc(p.n)).join(' · ')}</div>`;
+        meta += `<div class="feat-cont"><b>هم‌روزگاران نامدار:</b>${cont.map(p => esc(p.n)).join(' · ')}</div>`;
       }
+    } else if (type === 'event' && TL.eventGeo) {
+      const g = TL.eventGeo(it);
+      if (g && g[2]) meta = `<div class="feat-meta"><span>مکان: <b>${esc(g[2])}</b></span></div>`;
     }
     return `<div class="feat-card" style="--c:${col || 'var(--gold)'}">
       <div class="feat-k"><span>${esc(kindLbl)}</span><button type="button" class="feat-x" id="clearFocus" title="پاک‌کردن انتخاب">×</button></div>
@@ -480,8 +494,9 @@
   TL.people.forEach(p => index.push([p, 'person', TL.PKIND[p.k] || 'چهره']));
   index.forEach(row => {
     const o = row[0];
+    const loc = row[1] === 'person' && TL.personGeo ? (TL.personGeo(o)?.[2] || '') : (row[1] === 'event' && TL.eventGeo ? (TL.eventGeo(o)?.[2] || '') : '');
     row.nameKey = TL.norm(o.n + ' ' + (o.en || ''));
-    row.fullKey = row.nameKey + ' ' + TL.norm((o.cap || '') + ' ' + (o.d || ''));
+    row.fullKey = row.nameKey + ' ' + TL.norm((o.cap || '') + ' ' + loc + ' ' + (o.d || ''));
   });
 
   function parseYearQuery(raw) {
@@ -531,26 +546,38 @@
   qres.addEventListener('pointerdown', (ev) => { const li = ev.target.closest('li[data-i]'); if (li) { ev.preventDefault(); pick(+li.dataset.i); } });
   q.addEventListener('blur', () => setTimeout(() => (qres.hidden = true), 150));
 
-  // ---------- era chips ----------
+  // ---------- era chips (clean 12 primary eras + "سایر دوره‌ها" dropdown so ZERO clipping!) ----------
+  const PRIMARY_ERAS = new Set(['همهٔ تاریخ', 'ایلام', 'ماد و هخامنشی', 'اشکانیان', 'ساسانیان', 'ورود اسلام', 'سامانیان و آل‌بویه', 'سلجوقیان', 'مغول و ایلخانان', 'تیموریان', 'صفویه', 'افشار و زند', 'قاجار', 'امروز']);
   const chipHTML = (c) => `<button class="chip ${c.iran ? 'iran' : ''}" data-i="${TL.chips.indexOf(c)}">${esc(c.n)}</button>`;
-  $('eraChips').innerHTML = TL.chips.filter(c => c.iran).map(chipHTML).join('') + '<span class="chip-sep" aria-hidden="true"></span>' + TL.chips.filter(c => !c.iran).map(chipHTML).join('');
-  $('eraChips').addEventListener('click', (ev) => {
-    const b = ev.target.closest('.chip'); if (!b) return;
+  const mainChips = TL.chips.filter(c => PRIMARY_ERAS.has(c.n));
+  const extraIran = TL.chips.filter(c => c.iran && !PRIMARY_ERAS.has(c.n));
+  const extraWorld = TL.chips.filter(c => !c.iran && !PRIMARY_ERAS.has(c.n));
+  $('eraChips').innerHTML = mainChips.map(chipHTML).join('');
+  $('moreEras').innerHTML =
+    (extraIran.length ? '<div class="m-sec">دوره‌های ایران</div>' + extraIran.map(chipHTML).join('') : '') +
+    (extraWorld.length ? '<div class="m-sec">دوره‌های جهان</div>' + extraWorld.map(chipHTML).join('') : '');
+
+  function handleEraClick(ev) {
+    const b = ev.target.closest('.chip[data-i]'); if (!b) return;
     document.querySelectorAll('.chip.on').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    $('moreEras').hidden = true;
     const c = TL.chips[+b.dataset.i];
     stopPlay(); S.focus = null;
     const mid = Math.min(TL.NOW, (c.s + c.e) / 2);
-    setActiveYear(mid, false);
+    setActiveYear(mid, false, true);
     animateTo(c.s, c.e);
     if (c.iran) M.presetEurasia(); else M.presetWorld();
     updatePanel(); syncHash();
-  });
+  }
+  $('eraChips').addEventListener('click', handleEraClick);
+  $('moreEras').addEventListener('click', handleEraClick);
+  $('btnMoreEras').onclick = () => { const m = $('moreEras'); m.hidden = !m.hidden; $('layers').hidden = true; $('regions').hidden = true; $('btnMoreEras').setAttribute('aria-expanded', String(!m.hidden)); };
 
   // ---------- toolbar ----------
   $('btnScale').onclick = () => {
     const c = R.yearAt(S.PW / 2), [v0, v1] = R.visRange();
     TL.scaleMode = TL.scaleMode === 'warp' ? 'linear' : 'warp';
-    $('btnScale').textContent = 'مقیاس: ' + (TL.scaleMode === 'warp' ? 'فشرده' : 'خطی');
+    $('btnScale').textContent = TL.scaleMode === 'warp' ? 'فشرده' : 'خطی';
     R.fit(v0, v1, 0); if (TL.scaleMode === 'linear') { S.u0 = TL.u(c) - S.PW / S.k / 2; R.clampView(); } redrawTL();
   };
   $('btnDir').onclick = () => {
@@ -563,14 +590,15 @@
   try { const sv = localStorage.getItem('jam-atlas-theme'); if (sv) dark = sv === 'dark'; } catch (e) { }
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    $('btnTheme').textContent = dark ? '☀ روشن' : '☾ تیره';
+    $('btnTheme').textContent = dark ? '☀' : '☾';
+    $('btnTheme').title = dark ? 'تغییر به پوستهٔ روشن' : 'تغییر به پوستهٔ تیره';
     MS.dark = dark;
     try { localStorage.setItem('jam-atlas-theme', dark ? 'dark' : 'light'); } catch (e) { }
     R.readTheme(); redrawTL();
   }
   $('btnTheme').onclick = () => { dark = !dark; applyTheme(); };
 
-  $('btnLayers').onclick = () => { const l = $('layers'); l.hidden = !l.hidden; $('regions').hidden = true; $('btnLayers').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('btnLayers').onclick = () => { const l = $('layers'); l.hidden = !l.hidden; $('regions').hidden = true; $('moreEras').hidden = true; $('btnLayers').setAttribute('aria-expanded', String(!l.hidden)); };
   [['lyRulers', 'rulers'], ['lyEvents', 'events'], ['lyPeople', 'people'], ['lyLinks', 'links']].forEach(([id, k]) => {
     $(id).addEventListener('change', (ev) => { S.layers[k] = ev.target.checked; relayout(true); });
   });
@@ -607,17 +635,18 @@
   $('rgNone').onclick = () => setShow(new Set(), true);
   $('rgNear').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'caucasus', 'levant', 'arabia', 'egypt', 'central_asia', 'south_asia']), true);
   $('rgSilk').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'central_asia', 'steppe', 'south_asia', 'china', 'italy', 'greece']), true);
-  $('btnRegions').onclick = () => { const l = $('regions'); l.hidden = !l.hidden; $('layers').hidden = true; $('btnRegions').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('btnRegions').onclick = () => { const l = $('regions'); l.hidden = !l.hidden; $('layers').hidden = true; $('moreEras').hidden = true; $('btnRegions').setAttribute('aria-expanded', String(!l.hidden)); };
   try { const v = localStorage.getItem('jam-regions'); if (v) S.show = new Set(v === '-' ? [] : v.split(',')); } catch (e) { }
 
   // Close popovers on outside click
   document.addEventListener('pointerdown', (ev) => {
     if (!ev.target.closest('#layers,#btnLayers')) $('layers').hidden = true;
     if (!ev.target.closest('#regions,#btnRegions')) $('regions').hidden = true;
+    if (!ev.target.closest('#moreEras,#btnMoreEras')) $('moreEras').hidden = true;
   });
 
   // ---------- about modal ----------
-  $('btnAbout').onclick = () => { $('about').hidden = false; };
+  $('btnAbout').onclick = () => { $('layers').hidden = true; $('about').hidden = false; };
   $('aboutX').onclick = () => { $('about').hidden = true; };
   $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') $('about').hidden = true; });
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;

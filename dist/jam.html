@@ -34,31 +34,30 @@ button,input{font:inherit;color:inherit}
 
 .app{height:100%;display:grid;grid-template-rows:auto auto 1fr auto;min-height:0}
 
-/* ===== Header ===== */
+/* ===== Minimal Swiss Header (5 calm visual groups, zero clutter) ===== */
 .top{
-  position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;z-index:35;
-  padding:8px max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));
+  position:relative;display:flex;align-items:center;gap:14px;flex-wrap:wrap;z-index:35;
+  padding:7px max(16px,env(safe-area-inset-right,0px)) 7px max(16px,env(safe-area-inset-left,0px));
   background:var(--surface);border-bottom:1px solid var(--line);
 }
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand{display:flex;align-items:center;gap:9px;flex:none}
 .brand-orb{
-  width:24px;height:24px;border-radius:50%;flex:none;
-  background:radial-gradient(circle at 34% 30%, #ffe6a3, #c48e29 55%, #1c3d8f 100%);
-  box-shadow:0 0 14px rgba(232,190,102,.4);
+  width:20px;height:20px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 34% 30%, #ffe6a3, #c48e29 55%, #1d4496 100%);
+  box-shadow:0 0 10px rgba(216,180,108,.35);
 }
-.brand-title{margin:0;font-family:var(--f-disp);font-size:21px;font-weight:700;line-height:1.05;white-space:nowrap}
+.brand-title{margin:0;font-family:var(--f-disp);font-size:20px;font-weight:700;line-height:1;white-space:nowrap}
 .brand-title b{color:var(--gold);font-weight:inherit}
-.brand-sub{margin:0;font-size:10.5px;color:var(--muted);white-space:nowrap}
 
-.search-wrap{position:relative;flex:1 1 200px;min-width:0;max-width:340px;margin-inline-start:auto}
+.search-wrap{position:relative;flex:1 1 220px;min-width:0;max-width:380px;margin-inline-end:auto}
 .search{
-  width:100%;padding:6px 12px 6px 30px;border-radius:10px;border:1px solid var(--line);
-  background:var(--sunk);outline:none;font-size:12.5px;transition:border-color .18s;
+  width:100%;padding:6px 13px 6px 32px;border-radius:999px;border:1px solid var(--line);
+  background:var(--sunk);outline:none;font-size:12.5px;transition:border-color .18s,background .18s;
 }
 .search::placeholder{color:var(--muted)}
 .search:focus{border-color:var(--gold);background:var(--surface)}
 .skbd{
-  position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;
   font-family:monospace;font-size:10px;padding:1px 5px;border-radius:4px;
   border:1px solid var(--line);color:var(--muted);background:var(--surface);
 }
@@ -71,40 +70,56 @@ button,input{font:inherit;color:inherit}
 .qres li[aria-selected="true"],.qres li:hover{background:var(--sunk)}
 .qres .k{color:var(--muted);font-size:11px;white-space:nowrap}
 
-.tools{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
-.view-seg{display:flex;padding:2px;border-radius:9px;background:var(--sunk);border:1px solid var(--line);margin-inline-end:4px}
-.vbtn{border:0;background:transparent;padding:4px 9px;border-radius:7px;font-size:11.5px;font-weight:600;color:var(--ink2);cursor:pointer}
+.tools{display:flex;align-items:center;gap:5px;flex:none}
+.view-seg{display:flex;padding:2px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);margin-inline-end:4px}
+.vbtn{border:0;background:transparent;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
 .vbtn:hover{color:var(--ink)}
-.vbtn.on{background:var(--gold);color:#090c14;font-weight:800}
-:root[data-theme="light"] .vbtn.on{color:#fff}
+.vbtn.on{background:var(--ink);color:var(--surface);font-weight:700}
 
 .tbtn{
-  padding:5px 9px;border-radius:8px;border:1px solid transparent;background:transparent;
-  cursor:pointer;font-size:12px;font-weight:500;color:var(--ink2);white-space:nowrap;transition:all .15s;
+  padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:transparent;
+  cursor:pointer;font-size:11.5px;font-weight:600;color:var(--ink2);white-space:nowrap;transition:all .15s;
 }
-.tbtn:hover{background:var(--sunk);color:var(--ink)}
+.tbtn:hover{background:var(--sunk);color:var(--ink);border-color:var(--line2)}
 .tbtn-on{color:var(--gold);background:var(--tint2);border-color:var(--line2)}
+.tbtn-ico{width:30px;height:30px;padding:0;display:grid;place-items:center;font-size:13.5px}
 
 .layers{
-  position:absolute;top:100%;inset-inline-end:14px;z-index:55;display:grid;gap:8px;padding:14px 16px;
+  position:absolute;top:calc(100% + 6px);inset-inline-end:16px;z-index:55;display:grid;gap:7px;padding:14px 16px;
   background:var(--surface);border:1px solid var(--line2);border-radius:14px;box-shadow:var(--shadow);
 }
-.ly-grp{font-size:10.5px;font-weight:800;color:var(--gold);margin-top:4px;border-bottom:1px solid var(--line);padding-bottom:3px}
+.settings-pop{min-width:250px}
+.ly-grp{font-size:10.5px;font-weight:800;color:var(--gold);margin-top:6px;border-bottom:1px solid var(--line);padding-bottom:3px}
 .ly-grp:first-child{margin-top:0}
 .layers label{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:12.5px}
 .layers input{accent-color:var(--gold)}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--ink2)}
+.sbtn{padding:3px 10px;border-radius:7px;border:1px solid var(--line2);background:var(--sunk);font-size:11.5px;font-weight:600;cursor:pointer}
+.sbtn:hover{border-color:var(--gold);color:var(--ink)}
+.set-foot{margin-top:6px;padding-top:8px;border-top:1px solid var(--line);text-align:center}
 
-/* ===== Era Chips Strip ===== */
-.eras{
-  display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;padding:5px 14px;align-items:center;
-  border-bottom:1px solid var(--line);background:var(--surface);z-index:20;
+/* ===== Clean Non-Overflowing Era Bar ===== */
+.eras-bar{
+  position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:4px 16px;border-bottom:1px solid var(--line);background:var(--surface);z-index:25;
 }
+.eras{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;align-items:center;min-width:0;flex:1}
 .eras::-webkit-scrollbar{display:none}
-.chip{flex:none;padding:3px 10px;border-radius:999px;border:0;background:transparent;cursor:pointer;font-size:11.5px;font-weight:500;color:var(--ink2);transition:all .15s}
+.chip{flex:none;padding:3px 10px;border-radius:999px;border:0;background:transparent;cursor:pointer;font-size:11.5px;font-weight:500;color:var(--ink2);transition:all .15s;white-space:nowrap}
 .chip:hover{background:var(--sunk);color:var(--ink)}
-.chip.iran{color:var(--gold)}
-.chip.on{background:var(--tint2);color:var(--gold);font-weight:700;box-shadow:inset 0 0 0 1px var(--line2)}
-.chip-sep{flex:none;width:1px;height:13px;background:var(--line2);margin-inline:5px}
+.chip.iran{color:var(--ink2)}
+.chip.on{background:var(--ink);color:var(--surface);font-weight:700}
+.era-more-wrap{position:relative;flex:none}
+.more-btn{border:1px solid var(--line);color:var(--ink2);font-weight:600;padding:3px 11px}
+.more-btn:hover{border-color:var(--line2);color:var(--ink)}
+.more-eras-pop{
+  position:absolute;top:calc(100% + 6px);inset-inline-end:0;z-index:55;
+  width:300px;padding:10px;border-radius:13px;background:var(--surface);
+  border:1px solid var(--line2);box-shadow:var(--shadow);
+  display:flex;flex-wrap:wrap;gap:5px;
+}
+.more-eras-pop .m-sec{width:100%;font-size:10.5px;font-weight:800;color:var(--gold);margin:4px 2px 2px}
+.more-eras-pop .chip{border:1px solid var(--line);font-size:11px}
 
 /* ===== Main Split Workspace + Side Panel ===== */
 .main{display:grid;grid-template-columns:minmax(0,1fr) 336px;min-height:0;position:relative}
@@ -297,14 +312,11 @@ button,input{font:inherit;color:inherit}
   <header class="top">
     <div class="brand">
       <div class="brand-orb" aria-hidden="true"></div>
-      <div>
-        <h1 class="brand-title">جام <b>جهان‌نما</b></h1>
-        <p class="brand-sub">اطلس زندهٔ تاریخ ایران و جهان، از نوسنگی تا امروز</p>
-      </div>
+      <h1 class="brand-title">جام <b>جهان‌نما</b></h1>
     </div>
 
     <div class="search-wrap">
-      <input id="q" class="search" type="search" placeholder="جست‌وجو یا سال: ساسانیان، حافظ، ۵۵۰ پ.م، ۱۳۵۷ ش…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
+      <input id="q" class="search" type="search" placeholder="جست‌وجو: نام، زادگاه، نبرد یا سال (۵۵۰ پ.م، ۱۳۵۷ ش)…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
       <kbd class="skbd" aria-hidden="true">/</kbd>
       <ul id="qres" class="qres" hidden></ul>
     </div>
@@ -315,18 +327,15 @@ button,input{font:inherit;color:inherit}
         <button class="vbtn" data-view="map" title="نقشهٔ تمام‌صفحه">نقشه</button>
         <button class="vbtn" data-view="timeline" title="نمودار زمانی کامل">نمودار</button>
       </div>
-      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="انتخاب سرزمین‌ها">سرزمین‌ها</button>
-      <button id="btnLayers" class="tbtn" aria-haspopup="true" aria-expanded="false" title="لایه‌های نقشه و نمودار">لایه‌ها</button>
-      <button id="btnScale" class="tbtn" title="تغییر مقیاس زمان">مقیاس: فشرده</button>
-      <button id="btnDir" class="tbtn" title="جهت گذر زمان">چپ←راست</button>
-      <button id="btnTheme" class="tbtn" title="پوستهٔ تیره / روشن">☀ روشن</button>
+      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
       <button id="btnPanel" class="tbtn tbtn-on" aria-controls="panel" aria-expanded="true">برش زمان</button>
-      <button id="btnAbout" class="tbtn" title="روش و منابع">؟</button>
+      <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن">☀</button>
+      <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" title="لایه‌ها و تنظیمات نمایش">⚙</button>
     </nav>
 
     <div id="regions" class="layers regions" hidden>
       <div class="rg-head">
-        <b>سرزمین‌هایی که روی نقشه و زیر ایران دیده شوند</b>
+        <b>فیلتر سرزمین‌ها</b>
         <span>
           <button type="button" class="lnk" id="rgAll">همه</button> ·
           <button type="button" class="lnk" id="rgNear">همسایگان ایران</button> ·
@@ -337,21 +346,41 @@ button,input{font:inherit;color:inherit}
       <div id="rgList" class="rg-list"></div>
     </div>
 
-    <div id="layers" class="layers" hidden>
+    <div id="layers" class="layers settings-pop" hidden>
       <div class="ly-grp">لایه‌های نمودار</div>
       <label><input type="checkbox" id="lyRulers" checked> فرمانروایان</label>
-      <label><input type="checkbox" id="lyEvents" checked> رویدادها</label>
+      <label><input type="checkbox" id="lyEvents" checked> رویدادها و نبردها</label>
       <label><input type="checkbox" id="lyPeople" checked> چهره‌های ماندگار</label>
-      <label><input type="checkbox" id="lyLinks"> پیوند جانشینی دودمان‌های ایران</label>
-      <div class="ly-grp">لایه‌های نقشهٔ جهان</div>
+      <label><input type="checkbox" id="lyLinks"> پیوند جانشینی ایران</label>
+
+      <div class="ly-grp">لایه‌های نقشه</div>
       <label><input type="checkbox" id="lyRoutes" checked> راه شاهی و جادهٔ ابریشم</label>
       <label><input type="checkbox" id="lyCampaigns" checked> مسیر لشکرکشی‌های بزرگ</label>
       <label><input type="checkbox" id="lyDomArcs" checked> کمان‌های سیطرهٔ امپراتوری‌ها</label>
       <label><input type="checkbox" id="lyRivers" checked> رودهای تمدن‌ساز</label>
+
+      <div class="ly-grp">تنظیمات زمان</div>
+      <div class="set-row">
+        <span>مقیاس زمان</span>
+        <button id="btnScale" class="sbtn" type="button">فشرده</button>
+      </div>
+      <div class="set-row">
+        <span>جهت گذر زمان</span>
+        <button id="btnDir" class="sbtn" type="button">چپ←راست</button>
+      </div>
+      <div class="set-foot">
+        <button id="btnAbout" class="lnk" type="button">دربارهٔ جام جهان‌نما و منابع گاه‌شماری</button>
+      </div>
     </div>
   </header>
 
-  <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
+  <div class="eras-bar">
+    <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
+    <div class="era-more-wrap">
+      <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false">سایر دوره‌ها ▾</button>
+      <div id="moreEras" class="more-eras-pop" hidden></div>
+    </div>
+  </div>
 
   <div class="main" id="main">
     <div class="workspace" id="workspace">
@@ -385,7 +414,7 @@ button,input{font:inherit;color:inherit}
 
       <section class="stage" id="stage">
         <canvas id="tl" aria-label="نمودار زمانی تعاملی تاریخ ایران و جهان" role="img"></canvas>
-        <div class="hint" id="hint">روی نقشه بکشید و زوم کنید · روی نمودار کلیک کنید تا نقشه و برش زمان به آن سال بروند</div>
+        <div class="hint" id="hint">روی نقشه بکشید و زوم کنید · روی نمودار کلیک کنید تا مرزها و برش زمان به آن سال بروند</div>
       </section>
 
       <div id="tip" class="tip" hidden></div>
@@ -2315,97 +2344,1086 @@ TL.addEvents('oceania', [
 ]);
 
 /* data/people.js */
-/* چهره‌ها. [نام، نام لاتین، زاده، درگذشت، گونه، {d, a}]  گونه: poet|sci|phil|rel|art|pol|mil|exp */
+/* چهره‌های ماندگار ایران و جهان در هر ۲۷ سرزمین.
+   [نام، نام لاتین، زاده، درگذشت، گونه، {d, a}]  گونه: poet|sci|phil|rel|art|pol|mil|exp */
 TL.addPeople('iran', [
-  ['مانی', 'Mani', 216, 274, 'rel', { a: 'e', d: 'بنیان‌گذار آیین مانوی.' }],
+  ['زرتشت', 'Zoroaster', -1100, -1023, 'rel', { a: true, d: 'پیامبر ایران باستان و سرایندهٔ گاهان.' }],
+  ['مانی', 'Mani', 216, 274, 'rel', { a: 'e', d: 'بنیان‌گذار آیین مانوی و نقاش چیره‌دست.' }],
+  ['مزدک', 'Mazdak', 460, 528, 'rel', { a: true, d: 'اندیشمند و مصلح اجتماعی روزگار قباد ساسانی.' }],
+  ['بزرگمهر بختگان', 'Bozorgmehr', 498, 590, 'phil', { a: true, d: 'وزیر دانای خسرو انوشیروان.' }],
+  ['باربد جهرمی', 'Barbad', 585, 628, 'art', { a: true, d: 'موسیقی‌دان بزرگ دربار ساسانی و پدیدآورندهٔ سی لحن.' }],
   ['ابن مقفع (روزبه)', 'Ibn al-Muqaffa', 724, 759, 'poet', { a: 's', d: 'کلیله و دمنه را از پهلوی به عربی برگرداند.' }],
-  ['ابومسلم خراسانی', 'Abu Muslim', 718, 755, 'mil', { a: 's' }],
-  ['سیبویه', 'Sibawayh', 760, 796, 'sci', { a: true, d: 'بنیان‌گذار دستور زبان عربی.' }],
+  ['ابومسلم خراسانی', 'Abu Muslim', 718, 755, 'mil', { a: 's', d: 'فرماندهٔ قیام خراسان که خلافت اموی را برانداخت.' }],
+  ['سیبویه', 'Sibawayh', 760, 796, 'sci', { a: true, d: 'بنیان‌گذار دستور زبان عربی، زادهٔ بیضای فارس.' }],
   ['خوارزمی', 'al-Khwarizmi', 780, 850, 'sci', { a: true, d: 'واژهٔ «الگوریتم» از نام او و «جبر» از کتاب او آمده است.' }],
-  ['طبری', 'al-Tabari', 839, 923, 'sci', { d: 'تاریخ‌نگار و مفسر.' }],
-  ['رودکی', 'Rudaki', 858, 941, 'poet', { a: 's', d: 'پدر شعر فارسی.' }],
-  ['محمد زکریای رازی', 'al-Razi', 865, 925, 'sci', { d: 'پزشک و شیمی‌دان؛ جداکنندهٔ آبله از سرخک.' }],
-  ['فارابی', 'al-Farabi', 872, 950, 'phil', { a: true, d: '«معلم ثانی».' }],
-  ['فردوسی', 'Ferdowsi', 940, 1020, 'poet', { a: 'e', d: 'سرایندهٔ شاهنامه.' }],
-  ['ابوسعید ابوالخیر', 'Abu Said Abul-Khair', 967, 1049, 'rel'],
-  ['ابوریحان بیرونی', 'al-Biruni', 973, 1050, 'sci', { d: 'شعاع زمین را اندازه گرفت؛ تحقیق ماللهند.' }],
-  ['ابن‌سینا', 'Avicenna', 980, 1037, 'sci', { d: 'قانون در طب و شفا.' }],
-  ['بیهقی', 'Bayhaqi', 995, 1077, 'sci', { d: 'تاریخ بیهقی.' }],
-  ['ناصرخسرو', 'Nasir Khusraw', 1004, 1088, 'poet', { a: 'e', d: 'سفرنامه و دیوان.' }],
-  ['خواجه نظام‌الملک', 'Nizam al-Mulk', 1018, 1092, 'pol', { d: 'سیاست‌نامه و نظامیه‌ها.' }],
-  ['عمر خیام', 'Omar Khayyam', 1048, 1131, 'sci', { d: 'ریاضی‌دان، ستاره‌شناس و سرایندهٔ رباعیات.' }],
-  ['امام محمد غزالی', 'al-Ghazali', 1058, 1111, 'phil'],
-  ['سنایی', 'Sanai', 1080, 1131, 'poet', { a: true }],
-  ['نظامی گنجوی', 'Nizami Ganjavi', 1141, 1209, 'poet', { d: 'خمسه: لیلی و مجنون، خسرو و شیرین، هفت‌پیکر.' }],
-  ['عطار نیشابوری', 'Attar', 1145, 1221, 'poet', { a: true, d: 'منطق‌الطیر.' }],
-  ['شیخ اشراق سهروردی', 'Suhrawardi', 1154, 1191, 'phil'],
-  ['فخر رازی', 'Fakhr al-Din al-Razi', 1149, 1209, 'phil'],
-  ['خواجه نصیرالدین طوسی', 'Nasir al-Din Tusi', 1201, 1274, 'sci', { d: 'رصدخانهٔ مراغه و جفت طوسی.' }],
-  ['مولوی', 'Rumi', 1207, 1273, 'poet', { d: 'مثنوی معنوی و دیوان شمس.' }],
-  ['سعدی', 'Saadi', 1210, 1291, 'poet', { a: true, d: 'گلستان و بوستان.' }],
-  ['عطاملک جوینی', 'Ata-Malik Juvayni', 1226, 1283, 'sci', { d: 'تاریخ جهانگشا.' }],
-  ['قطب‌الدین شیرازی', 'Qutb al-Din Shirazi', 1236, 1311, 'sci'],
-  ['رشیدالدین فضل‌الله', 'Rashid al-Din', 1247, 1318, 'pol', { d: 'جامع‌التواریخ.' }],
-  ['عبید زاکانی', 'Obeyd Zakani', 1300, 1371, 'poet', { a: true }],
+  ['بابک خرمدین', 'Babak Khorramdin', 795, 838, 'mil', { a: 's', d: 'رهبر جنبش سرخ‌جامگان در قلعهٔ بذ آذربایجان.' }],
+  ['طبری', 'al-Tabari', 839, 923, 'sci', { d: 'تاریخ‌نگار و مفسر بزرگ، زادهٔ آمل.' }],
+  ['رودکی', 'Rudaki', 858, 941, 'poet', { a: 's', d: 'پدر شعر فارسی دری در دربار سامانیان.' }],
+  ['محمد زکریای رازی', 'al-Razi', 865, 925, 'sci', { d: 'پزشک و شیمی‌دان بزرگ ری؛ جداکنندهٔ آبله از سرخک.' }],
+  ['فارابی', 'al-Farabi', 872, 950, 'phil', { a: true, d: '«معلم ثانی»؛ فیلسوف و نظریه‌پرداز موسیقی.' }],
+  ['رابعه بلخی', 'Rabia Balkhi', 914, 940, 'poet', { a: true, d: 'از نخستین زنان شاعر زبان فارسی دری.' }],
+  ['فردوسی', 'Ferdowsi', 940, 1020, 'poet', { a: 'e', d: 'سرایندهٔ شاهنامه در طوس و احیاگر زبان فارسی.' }],
+  ['ابوسعید ابوالخیر', 'Abu Said Abul-Khair', 967, 1049, 'rel', { d: 'عارف بزرگ خراسان در میهنه.' }],
+  ['ابوریحان بیرونی', 'al-Biruni', 973, 1050, 'sci', { d: 'شعاع زمین را اندازه گرفت؛ نویسندهٔ تحقیق ماللهند.' }],
+  ['ابن‌سینا', 'Avicenna', 980, 1037, 'sci', { d: 'نویسندهٔ قانون در طب و شفا؛ زادهٔ افشنهٔ بخارا.' }],
+  ['بیهقی', 'Bayhaqi', 995, 1077, 'sci', { d: 'نویسندهٔ تاریخ بیهقی، شاهکار نثر فارسی.' }],
+  ['ناصرخسرو', 'Nasir Khusraw', 1004, 1088, 'poet', { a: 'e', d: 'شاعر، فیلسوف و نویسندهٔ سفرنامه.' }],
+  ['خواجه نظام‌الملک', 'Nizam al-Mulk', 1018, 1092, 'pol', { d: 'وزیر کاردان سلجوقیان، نویسندهٔ سیاست‌نامه و بنیان‌گذار نظامیه‌ها.' }],
+  ['عمر خیام', 'Omar Khayyam', 1048, 1131, 'sci', { d: 'ریاضی‌دان، ستاره‌شناس، طراح تقویم جلالی و سرایندهٔ رباعیات.' }],
+  ['امام محمد غزالی', 'al-Ghazali', 1058, 1111, 'phil', { d: 'فیلسوف و متکلم نامدار طوس؛ نویسندهٔ کیمیای سعادت.' }],
+  ['سنایی', 'Sanai', 1080, 1131, 'poet', { a: true, d: 'پایه‌گذار شعر عرفانی فارسی در غزنین.' }],
+  ['نظامی گنجوی', 'Nizami Ganjavi', 1141, 1209, 'poet', { d: 'سرایندهٔ خمسه: لیلی و مجنون، خسرو و شیرین، هفت‌پیکر.' }],
+  ['عطار نیشابوری', 'Attar', 1145, 1221, 'poet', { a: true, d: 'سرایندهٔ منطق‌الطیر و تذکرةالاولیا.' }],
+  ['شیخ اشراق سهروردی', 'Suhrawardi', 1154, 1191, 'phil', { d: 'بنیان‌گذار فلسفهٔ اشراق.' }],
+  ['فخر رازی', 'Fakhr al-Din al-Razi', 1149, 1209, 'phil', { d: 'فیلسوف و مفسر برجستهٔ ری و هرات.' }],
+  ['خواجه نصیرالدین طوسی', 'Nasir al-Din Tusi', 1201, 1274, 'sci', { d: 'بنیان‌گذار رصدخانهٔ مراغه و کاشف جفت طوسی.' }],
+  ['مولوی', 'Rumi', 1207, 1273, 'poet', { d: 'سرایندهٔ مثنوی معنوی و دیوان شمس؛ زادهٔ بلخ.' }],
+  ['سعدی', 'Saadi', 1210, 1291, 'poet', { a: true, d: 'سرایندهٔ گلستان و بوستان در شیراز.' }],
+  ['عطاملک جوینی', 'Ata-Malik Juvayni', 1226, 1283, 'sci', { d: 'نویسندهٔ تاریخ جهانگشا.' }],
+  ['قطب‌الدین شیرازی', 'Qutb al-Din Shirazi', 1236, 1311, 'sci', { d: 'اخترشناس، پزشک و شارح رنگین‌کمان.' }],
+  ['رشیدالدین فضل‌الله', 'Rashid al-Din', 1247, 1318, 'pol', { d: 'وزیر ایلخانان و مؤلف جامع‌التواریخ، نخستین تاریخ جامع جهان.' }],
+  ['عبید زاکانی', 'Obeyd Zakani', 1300, 1371, 'poet', { a: true, d: 'بزرگ‌ترین طنزپرداز ادب فارسی.' }],
   ['حافظ', 'Hafez', 1315, 1390, 'poet', { a: true, d: 'دیوان حافظ؛ گوته دیوان غربی-شرقی را با الهام از او سرود.' }],
   ['جمشید کاشانی', 'Jamshid al-Kashi', 1380, 1429, 'sci', { a: true, d: 'عدد پی را تا ۱۶ رقم درست حساب کرد.' }],
-  ['جامی', 'Jami', 1414, 1492, 'poet'],
-  ['کمال‌الدین بهزاد', 'Kamal ud-Din Behzad', 1450, 1535, 'art', { a: true, d: 'بزرگ‌ترین نگارگر مکتب هرات.' }],
-  ['شیخ بهایی', 'Sheikh Baha al-Din', 1547, 1621, 'sci'],
-  ['میرداماد', 'Mir Damad', 1561, 1631, 'phil', { a: true }],
-  ['رضا عباسی', 'Reza Abbasi', 1565, 1635, 'art', { a: true }],
-  ['ملاصدرا', 'Mulla Sadra', 1572, 1640, 'phil', { a: true, d: 'حکمت متعالیه.' }],
-  ['صائب تبریزی', 'Saib Tabrizi', 1592, 1676, 'poet'],
-  ['علامه مجلسی', 'Allameh Majlesi', 1627, 1699, 'rel'],
-  ['قائم‌مقام فراهانی', 'Qaem-Magham Farahani', 1779, 1835, 'pol'],
+  ['جامی', 'Jami', 1414, 1492, 'poet', { d: 'واپسین شاعر بزرگ کلاسیک سبک عراقی در هرات.' }],
+  ['کمال‌الدین بهزاد', 'Kamal ud-Din Behzad', 1450, 1535, 'art', { a: true, d: 'بزرگ‌ترین نگارگر مکتب هرات و تبریز.' }],
+  ['شیخ بهایی', 'Sheikh Baha al-Din', 1547, 1621, 'sci', { d: 'دانشمند، معمار و طراح تقسیم آب زاینده‌رود.' }],
+  ['میرداماد', 'Mir Damad', 1561, 1631, 'phil', { a: true, d: 'بنیان‌گذار مکتب فلسفی اصفهان.' }],
+  ['رضا عباسی', 'Reza Abbasi', 1565, 1635, 'art', { a: true, d: 'استاد برجستهٔ نگارگری مکتب اصفهان.' }],
+  ['ملاصدرا', 'Mulla Sadra', 1572, 1640, 'phil', { a: true, d: 'بنیان‌گذار حکمت متعالیه در شیراز و قم.' }],
+  ['صائب تبریزی', 'Saib Tabrizi', 1592, 1676, 'poet', { d: 'بزرگ‌ترین غزل‌سرای سبک هندی.' }],
+  ['علامه مجلسی', 'Allameh Majlesi', 1627, 1699, 'rel', { d: 'مؤلف بحارالانوار در اصفهان صفوی.' }],
+  ['قائم‌مقام فراهانی', 'Qaem-Magham Farahani', 1779, 1835, 'pol', { d: 'صدراعظم ادیب و پایه‌گذار نثر سادهٔ فارسی نوین.' }],
   ['عباس میرزا', 'Abbas Mirza', 1789, 1833, 'mil', { d: 'ولیعهد نوگرا و فرماندهٔ جنگ‌های ایران و روس.' }],
   ['امیرکبیر', 'Amir Kabir', 1807, 1852, 'pol', { d: 'صدراعظم اصلاح‌گر و بنیان‌گذار دارالفنون.' }],
-  ['طاهره قرةالعین', 'Tahirih', 1814, 1852, 'poet', { a: 's' }],
-  ['باب', 'The Báb', 1819, 1850, 'rel'],
-  ['میرزا ملکم‌خان', 'Malkam Khan', 1833, 1908, 'pol'],
-  ['سید جمال‌الدین اسدآبادی', 'Jamal al-Din al-Afghani', 1838, 1897, 'pol'],
-  ['کمال‌الملک', 'Kamal-ol-Molk', 1847, 1940, 'art'],
+  ['طاهره قرةالعین', 'Tahirih', 1814, 1852, 'poet', { a: 's', d: 'شاعر و چهرهٔ نامدار سدهٔ نوزدهم در قزوین.' }],
+  ['باب', 'The Báb', 1819, 1850, 'rel', { d: 'بنیان‌گذار آیین بابی در شیراز.' }],
+  ['میرزا ملکم‌خان', 'Malkam Khan', 1833, 1908, 'pol', { d: 'نویسندهٔ روزنامهٔ قانون و از پیشگامان مشروطه‌خواهی.' }],
+  ['سید جمال‌الدین اسدآبادی', 'Jamal al-Din al-Afghani', 1838, 1897, 'pol', { d: 'اندیشمند اصلاح‌گر و ضد استعمار.' }],
+  ['کمال‌الملک', 'Kamal-ol-Molk', 1847, 1940, 'art', { d: 'بنیان‌گذار نقاشی واقع‌گرای نوین ایران.' }],
   ['ستارخان', 'Sattar Khan', 1868, 1914, 'mil', { d: 'سردار ملی مشروطه در تبریز.' }],
-  ['ایرج میرزا', 'Iraj Mirza', 1874, 1926, 'poet'],
-  ['محمدعلی فروغی', 'Mohammad Ali Foroughi', 1877, 1942, 'pol'],
-  ['علی‌اکبر دهخدا', 'Dehkhoda', 1879, 1956, 'poet', { d: 'لغت‌نامهٔ دهخدا.' }],
-  ['محمد مصدق', 'Mohammad Mosaddegh', 1882, 1967, 'pol', { d: 'نخست‌وزیر ملی‌کردن نفت.' }],
-  ['نیما یوشیج', 'Nima Yooshij', 1897, 1960, 'poet', { d: 'پدر شعر نو.' }],
-  ['صادق هدایت', 'Sadegh Hedayat', 1903, 1951, 'poet', { d: 'بوف کور.' }],
-  ['شهریار', 'Shahriar', 1906, 1988, 'poet'],
-  ['پروین اعتصامی', 'Parvin Etesami', 1907, 1941, 'poet'],
+  ['ایرج میرزا', 'Iraj Mirza', 1874, 1926, 'poet', { d: 'شاعر طنزپرداز و منتقد اجتماعی عصر مشروطه.' }],
+  ['محمدعلی فروغی', 'Mohammad Ali Foroughi', 1877, 1942, 'pol', { d: 'نخست‌وزیر، فیلسوف و مؤلف سیر حکمت در اروپا.' }],
+  ['علی‌اکبر دهخدا', 'Dehkhoda', 1879, 1956, 'poet', { d: 'پدیدآورندهٔ لغت‌نامهٔ دهخدا و طنز چرند و پرند.' }],
+  ['محمد مصدق', 'Mohammad Mosaddegh', 1882, 1967, 'pol', { d: 'نخست‌وزیر ملی‌کردن صنعت نفت ایران.' }],
+  ['نیما یوشیج', 'Nima Yooshij', 1897, 1960, 'poet', { d: 'پدر شعر نو فارسی.' }],
+  ['صادق هدایت', 'Sadegh Hedayat', 1903, 1951, 'poet', { d: 'نویسندهٔ بوف کور و پیشگام داستان‌نویسی مدرن.' }],
+  ['شهریار', 'Shahriar', 1906, 1988, 'poet', { d: 'شاعر بزرگ تبریز؛ سرایندهٔ حیدربابایه سلام.' }],
+  ['پروین اعتصامی', 'Parvin Etesami', 1907, 1941, 'poet', { d: 'از برجسته‌ترین زنان شاعر سدهٔ بیستم ایران.' }],
   ['لطفی‌زاده', 'Lotfi Zadeh', 1921, 2017, 'sci', { d: 'بنیان‌گذار منطق فازی.' }],
-  ['احمد شاملو', 'Ahmad Shamlou', 1925, 2000, 'poet'],
-  ['سهراب سپهری', 'Sohrab Sepehri', 1928, 1980, 'poet'],
-  ['علی شریعتی', 'Ali Shariati', 1933, 1977, 'phil'],
-  ['فروغ فرخزاد', 'Forough Farrokhzad', 1934, 1967, 'poet'],
-  ['محمدرضا شجریان', 'Mohammad-Reza Shajarian', 1940, 2020, 'art'],
-  ['عباس کیارستمی', 'Abbas Kiarostami', 1940, 2016, 'art'],
-  ['شیرین عبادی', 'Shirin Ebadi', 1947, 2027, 'pol', { d: 'جایزهٔ صلح نوبل ۲۰۰۳.' }],
-  ['اصغر فرهادی', 'Asghar Farhadi', 1972, 2027, 'art', { d: 'دو جایزهٔ اسکار.' }],
-  ['نرگس محمدی', 'Narges Mohammadi', 1972, 2027, 'pol', { d: 'جایزهٔ صلح نوبل ۲۰۲۳.' }],
-  ['مریم میرزاخانی', 'Maryam Mirzakhani', 1977, 2017, 'sci', { d: 'نخستین زن برندهٔ مدال فیلدز (۲۰۱۴).' }]
+  ['احمد شاملو', 'Ahmad Shamlou', 1925, 2000, 'poet', { d: 'شاعر شعر سپید و گردآورندهٔ کتاب کوچه.' }],
+  ['سهراب سپهری', 'Sohrab Sepehri', 1928, 1980, 'poet', { d: 'شاعر و نقاش نوگرای کاشان.' }],
+  ['علی شریعتی', 'Ali Shariati', 1933, 1977, 'phil', { d: 'جامعه‌شناس و اندیشمند معاصر.' }],
+  ['فروغ فرخزاد', 'Forough Farrokhzad', 1934, 1967, 'poet', { d: 'شاعر نوگرا و فیلم‌ساز.' }],
+  ['محمدرضا شجریان', 'Mohammad-Reza Shajarian', 1940, 2020, 'art', { d: 'استاد بزرگ آواز سنتی ایران.' }],
+  ['عباس کیارستمی', 'Abbas Kiarostami', 1940, 2016, 'art', { d: 'کارگردان نامدار سینمای جهان؛ برندهٔ نخل طلای کن.' }],
+  ['شیرین عبادی', 'Shirin Ebadi', 1947, 2027, 'pol', { d: 'حقوق‌دان و برندهٔ جایزهٔ صلح نوبل ۲۰۰۳.' }],
+  ['اصغر فرهادی', 'Asghar Farhadi', 1972, 2027, 'art', { d: 'کارگردان برندهٔ دو جایزهٔ اسکار.' }],
+  ['نرگس محمدی', 'Narges Mohammadi', 1972, 2027, 'pol', { d: 'کنشگر حقوق بشر و برندهٔ صلح نوبل ۲۰۲۳.' }],
+  ['مریم میرزاخانی', 'Maryam Mirzakhani', 1977, 2017, 'sci', { d: 'نخستین زن برندهٔ مدال فیلدز ریاضیات (۲۰۱۴).' }]
 ]);
+
 const P = (r, rows) => TL.addPeople(r, rows);
-P('egypt', [['ایمحوتپ', 'Imhotep', -2690, -2610, 'art', { a: true, d: 'معمار هرم زوسر.' }], ['هیپاتیا', 'Hypatia', 360, 415, 'sci', { a: 's' }]]);
-P('south_asia', [['بودا', 'Gautama Buddha', -563, -483, 'rel', { a: true }], ['امیرخسرو دهلوی', 'Amir Khusrau', 1253, 1325, 'poet', { d: 'شاعر پارسی‌گوی هند.' }], ['میرزا غالب', 'Mirza Ghalib', 1797, 1869, 'poet'], ['رابیندرانات تاگور', 'Rabindranath Tagore', 1861, 1941, 'poet'], ['مهاتما گاندی', 'Mahatma Gandhi', 1869, 1948, 'pol'], ['محمد اقبال لاهوری', 'Muhammad Iqbal', 1877, 1938, 'poet', { d: 'بیشتر شعرهایش را به فارسی سرود.' }]]);
-P('china', [['کنفوسیوس', 'Confucius', -551, -479, 'phil'], ['لی بای', 'Li Bai', 701, 762, 'poet']]);
-P('korea_japan', [['موراساکی شیکیبو', 'Murasaki Shikibu', 973, 1014, 'poet', { a: true, d: 'داستان گنجی.' }], ['هوکوسای', 'Hokusai', 1760, 1849, 'art']]);
-P('greece', [['فیثاغورس', 'Pythagoras', -570, -495, 'sci', { a: true }], ['هرودوت', 'Herodotus', -484, -425, 'sci', { a: true, d: '«پدر تاریخ»؛ راوی جنگ‌های ایران و یونان.' }], ['سقراط', 'Socrates', -470, -399, 'phil'], ['افلاطون', 'Plato', -428, -348, 'phil'], ['ارسطو', 'Aristotle', -384, -322, 'phil'], ['اقلیدس', 'Euclid', -325, -265, 'sci', { a: true }], ['ارشمیدس', 'Archimedes', -287, -212, 'sci', { a: true }]]);
-P('italy', [['سیسرون', 'Cicero', -106, -43, 'pol'], ['ویرژیل', 'Virgil', -70, -19, 'poet'], ['بطلمیوس', 'Claudius Ptolemy', 100, 170, 'sci', { a: true }], ['جالینوس', 'Galen', 129, 216, 'sci', { a: true }], ['آگوستین', 'Augustine', 354, 430, 'phil'], ['توماس آکویناس', 'Thomas Aquinas', 1225, 1274, 'phil'], ['مارکوپولو', 'Marco Polo', 1254, 1324, 'exp', { d: 'از تبریز و هرمز گذشت.' }], ['دانته', 'Dante', 1265, 1321, 'poet'], ['فیبوناچی', 'Fibonacci', 1170, 1250, 'sci', { a: true }], ['لئوناردو داوینچی', 'Leonardo da Vinci', 1452, 1519, 'art'], ['ماکیاولی', 'Machiavelli', 1469, 1527, 'phil'], ['میکل‌آنژ', 'Michelangelo', 1475, 1564, 'art'], ['گالیله', 'Galileo Galilei', 1564, 1642, 'sci'], ['گاریبالدی', 'Garibaldi', 1807, 1882, 'mil']]);
-P('levant', [['عیسی مسیح', 'Jesus', -4, 30, 'rel', { a: true }]]);
-P('arabia', [['محمد پیامبر اسلام', 'Muhammad', 570, 632, 'rel', { a: 's' }], ['علی بن ابی‌طالب', 'Ali ibn Abi Talib', 600, 661, 'rel', { a: 's' }], ['حسین بن علی', 'Husayn ibn Ali', 626, 680, 'rel']]);
-P('mesopotamia', [['کندی', 'al-Kindi', 801, 873, 'phil', { a: true }], ['ابن هیثم', 'Ibn al-Haytham', 965, 1040, 'sci', { a: true, d: 'پدر نورشناسی نوین.' }]]);
-P('iberia', [['ابن رشد', 'Averroes', 1126, 1198, 'phil'], ['ابن میمون', 'Maimonides', 1138, 1204, 'phil'], ['ابن عربی', 'Ibn Arabi', 1165, 1240, 'rel'], ['کریستف کلمب', 'Christopher Columbus', 1451, 1506, 'exp'], ['واسکو دو گاما', 'Vasco da Gama', 1469, 1524, 'exp', { a: 's' }], ['ماژلان', 'Ferdinand Magellan', 1480, 1521, 'exp'], ['سروانتس', 'Cervantes', 1547, 1616, 'poet'], ['پیکاسو', 'Pablo Picasso', 1881, 1973, 'art']]);
-P('maghreb', [['ابن بطوطه', 'Ibn Battuta', 1304, 1369, 'exp'], ['ابن خلدون', 'Ibn Khaldun', 1332, 1406, 'sci', { d: 'مقدمه؛ بنیان‌گذار جامعه‌شناسی تاریخی.' }]]);
-P('anatolia', [['معمار سنان', 'Mimar Sinan', 1489, 1588, 'art', { a: 's' }]]);
-P('france', [['ژاندارک', 'Joan of Arc', 1412, 1431, 'mil'], ['دکارت', 'René Descartes', 1596, 1650, 'phil'], ['ولتر', 'Voltaire', 1694, 1778, 'phil'], ['روسو', 'Rousseau', 1712, 1778, 'phil'], ['ویکتور هوگو', 'Victor Hugo', 1802, 1885, 'poet'], ['لویی پاستور', 'Louis Pasteur', 1822, 1895, 'sci'], ['ونسان ون گوگ', 'Vincent van Gogh', 1853, 1890, 'art'], ['ماری کوری', 'Marie Curie', 1867, 1934, 'sci'], ['رامبرانت', 'Rembrandt', 1606, 1669, 'art']]);
-P('britain', [['شکسپیر', 'William Shakespeare', 1564, 1616, 'poet'], ['جان لاک', 'John Locke', 1632, 1704, 'phil'], ['آیزاک نیوتن', 'Isaac Newton', 1643, 1727, 'sci'], ['آدام اسمیت', 'Adam Smith', 1723, 1790, 'phil'], ['چارلز داروین', 'Charles Darwin', 1809, 1882, 'sci'], ['وینستون چرچیل', 'Winston Churchill', 1874, 1965, 'pol'], ['آلن تورینگ', 'Alan Turing', 1912, 1954, 'sci'], ['استیون هاوکینگ', 'Stephen Hawking', 1942, 2018, 'sci']]);
-P('germany', [['گوتنبرگ', 'Johannes Gutenberg', 1400, 1468, 'sci', { a: 's' }], ['کوپرنیک', 'Copernicus', 1473, 1543, 'sci'], ['مارتین لوتر', 'Martin Luther', 1483, 1546, 'rel'], ['کپلر', 'Johannes Kepler', 1571, 1630, 'sci'], ['باخ', 'J. S. Bach', 1685, 1750, 'art'], ['کانت', 'Immanuel Kant', 1724, 1804, 'phil'], ['گوته', 'Goethe', 1749, 1832, 'poet', { d: 'دیوان غربی-شرقی را با الهام از حافظ سرود.' }], ['موتسارت', 'Mozart', 1756, 1791, 'art'], ['بتهوون', 'Beethoven', 1770, 1827, 'art'], ['هگل', 'Hegel', 1770, 1831, 'phil'], ['بیسمارک', 'Otto von Bismarck', 1815, 1898, 'pol'], ['کارل مارکس', 'Karl Marx', 1818, 1883, 'phil'], ['نیچه', 'Friedrich Nietzsche', 1844, 1900, 'phil'], ['زیگموند فروید', 'Sigmund Freud', 1856, 1939, 'sci'], ['آلبرت اینشتین', 'Albert Einstein', 1879, 1955, 'sci']]);
-P('russia', [['داستایفسکی', 'Fyodor Dostoevsky', 1821, 1881, 'poet'], ['تولستوی', 'Leo Tolstoy', 1828, 1910, 'poet'], ['مندلیف', 'Dmitri Mendeleev', 1834, 1907, 'sci'], ['یوری گاگارین', 'Yuri Gagarin', 1934, 1968, 'exp']]);
-P('n_america', [['توماس ادیسون', 'Thomas Edison', 1847, 1931, 'sci'], ['نیکولا تسلا', 'Nikola Tesla', 1856, 1943, 'sci'], ['مارتین لوتر کینگ', 'Martin Luther King Jr.', 1929, 1968, 'pol'], ['نیل آرمسترانگ', 'Neil Armstrong', 1930, 2012, 'exp']]);
-P('andes', [['سیمون بولیوار', 'Simón Bolívar', 1783, 1830, 'mil']]);
-P('africa', [['نلسون ماندلا', 'Nelson Mandela', 1918, 2013, 'pol']]);
+
+// میان‌رودان (عراق)
+P('mesopotamia', [
+  ['انهدوانا', 'Enheduanna', -2285, -2250, 'poet', { a: true, d: 'نخستین نویسنده و شاعر شناخته‌شده در تاریخ بشر (اور).' }],
+  ['حمورابی', 'Hammurabi', -1810, -1750, 'pol', { a: true, d: 'پادشاه بابل و تدوین‌گر قانون‌نامهٔ نامدار حمورابی.' }],
+  ['جاحظ', 'Al-Jahiz', 776, 868, 'poet', { d: 'ادیب و نویسندهٔ کتاب‌الحیوان در بصره و بغداد.' }],
+  ['کندی', 'al-Kindi', 801, 873, 'phil', { a: true, d: 'نخستین فیلسوف جهان اسلام در بغداد.' }],
+  ['منصور حلاج', 'Mansur al-Hallaj', 858, 922, 'rel', { d: 'عارف نامدار و پرآوازهٔ سدهٔ چهارم هجری.' }],
+  ['متنبی', 'Al-Mutanabbi', 915, 965, 'poet', { d: 'از بزرگ‌ترین شاعران زبان عربی، زادهٔ کوفه.' }],
+  ['ابن هیثم', 'Ibn al-Haytham', 965, 1040, 'sci', { a: true, d: 'پدر نورشناسی نوین و روش علمی آزمایشی، زادهٔ بصره.' }],
+  ['زها حدید', 'Zaha Hadid', 1950, 2016, 'art', { d: 'معمار نامدار معاصر، زادهٔ بغداد.' }]
+]);
+
+// آناتولی (ترکیه)
+P('anatolia', [
+  ['تالس ملطی', 'Thales of Miletus', -624, -546, 'phil', { a: true, d: 'نخستین فیلسوف و ریاضی‌دان یونانی در ملط (میلتوس).' }],
+  ['هراکلیتوس', 'Heraclitus', -535, -475, 'phil', { a: true, d: 'فیلسوف تغییر و دگرگونی در افسوس.' }],
+  ['استرابون', 'Strabo', -64, 24, 'sci', { a: true, d: 'جغرافی‌دان بزرگ باستان، زادهٔ آماسیا.' }],
+  ['یونس امره', 'Yunus Emre', 1238, 1328, 'poet', { a: true, d: 'شاعر عارف و پیشگام شعر ترکی آناتولی.' }],
+  ['پیری رئیس', 'Piri Reis', 1465, 1553, 'exp', { a: 's', d: 'دریانورد و نقشه‌نگار عثمانی؛ خالق نقشهٔ جهان ۱۵۱۳.' }],
+  ['معمار سنان', 'Mimar Sinan', 1489, 1588, 'art', { a: 's', d: 'بزرگ‌ترین معمار عثمانی؛ سازندهٔ مسجد سلیمانیه و سلیمیه.' }],
+  ['مصطفی کمال آتاتورک', 'Atatürk', 1881, 1938, 'pol', { d: 'بنیان‌گذار جمهوری مدرن ترکیه.' }]
+]);
+
+// قفقاز
+P('caucasus', [
+  ['مسروپ ماشتوتس', 'Mesrop Mashtots', 362, 440, 'sci', { a: 's', d: 'پدیدآورندهٔ الفبای ارمنی.' }],
+  ['خاقانی شروانی', 'Khaqani', 1120, 1199, 'poet', { a: 's', d: 'شاعر بزرگ قصیده‌سرای فارسی، زادهٔ شروان.' }],
+  ['شوتا روستاولی', 'Shota Rustaveli', 1160, 1220, 'poet', { a: true, d: 'سرایندهٔ حماسهٔ ملی گرجستان «پلنگینه‌پوش».' }],
+  ['آرام خاچاتوریان', 'Aram Khachaturian', 1903, 1978, 'art', { d: 'آهنگساز برجستهٔ ارمنی، زادهٔ تفلیس.' }]
+]);
+
+// شام و فلسطین
+P('levant', [
+  ['عیسی مسیح', 'Jesus', -4, 30, 'rel', { a: true, d: 'چهرهٔ محوری آیین مسیحیت.' }],
+  ['زنوبیا', 'Zenobia', 240, 274, 'pol', { a: true, d: 'ملکهٔ نامدار پالمیرا که در برابر روم ایستاد.' }],
+  ['ابوالعلای معری', 'Al-Ma\'arri', 973, 1057, 'poet', { d: 'شاعر و فیلسوف نابینای معره در شام.' }],
+  ['صلاح‌الدین ایوبی', 'Saladin', 1137, 1193, 'mil', { d: 'بنیان‌گذار دودمان ایوبی و فاتح اورشلیم.' }],
+  ['جبران خلیل جبران', 'Kahlil Gibran', 1883, 1931, 'poet', { d: 'نویسندهٔ «پیامبر» و شاعر نامدار لبنانی.' }]
+]);
+
+// عربستان
+P('arabia', [
+  ['امرؤالقیس', 'Imru\' al-Qais', 501, 544, 'poet', { a: true, d: 'نامدارترین شاعر عرب پیش از اسلام (معلقات).' }],
+  ['محمد پیامبر اسلام', 'Muhammad', 570, 632, 'rel', { a: 's', d: 'پیامبر اسلام، زادهٔ مکه.' }],
+  ['علی بن ابی‌طالب', 'Ali ibn Abi Talib', 600, 661, 'rel', { a: 's', d: 'خلیفهٔ چهارم و امام نخست شیعیان.' }],
+  ['حسین بن علی', 'Husayn ibn Ali', 626, 680, 'rel', { d: 'امام سوم شیعیان و محور واقعهٔ کربلا.' }],
+  ['خلیل بن احمد فراهیدی', 'Al-Khalil', 718, 786, 'sci', { a: 's', d: 'بنیان‌گذار علم عروض و نخستین فرهنگ لغت عربی، زادهٔ عمان.' }],
+  ['احمد بن ماجد', 'Ahmad ibn Majid', 1432, 1500, 'exp', { a: true, d: 'ناخدا و جغرافی‌دان بزرگ اقیانوس هند.' }]
+]);
+
+// مصر
+P('egypt', [
+  ['ایمحوتپ', 'Imhotep', -2690, -2610, 'art', { a: true, d: 'معمار هرم پلکانی زوسر و پزشک مصر باستان.' }],
+  ['آخناتون', 'Akhenaten', -1380, -1334, 'rel', { a: true, d: 'فرعون نوآور و پدیدآورندهٔ آیین یکتاپرستانهٔ آتون.' }],
+  ['کلئوپاترا هفتم', 'Cleopatra', -69, -30, 'pol', { d: 'واپسین فرمانروای بطلمیوسی مصر در اسکندریه.' }],
+  ['هیپاتیا', 'Hypatia', 360, 415, 'sci', { a: 's', d: 'ریاضی‌دان، اخترشناس و فیلسوف نامدار اسکندریه.' }],
+  ['ابن یونس مصری', 'Ibn Yunus', 950, 1009, 'sci', { a: 's', d: 'اخترشناس بزرگ دربار فاطمی و مؤلف زیج حاکمی.' }],
+  ['ام‌کلثوم', 'Umm Kulthum', 1904, 1975, 'art', { d: 'اسطورهٔ آواز جهان عرب.' }],
+  ['نجیب محفوظ', 'Naguib Mahfouz', 1911, 2006, 'poet', { d: 'رمان‌نویس مصری و برندهٔ نوبل ادبیات ۱۹۸۸.' }]
+]);
+
+// آسیای میانه و فرارود
+P('central_asia', [
+  ['امام بخاری', 'Al-Bukhari', 810, 870, 'rel', { d: 'محدث نامدار زادهٔ بخارا.' }],
+  ['احمد فرغانی', 'Al-Farghani', 805, 870, 'sci', { a: true, d: 'ستاره‌شناس بزرگ فرغانه که آثارش در اروپا شهرت یافت.' }],
+  ['الغ‌بیگ', 'Ulugh Beg', 1394, 1449, 'sci', { d: 'پادشاه ستاره‌شناس تیموری و سازندهٔ رصدخانهٔ سمرقند.' }],
+  ['علیشیر نوایی', 'Ali-Shir Nava\'i', 1441, 1501, 'poet', { d: 'شاعر، وزیر و حامی هنر در هرات تیموری.' }],
+  ['محمود طرزی', 'Mahmud Tarzi', 1865, 1933, 'pol', { d: 'پدر روزنامه‌نگاری و نوگرایی افغانستان.' }]
+]);
+
+// استپ و مغولستان
+P('steppe', [
+  ['تونیوقوق', 'Tonyukuk', 646, 726, 'pol', { a: true, d: 'وزیر خردمند خاقانات ترک و صاحب سنگ‌نبشته‌های اورخون.' }],
+  ['چنگیزخان', 'Genghis Khan', 1162, 1227, 'mil', { a: 's', d: 'بنیان‌گذار بزرگ‌ترین امپراتوری پیوستهٔ تاریخ.' }],
+  ['ابای قونانبای‌اولی', 'Abai Qunanbaiuly', 1845, 1904, 'poet', { d: 'شاعر، فیلسوف و بنیان‌گذار ادبیات مدرن قزاق.' }]
+]);
+
+// شبه‌قارهٔ هند
+P('south_asia', [
+  ['بودا', 'Gautama Buddha', -563, -483, 'rel', { a: true, d: 'بنیان‌گذار آیین بودا.' }],
+  ['پانینی', 'Panini', -520, -460, 'sci', { a: true, d: 'بنیان‌گذار دستور زبان علمی سانسکریت.' }],
+  ['چاناکیا', 'Chanakya', -375, -283, 'pol', { a: true, d: 'استراتژیست، اقتصاددان و نویسندهٔ ارته‌شاستره.' }],
+  ['کالیداسا', 'Kalidasa', 370, 450, 'poet', { a: true, d: 'بزرگ‌ترین شاعر و نمایش‌نامه‌نویس سانسکریت در عصر گوپتا.' }],
+  ['آریابهاتا', 'Aryabhata', 476, 550, 'sci', { d: 'ریاضی‌دان و اخترشناس هند؛ پیشگام صفر و تقریب عدد پی.' }],
+  ['امیرخسرو دهلوی', 'Amir Khusrau', 1253, 1325, 'poet', { d: '«طوطی هند»؛ بزرگ‌ترین شاعر پارسی‌گوی شبه‌قاره.' }],
+  ['کبیر', 'Kabir', 1440, 1518, 'poet', { a: true, d: 'شاعر عارف بنارس و پیونددهندهٔ فرهنگ هند و اسلام.' }],
+  ['میرزا غالب', 'Mirza Ghalib', 1797, 1869, 'poet', { d: 'بزرگ‌ترین غزل‌سرای اردو و فارسی در دهلی.' }],
+  ['رابیندرانات تاگور', 'Rabindranath Tagore', 1861, 1941, 'poet', { d: 'نخستین برندهٔ آسیایی جایزهٔ نوبل ادبیات.' }],
+  ['مهاتما گاندی', 'Mahatma Gandhi', 1869, 1948, 'pol', { d: 'رهبر جنبش استقلال هند با روش مبارزهٔ بی‌خشونت.' }],
+  ['محمد اقبال لاهوری', 'Muhammad Iqbal', 1877, 1938, 'poet', { d: 'فیلسوف و شاعر بزرگ؛ بیشتر شعرهایش را به فارسی سرود.' }],
+  ['سرینیواسا رامانوجان', 'Ramanujan', 1887, 1920, 'sci', { d: 'نابغهٔ خودآموختهٔ نظریهٔ اعداد.' }]
+]);
+
+// چین
+P('china', [
+  ['لائوتسه', 'Laozi', -600, -531, 'phil', { a: true, d: 'بنیان‌گذار سنت فلسفی تائوئیسم و نویسندهٔ دائو ده جینگ.' }],
+  ['کنفوسیوس', 'Confucius', -551, -479, 'phil', { d: 'بنیان‌گذار اخلاق و فلسفهٔ سیاسی کنفوسیوسی.' }],
+  ['سون تزو', 'Sun Tzu', -544, -496, 'mil', { a: true, d: 'فرمانده و نویسندهٔ «هنر رزم».' }],
+  ['سیما چیان', 'Sima Qian', -145, -86, 'sci', { a: true, d: 'پدر تاریخ‌نگاری چین در دورهٔ هان.' }],
+  ['کای لون', 'Cai Lun', 50, 121, 'sci', { a: 's', d: 'مخترع فرایند نوین ساخت کاغذ در چین.' }],
+  ['لی بای', 'Li Bai', 701, 762, 'poet', { d: 'نامدارترین شاعر عصر زرین تانگ.' }],
+  ['دو فو', 'Du Fu', 712, 770, 'poet', { d: '«حکیم شعر» چین در روزگار تانگ.' }],
+  ['ژنگ هه', 'Zheng He', 1371, 1433, 'exp', { d: 'دریادار بزرگ مینگ که هفت بار تا خلیج فارس و آفریقا رفت.' }],
+  ['سون یات‌سن', 'Sun Yat-sen', 1866, 1925, 'pol', { d: 'پدر جمهوری چین مدرن.' }]
+]);
+
+// کره و ژاپن
+P('korea_japan', [
+  ['موراساکی شیکیبو', 'Murasaki Shikibu', 973, 1014, 'poet', { a: true, d: 'نویسندهٔ «داستان گنجی»، نخستین رمان جهان در کیوتو.' }],
+  ['سجونگ بزرگ', 'Sejong the Great', 1397, 1450, 'pol', { d: 'پادشاه دانشمند کره و ابداع‌کنندهٔ الفبای هانگول.' }],
+  ['یی سون‌شین', 'Yi Sun-sin', 1545, 1598, 'mil', { d: 'دریادار شکست‌ناپذیر کره و طراح کشتی‌های لاک‌پشتی.' }],
+  ['میاموتو موساشی', 'Miyamoto Musashi', 1584, 1645, 'mil', { d: 'سامورایی نامدار و نویسندهٔ «کتاب پنج حلقه».' }],
+  ['ماتسوئو باشو', 'Matsuo Basho', 1644, 1694, 'poet', { d: 'بزرگ‌ترین استاد شعر هایکو در ژاپن.' }],
+  ['هوکوسای', 'Hokusai', 1760, 1849, 'art', { d: 'خالق «موج بزرگ کاناگاوا».' }],
+  ['آکیرا کوروساوا', 'Akira Kurosawa', 1910, 1998, 'art', { d: 'کارگردان افسانه‌ای سینمای ژاپن.' }],
+  ['هایائو میازاکی', 'Hayao Miyazaki', 1941, 2027, 'art', { d: 'بنیان‌گذار استودیو گیبلی و استاد انیمیشن.' }]
+]);
+
+// جنوب شرق آسیا
+P('se_asia', [
+  ['سوریه‌وارمان دوم', 'Suryavarman II', 1095, 1150, 'art', { a: true, d: 'سازندهٔ معبد باشکوه انگکور وات در کامبوج.' }],
+  ['گاجاه مادا', 'Gajah Mada', 1290, 1364, 'pol', { a: 's', d: 'صدراعظم و متحدکنندهٔ مجمع‌الجزایر امپراتوری ماجاپاهیت.' }],
+  ['خوزه ریزال', 'José Rizal', 1861, 1896, 'poet', { d: 'نویسنده و قهرمان ملی استقلال فیلیپین.' }],
+  ['هو شی مین', 'Ho Chi Minh', 1890, 1969, 'pol', { d: 'رهبر استقلال ویتنام.' }]
+]);
+
+// یونان و بالکان
+P('greece', [
+  ['هومر', 'Homer', -800, -720, 'poet', { a: true, d: 'سرایندهٔ ایلیاد و اودیسه.' }],
+  ['سافو', 'Sappho', -630, -570, 'poet', { a: true, d: 'شاعر غنایی بزرگ جزیرهٔ لسبوس.' }],
+  ['فیثاغورس', 'Pythagoras', -570, -495, 'sci', { a: true, d: 'ریاضی‌دان و فیلسوف زادهٔ ساموس.' }],
+  ['سوفوکل', 'Sophocles', -497, -406, 'poet', { d: 'تراژدی‌نویس بزرگ آتن؛ خالق ادیپ شهریار و آنتیگونه.' }],
+  ['هرودوت', 'Herodotus', -484, -425, 'sci', { a: true, d: '«پدر تاریخ»؛ راوی جنگ‌های ایران و یونان.' }],
+  ['سقراط', 'Socrates', -470, -399, 'phil', { d: 'بنیان‌گذار فلسفهٔ اخلاق غرب در آتن.' }],
+  ['بقراط', 'Hippocrates', -460, -370, 'sci', { a: true, d: 'پدر پزشکی یونان باستان، زادهٔ جزیرهٔ کوس.' }],
+  ['توسیدید', 'Thucydides', -460, -400, 'sci', { a: true, d: 'تاریخ‌نگار جنگ‌های پلوپونزی.' }],
+  ['افلاطون', 'Plato', -428, -348, 'phil', { d: 'بنیان‌گذار آکادمی آتن و نویسندهٔ جمهور.' }],
+  ['ارسطو', 'Aristotle', -384, -322, 'phil', { d: 'بنیان‌گذار منطق صوری و آموزگار اسکندر.' }],
+  ['اقلیدس', 'Euclid', -325, -265, 'sci', { a: true, d: 'پدر هندسه و نویسندهٔ اصول اقلیدس.' }],
+  ['ارشمیدس', 'Archimedes', -287, -212, 'sci', { a: true, d: 'بزرگ‌ترین ریاضی‌دان و مخترع دنیای باستان در سیراکوز.' }]
+]);
+
+// ایتالیا و روم
+P('italy', [
+  ['سیسرون', 'Cicero', -106, -43, 'pol', { d: 'سخنور و دولتمرد بزرگ جمهوری روم.' }],
+  ['ژولیوس سزار', 'Julius Caesar', -100, -44, 'mil', { d: 'سردار فاتح گل و نقطه‌عطف گذار از جمهوری به امپراتوری روم.' }],
+  ['ویرژیل', 'Virgil', -70, -19, 'poet', { d: 'سرایندهٔ حماسهٔ انئید.' }],
+  ['بطلمیوس', 'Claudius Ptolemy', 100, 170, 'sci', { a: true, d: 'اخترشناس و جغرافی‌دان صاحب مجسطی.' }],
+  ['جالینوس', 'Galen', 129, 216, 'sci', { a: true, d: 'پزشک بزرگ امپراتوری روم.' }],
+  ['آگوستین', 'Augustine', 354, 430, 'phil', { d: 'فیلسوف و نویسندهٔ شهر خدا.' }],
+  ['فیبوناچی', 'Fibonacci', 1170, 1250, 'sci', { a: true, d: 'ریاضی‌دان پیزا که ارقام هندی-عربی را به اروپا برد.' }],
+  ['توماس آکویناس', 'Thomas Aquinas', 1225, 1274, 'phil', { d: 'بزرگ‌ترین متفکر فلسفهٔ اسکولاستیک.' }],
+  ['مارکوپولو', 'Marco Polo', 1254, 1324, 'exp', { d: 'جهانگرد ونیزی که از تبریز و هرمز تا چین رفت.' }],
+  ['دانته', 'Dante', 1265, 1321, 'poet', { d: 'سرایندهٔ کمدی الهی در فلورانس.' }],
+  ['لئوناردو داوینچی', 'Leonardo da Vinci', 1452, 1519, 'art', { d: 'نماد نبوغ چندوجهی رنسانس.' }],
+  ['ماکیاولی', 'Machiavelli', 1469, 1527, 'phil', { d: 'نویسندهٔ «شهریار» و بنیان‌گذار علم سیاست مدرن.' }],
+  ['میکل‌آنژ', 'Michelangelo', 1475, 1564, 'art', { d: 'پیکرتراش و نقاش سقف کلیسای سیستین.' }],
+  ['گالیله', 'Galileo Galilei', 1564, 1642, 'sci', { d: 'پدر اخترشناسی رصدی و فیزیک نوین.' }],
+  ['آنتونیو ویوالدی', 'Vivaldi', 1678, 1741, 'art', { d: 'آهنگساز ونیزی «چهارفصل».' }],
+  ['الساندرو ولتا', 'Alessandro Volta', 1745, 1827, 'sci', { d: 'مخترع باتری الکتریکی.' }],
+  ['گاریبالدی', 'Garibaldi', 1807, 1882, 'mil', { d: 'قهرمان یکپارچگی ایتالیا.' }],
+  ['ماریا مونته‌سوری', 'Maria Montessori', 1870, 1952, 'sci', { d: 'پزشک و ابداع‌کنندهٔ روش آموزشی مونته‌سوری.' }]
+]);
+
+// ایبری (اسپانیا و پرتغال)
+P('iberia', [
+  ['سنکا', 'Seneca', -4, 65, 'phil', { d: 'فیلسوف رواقی، زادهٔ قرطبه.' }],
+  ['ابن رشد', 'Averroes', 1126, 1198, 'phil', { d: 'شارح بزرگ ارسطو در قرطبه.' }],
+  ['ابن میمون', 'Maimonides', 1138, 1204, 'phil', { d: 'فیلسوف و پزشک نامدار اندلس و قاهره.' }],
+  ['ابن عربی', 'Ibn Arabi', 1165, 1240, 'rel', { d: 'عارف بزرگ، زادهٔ مورسیا.' }],
+  ['کریستف کلمب', 'Christopher Columbus', 1451, 1506, 'exp', { d: 'دریانورد سفر ۱۴۹۲ به قارهٔ آمریکا.' }],
+  ['واسکو دو گاما', 'Vasco da Gama', 1469, 1524, 'exp', { a: 's', d: 'کاشف راه دریایی اروپا به هند.' }],
+  ['ماژلان', 'Ferdinand Magellan', 1480, 1521, 'exp', { d: 'فرماندهٔ نخستین سفر به دور کرهٔ زمین.' }],
+  ['سروانتس', 'Cervantes', 1547, 1616, 'poet', { d: 'نویسندهٔ «دن کیشوت».' }],
+  ['فرانسیسکو گویا', 'Francisco Goya', 1746, 1828, 'art', { d: 'نقاش بزرگ اسپانیا.' }],
+  ['پیکاسو', 'Pablo Picasso', 1881, 1973, 'art', { d: 'پیشگام کوبیسم و هنر مدرن.' }]
+]);
+
+// فرانسه و سرزمین‌های پست
+P('france', [
+  ['ژاندارک', 'Joan of Arc', 1412, 1431, 'mil', { d: 'قهرمان ملی فرانسه در جنگ صدساله.' }],
+  ['دکارت', 'René Descartes', 1596, 1650, 'phil', { d: 'بنیان‌گذار فلسفهٔ مدرن و هندسهٔ تحلیلی.' }],
+  ['رامبرانت', 'Rembrandt', 1606, 1669, 'art', { d: 'استاد بزرگ نقاشی عصر زرین هلند.' }],
+  ['مولیر', 'Molière', 1622, 1673, 'poet', { d: 'بزرگ‌ترین کمدی‌نویس تئاتر فرانسه.' }],
+  ['ولتر', 'Voltaire', 1694, 1778, 'phil', { d: 'چهرهٔ شاخص عصر روشنگری.' }],
+  ['روسو', 'Rousseau', 1712, 1778, 'phil', { d: 'نویسندهٔ «قرارداد اجتماعی».' }],
+  ['آنتوان لاووازیه', 'Lavoisier', 1743, 1794, 'sci', { d: 'پدر شیمی نوین در پاریس.' }],
+  ['ویکتور هوگو', 'Victor Hugo', 1802, 1885, 'poet', { d: 'نویسندهٔ «بینوایان» و «گوژپشت نتردام».' }],
+  ['لویی پاستور', 'Louis Pasteur', 1822, 1895, 'sci', { d: 'بنیان‌گذار میکروب‌شناسی و واکسیناسیون.' }],
+  ['کلود مونه', 'Claude Monet', 1840, 1926, 'art', { d: 'بنیان‌گذار امپرسیونیسم.' }],
+  ['ونسان ون گوگ', 'Vincent van Gogh', 1853, 1890, 'art', { d: 'نقاش پرآوازهٔ پست‌امپرسیونیست.' }],
+  ['ماری کوری', 'Marie Curie', 1867, 1934, 'sci', { d: 'برندهٔ دو نوبل فیزیک و شیمی؛ کاشف رادیوم.' }],
+  ['آلبر کامو', 'Albert Camus', 1913, 1960, 'phil', { d: 'نویسندهٔ «بیگانه» و برندهٔ نوبل ادبیات.' }]
+]);
+
+// بریتانیا و ایرلند
+P('britain', [
+  ['شکسپیر', 'William Shakespeare', 1564, 1616, 'poet', { d: 'بزرگ‌ترین نمایش‌نامه‌نویس زبان انگلیسی.' }],
+  ['جان لاک', 'John Locke', 1632, 1704, 'phil', { d: 'پدر لیبرالیسم و تجربه‌گرایی مدرن.' }],
+  ['آیزاک نیوتن', 'Isaac Newton', 1643, 1727, 'sci', { d: 'کاشف قوانین حرکت، گرانش و حسابان.' }],
+  ['آدام اسمیت', 'Adam Smith', 1723, 1790, 'phil', { d: 'نویسندهٔ «ثروت ملل» و پدر اقتصاد مدرن.' }],
+  ['جین آستن', 'Jane Austen', 1775, 1817, 'poet', { d: 'نویسندهٔ «غرور و تعصب».' }],
+  ['مایکل فارادی', 'Michael Faraday', 1791, 1867, 'sci', { d: 'کاشف القای الکترومغناطیسی.' }],
+  ['چارلز داروین', 'Charles Darwin', 1809, 1882, 'sci', { d: 'ارائه‌دهندهٔ نظریهٔ تکامل و انتخاب طبیعی.' }],
+  ['آدا لاولیس', 'Ada Lovelace', 1815, 1852, 'sci', { d: 'نخستین برنامه‌نویس کامپیوتر در تاریخ.' }],
+  ['وینستون چرچیل', 'Winston Churchill', 1874, 1965, 'pol', { d: 'نخست‌وزیر بریتانیا در جنگ جهانی دوم.' }],
+  ['آلن تورینگ', 'Alan Turing', 1912, 1954, 'sci', { d: 'پدر علوم کامپیوتر و هوش مصنوعی.' }],
+  ['استیون هاوکینگ', 'Stephen Hawking', 1942, 2018, 'sci', { d: 'کیهان‌شناس و نویسندهٔ «تاریخچهٔ زمان».' }]
+]);
+
+// آلمان و اروپای مرکزی
+P('germany', [
+  ['گوتنبرگ', 'Johannes Gutenberg', 1400, 1468, 'sci', { a: 's', d: 'مخترع صنعت چاپ با حروف متحرک در ماینتس.' }],
+  ['کوپرنیک', 'Copernicus', 1473, 1543, 'sci', { d: 'ارائه‌دهندهٔ مدل خورشیدمرکزی منظومهٔ شمسی.' }],
+  ['مارتین لوتر', 'Martin Luther', 1483, 1546, 'rel', { d: 'آغازگر جنبش اصلاح دینی پروتستان.' }],
+  ['کپلر', 'Johannes Kepler', 1571, 1630, 'sci', { d: 'کاشف قوانین حرکت سیارات.' }],
+  ['لایبنیتس', 'Leibniz', 1646, 1716, 'phil', { d: 'فیلسوف و هم‌مبتکر حساب دیفرانسیل.' }],
+  ['باخ', 'J. S. Bach', 1685, 1750, 'art', { d: 'قلهٔ موسیقی دورهٔ باروک.' }],
+  ['کانت', 'Immanuel Kant', 1724, 1804, 'phil', { d: 'نویسندهٔ «نقد عقل محض» در کونیگسبرگ.' }],
+  ['گوته', 'Goethe', 1749, 1832, 'poet', { d: 'دیوان غربی-شرقی را با الهام از حافظ سرود.' }],
+  ['موتسارت', 'Mozart', 1756, 1791, 'art', { d: 'نابغهٔ موسیقی کلاسیک، زادهٔ سالزبورگ.' }],
+  ['بتهوون', 'Beethoven', 1770, 1827, 'art', { d: 'آهنگساز سمفونی نهم و پل کلاسیک به رمانتیک.' }],
+  ['هگل', 'Hegel', 1770, 1831, 'phil', { d: 'فیلسوف دیالکتیک و ایدئالیسم آلمانی.' }],
+  ['فردریک شوپن', 'Chopin', 1810, 1849, 'art', { d: 'آهنگساز و پیانیست نامدار لهستانی.' }],
+  ['بیسمارک', 'Otto von Bismarck', 1815, 1898, 'pol', { d: 'صدراعظم و معمار یکپارچگی آلمان.' }],
+  ['کارل مارکس', 'Karl Marx', 1818, 1883, 'phil', { d: 'نویسندهٔ «سرمایه» و مانیفست کمونیست.' }],
+  ['نیچه', 'Friedrich Nietzsche', 1844, 1900, 'phil', { d: 'نویسندهٔ «چنین گفت زرتشت».' }],
+  ['زیگموند فروید', 'Sigmund Freud', 1856, 1939, 'sci', { d: 'بنیان‌گذار روان‌کاوی در وین.' }],
+  ['آلبرت اینشتین', 'Albert Einstein', 1879, 1955, 'sci', { d: 'پدیدآورندهٔ نظریهٔ نسبیت و فیزیک نوین.' }],
+  ['فرانتس کافکا', 'Franz Kafka', 1883, 1924, 'poet', { d: 'نویسندهٔ «مسخ» و «محاکمه» در پراگ.' }]
+]);
+
+// اسکاندیناوی
+P('nordic', [
+  ['تیکو براهه', 'Tycho Brahe', 1546, 1601, 'sci', { d: 'اخترشناس دقیق دانمارکی پیش از اختراع تلسکوپ.' }],
+  ['کارل لینه', 'Carl Linnaeus', 1707, 1778, 'sci', { d: 'پدر رده‌بندی علمی گیاهان و جانوران در سوئد.' }],
+  ['هانس کریستیان اندرسن', 'Hans Christian Andersen', 1805, 1875, 'poet', { d: 'نویسندهٔ افسانه‌های جاودانهٔ دانمارکی.' }],
+  ['سورن کیرکگور', 'Søren Kierkegaard', 1813, 1855, 'phil', { d: 'بنیان‌گذار اگزیستانسیالیسم در کپنهاگ.' }],
+  ['هنریک ایبسن', 'Henrik Ibsen', 1828, 1906, 'poet', { d: 'پدر نمایش‌نامه‌نویسی مدرن نروژ.' }],
+  ['آلفرد نوبل', 'Alfred Nobel', 1833, 1896, 'sci', { d: 'مخترع و بنیان‌گذار جوایز نوبل در استکهلم.' }],
+  ['ادوارد مونک', 'Edvard Munch', 1863, 1944, 'art', { d: 'نقاش نروژی و خالق تابلوی «جیغ».' }],
+  ['نیلز بور', 'Niels Bohr', 1885, 1962, 'sci', { d: 'بنیان‌گذار مدل اتمی و فیزیک کوانتوم در کپنهاگ.' }]
+]);
+
+// روسیه و اروپای شرقی
+P('russia', [
+  ['میخائیل لومونوسوف', 'Lomonosov', 1711, 1765, 'sci', { d: 'دانشمند و بنیان‌گذار دانشگاه مسکو.' }],
+  ['الکساندر پوشکین', 'Pushkin', 1799, 1837, 'poet', { d: 'پدر ادبیات مدرن روسیه.' }],
+  ['داستایفسکی', 'Fyodor Dostoevsky', 1821, 1881, 'poet', { d: 'نویسندهٔ «جنایت و مکافات» و «برادران کارامازوف».' }],
+  ['تولستوی', 'Leo Tolstoy', 1828, 1910, 'poet', { d: 'نویسندهٔ «جنگ و صلح» و «آنا کارنینا».' }],
+  ['مندلیف', 'Dmitri Mendeleev', 1834, 1907, 'sci', { d: 'پدیدآورندهٔ جدول تناوبی عناصر.' }],
+  ['چایکوفسکی', 'Tchaikovsky', 1840, 1893, 'art', { d: 'آهنگساز بزرگ روس؛ خالق دریاچهٔ قو.' }],
+  ['آنتون چخوف', 'Anton Chekhov', 1860, 1904, 'poet', { d: 'استاد داستان کوتاه و نمایش‌نامه‌نویسی.' }],
+  ['یوری گاگارین', 'Yuri Gagarin', 1934, 1968, 'exp', { d: 'نخستین انسانی که به فضا سفر کرد (۱۹۶۱).' }]
+]);
+
+// شمال آفریقا (مغرب)
+P('maghreb', [
+  ['هانیبال بارکا', 'Hannibal', -247, -183, 'mil', { d: 'سردار کارتاژی که با فیل‌ها از آلپ گذشت.' }],
+  ['محمد ادریسی', 'Al-Idrisi', 1100, 1165, 'sci', { d: 'جغرافی‌دان و نقشه‌نگار نامدار کتاب روجر.' }],
+  ['ابن بطوطه', 'Ibn Battuta', 1304, 1369, 'exp', { d: 'بزرگ‌ترین جهانگرد سده‌های میانه، زادهٔ طنجه.' }],
+  ['ابن خلدون', 'Ibn Khaldun', 1332, 1406, 'sci', { d: 'نویسندهٔ «مقدمه»؛ بنیان‌گذار جامعه‌شناسی تاریخی.' }]
+]);
+
+// آفریقای جنوب صحرا
+P('africa', [
+  ['سوندیاتا کیتا', 'Sundiata Keita', 1217, 1255, 'pol', { a: true, d: 'بنیان‌گذار امپراتوری مالی.' }],
+  ['منسا موسی', 'Mansa Musa', 1280, 1337, 'pol', { a: true, d: 'فرمانروای ثروتمند مالی و سازندهٔ دانشگاه تیمبوکتو.' }],
+  ['شاکا زولو', 'Shaka Zulu', 1787, 1828, 'mil', { a: 's', d: 'بنیان‌گذار پادشاهی زولو در جنوب آفریقا.' }],
+  ['نلسون ماندلا', 'Nelson Mandela', 1918, 2013, 'pol', { d: 'رهبر مبارزه با آپارتاید و برندهٔ صلح نوبل.' }],
+  ['چینوآ آچبه', 'Chinua Achebe', 1930, 2013, 'poet', { d: 'پدر رمان مدرن آفریقا در نیجریه.' }],
+  ['ونگاری ماتای', 'Wangari Maathai', 1940, 2011, 'pol', { d: 'نخستین زن آفریقایی برندهٔ جایزهٔ صلح نوبل در کنیا.' }]
+]);
+
+// آمریکای میانه
+P('mesoamerica', [
+  ['پاکال بزرگ', 'K\'inich Janaab Pakal', 603, 683, 'pol', { d: 'فرمانروای نامدار شهر مایایی پالنکه.' }],
+  ['نتزاهوالکویوتل', 'Nezahualcoyotl', 1402, 1472, 'poet', { d: 'پادشاه فیلسوف، معمار و شاعر تکسکوکو (مکزیک).' }],
+  ['سور خوانا اینس', 'Sor Juana Inés', 1648, 1695, 'poet', { d: 'شاعر و اندیشمند برجستهٔ مکزیک سدهٔ هفدهم.' }],
+  ['بنیتو خوارز', 'Benito Juárez', 1806, 1872, 'pol', { d: 'رئیس‌جمهور اصلاح‌گر و قهرمان ملی مکزیک.' }],
+  ['فریدا کالو', 'Frida Kahlo', 1907, 1954, 'art', { d: 'نقاش برجسته و نماد هنر مدرن مکزیک.' }]
+]);
+
+// آمریکای جنوبی
+P('andes', [
+  ['سیمون بولیوار', 'Simón Bolívar', 1783, 1830, 'mil', { d: 'آزادی‌بخش کشورهای آمریکای جنوبی.' }],
+  ['خورخه لوئیس بورخس', 'Jorge Luis Borges', 1899, 1986, 'poet', { d: 'نویسنده و اندیشمند بزرگ آرژانتین.' }],
+  ['پابلو نرودا', 'Pablo Neruda', 1904, 1973, 'poet', { d: 'شاعر بزرگ شیلی و برندهٔ نوبل ادبیات.' }],
+  ['گابریل گارسیا مارکز', 'García Márquez', 1927, 2014, 'poet', { d: 'نویسندهٔ «صد سال تنهایی» در کلمبیا.' }]
+]);
+
+// آمریکای شمالی
+P('n_america', [
+  ['بنجامین فرانکلین', 'Benjamin Franklin', 1706, 1790, 'sci', { d: 'دانشمند، مخترع برق‌گیر و از بنیان‌گذاران آمریکا.' }],
+  ['توماس جفرسون', 'Thomas Jefferson', 1743, 1826, 'pol', { d: 'نگارندهٔ اعلامیهٔ استقلال آمریکا.' }],
+  ['آبراهام لینکلن', 'Abraham Lincoln', 1809, 1865, 'pol', { d: 'رئیس‌جمهور لغوکنندهٔ برده‌داری در آمریکا.' }],
+  ['مارک تواین', 'Mark Twain', 1835, 1910, 'poet', { d: 'نویسندهٔ «ماجراهای هاکلبری فین».' }],
+  ['توماس ادیسون', 'Thomas Edison', 1847, 1931, 'sci', { d: 'مخترع لامپ رشته‌ای و گرامافون.' }],
+  ['نیکولا تسلا', 'Nikola Tesla', 1856, 1943, 'sci', { d: 'مخترع جریان متناوب و پیشگام مهندسی برق.' }],
+  ['ارنست همینگوی', 'Ernest Hemingway', 1899, 1961, 'poet', { d: 'نویسندهٔ «پیرمرد و دریا» و برندهٔ نوبل.' }],
+  ['مارتین لوتر کینگ', 'Martin Luther King Jr.', 1929, 1968, 'pol', { d: 'رهبر جنبش حقوق مدنی آمریکا.' }],
+  ['نیل آرمسترانگ', 'Neil Armstrong', 1930, 2012, 'exp', { d: 'نخستین انسانی که بر ماه گام نهاد (۱۹۶۹).' }]
+]);
+
+// اقیانوسیه
+P('oceania', [
+  ['ارنست رادرفورد', 'Ernest Rutherford', 1871, 1937, 'sci', { d: 'پدر فیزیک هسته‌ای، زادهٔ نیوزیلند.' }],
+  ['پاتریک وایت', 'Patrick White', 1912, 1990, 'poet', { d: 'نویسندهٔ استرالیایی و برندهٔ نوبل ادبیات.' }],
+  ['ادموند هیلاری', 'Edmund Hillary', 1919, 2008, 'exp', { d: 'کوهنورد نیوزیلندی؛ نخستین فاتح اورست (۱۹۵۳).' }],
+  ['ادی مابو', 'Eddie Mabo', 1936, 1992, 'pol', { d: 'کنشگر برجستهٔ حقوق بومیان استرالیا.' }]
+]);
+
+/* data/geo-places.js */
+/* Exact geographic coordinates [lon, lat, placeNameFa] for historical figures (birthplaces)
+   and historical events/battles/landmarks across all 27 regions. */
+(function () {
+  // 1. Exact birthplaces / primary cities for historical figures (matched by person.n)
+  TL.PEOPLE_GEO = {
+    // ایران
+    'زرتشت': [66.9, 36.8, 'بلخ · خراسان باستان'],
+    'مانی': [44.5, 33.1, 'مردینو (بابل / تیسفون)'],
+    'مزدک': [51.4, 35.6, 'مداین · ایرانشهر'],
+    'بزرگمهر بختگان': [62.2, 37.6, 'مرو · تیسفون'],
+    'باربد جهرمی': [53.56, 28.50, 'جهرم'],
+    'ابن مقفع (روزبه)': [52.57, 28.84, 'گور (فیروزآباد فارس)'],
+    'ابومسلم خراسانی': [62.18, 37.66, 'مرو · اصفهان'],
+    'سیبویه': [52.40, 29.97, 'بیضای فارس'],
+    'خوارزمی': [60.36, 41.38, 'خوارزم'],
+    'بابک خرمدین': [47.03, 38.87, 'قلعهٔ بذ (کلیبر آذربایجان)'],
+    'طبری': [52.35, 36.47, 'آمل'],
+    'رودکی': [67.61, 39.50, 'پنجرود (سمرقند)'],
+    'محمد زکریای رازی': [51.43, 35.59, 'ری'],
+    'فارابی': [68.38, 42.85, 'فاراب (ماوراءالنهر)'],
+    'رابعه بلخی': [66.90, 36.76, 'بلخ'],
+    'فردوسی': [59.51, 36.49, 'طوس'],
+    'ابوسعید ابوالخیر': [60.60, 36.85, 'میهنه (خراسان)'],
+    'ابوریحان بیرونی': [60.36, 41.55, 'کاث (خوارزم)'],
+    'ابن‌سینا': [64.42, 39.77, 'افشنه (بخارا)'],
+    'بیهقی': [57.68, 36.21, 'بیهق (سبزوار)'],
+    'ناصرخسرو': [68.18, 37.30, 'قبادیان (بلخ)'],
+    'خواجه نظام‌الملک': [59.51, 36.49, 'طوس'],
+    'عمر خیام': [58.79, 36.21, 'نیشابور'],
+    'امام محمد غزالی': [59.51, 36.49, 'طوس'],
+    'سنایی': [68.42, 33.55, 'غزنین'],
+    'نظامی گنجوی': [46.36, 40.68, 'گنجه'],
+    'عطار نیشابوری': [58.79, 36.21, 'نیشابور'],
+    'شیخ اشراق سهروردی': [48.44, 36.05, 'سهرورد (زنجان)'],
+    'فخر رازی': [51.43, 35.59, 'ری'],
+    'خواجه نصیرالدین طوسی': [59.51, 36.49, 'طوس · مراغه'],
+    'مولوی': [66.90, 36.76, 'بلخ · قونیه'],
+    'سعدی': [52.53, 29.59, 'شیراز'],
+    'عطاملک جوینی': [57.42, 36.66, 'جوین (خراسان)'],
+    'قطب‌الدین شیرازی': [51.65, 29.62, 'کازرون · شیراز'],
+    'رشیدالدین فضل‌الله': [48.52, 34.80, 'همدان · تبریز'],
+    'عبید زاکانی': [50.00, 36.27, 'قزوین'],
+    'حافظ': [52.53, 29.59, 'شیراز'],
+    'جمشید کاشانی': [51.44, 33.98, 'کاشان · سمرقند'],
+    'جامی': [60.62, 35.24, 'جام (خراسان) · هرات'],
+    'کمال‌الدین بهزاد': [62.20, 34.35, 'هرات'],
+    'شیخ بهایی': [36.21, 34.00, 'بعلبک · اصفهان'],
+    'میرداماد': [54.44, 36.84, 'استرآباد · اصفهان'],
+    'رضا عباسی': [51.67, 32.65, 'اصفهان'],
+    'ملاصدرا': [52.53, 29.59, 'شیراز'],
+    'صائب تبریزی': [46.29, 38.08, 'تبریز · اصفهان'],
+    'علامه مجلسی': [51.67, 32.65, 'اصفهان'],
+    'قائم‌مقام فراهانی': [49.70, 34.50, 'فراهان'],
+    'عباس میرزا': [52.95, 36.50, 'نوا (مازندران) · تبریز'],
+    'امیرکبیر': [49.55, 34.12, 'هزاوه (اراک)'],
+    'طاهره قرةالعین': [50.00, 36.27, 'قزوین'],
+    'باب': [52.53, 29.59, 'شیراز'],
+    'میرزا ملکم‌خان': [51.65, 32.63, 'جلفای اصفهان'],
+    'سید جمال‌الدین اسدآبادی': [48.12, 34.78, 'اسدآباد (همدان)'],
+    'کمال‌الملک': [51.44, 33.98, 'کاشان'],
+    'ستارخان': [46.29, 38.08, 'قره‌داغ · تبریز'],
+    'ایرج میرزا': [46.29, 38.08, 'تبریز'],
+    'محمدعلی فروغی': [51.39, 35.69, 'تهران'],
+    'علی‌اکبر دهخدا': [51.39, 35.69, 'تهران'],
+    'محمد مصدق': [51.39, 35.69, 'تهران'],
+    'نیما یوشیج': [51.78, 36.18, 'یوش (مازندران)'],
+    'صادق هدایت': [51.39, 35.69, 'تهران'],
+    'شهریار': [46.29, 38.08, 'تبریز'],
+    'پروین اعتصامی': [46.29, 38.08, 'تبریز'],
+    'لطفی‌زاده': [49.87, 40.41, 'باکو · تهران'],
+    'احمد شاملو': [51.39, 35.69, 'تهران'],
+    'سهراب سپهری': [51.44, 33.98, 'کاشان'],
+    'علی شریعتی': [56.83, 36.28, 'کاهک (سبزوار)'],
+    'فروغ فرخزاد': [51.39, 35.69, 'تهران'],
+    'محمدرضا شجریان': [59.60, 36.29, 'مشهد'],
+    'عباس کیارستمی': [51.39, 35.69, 'تهران'],
+    'شیرین عبادی': [48.52, 34.80, 'همدان'],
+    'اصغر فرهادی': [51.53, 32.69, 'خمینی‌شهر (اصفهان)'],
+    'نرگس محمدی': [48.48, 36.67, 'زنجان'],
+    'مریم میرزاخانی': [51.39, 35.69, 'تهران'],
+
+    // میان‌رودان، آناتولی، قفقاز، شام، عربستان، مصر
+    'انهدوانا': [46.10, 30.96, 'اور'],
+    'حمورابی': [44.42, 32.54, 'بابل'],
+    'جاحظ': [47.78, 30.51, 'بصره'],
+    'کندی': [44.40, 32.03, 'کوفه · بغداد'],
+    'منصور حلاج': [52.40, 29.97, 'بیضا · بغداد'],
+    'متنبی': [44.40, 32.03, 'کوفه'],
+    'ابن هیثم': [47.78, 30.51, 'بصره'],
+    'زها حدید': [44.36, 33.31, 'بغداد'],
+    'تالس ملطی': [27.28, 37.53, 'میلتوس (ایونیه)'],
+    'هراکلیتوس': [27.34, 37.94, 'افسوس'],
+    'استرابون': [35.83, 40.65, 'آماسیا'],
+    'یونس امره': [31.50, 39.65, 'ساری‌کوی (آناتولی)'],
+    'پیری رئیس': [26.67, 40.41, 'گالیپولی'],
+    'معمار سنان': [35.62, 38.73, 'قیصریه · استانبول'],
+    'مصطفی کمال آتاتورک': [22.94, 40.64, 'سالونیک · آنکارا'],
+    'مسروپ ماشتوتس': [41.78, 38.75, 'تارون (ارمنستان)'],
+    'خاقانی شروانی': [48.64, 40.63, 'شماخی (شروان)'],
+    'شوتا روستاولی': [43.25, 41.60, 'روستاوی (گرجستان)'],
+    'آرام خاچاتوریان': [44.80, 41.72, 'تفلیس'],
+    'عیسی مسیح': [35.20, 31.70, 'بیت‌لحم · ناصره'],
+    'زنوبیا': [38.27, 34.55, 'پالمیرا (تدمر)'],
+    'ابوالعلای معری': [36.68, 35.65, 'معرةالنعمان'],
+    'صلاح‌الدین ایوبی': [43.68, 34.61, 'تکریت · دمشق'],
+    'جبران خلیل جبران': [36.01, 34.25, 'بشری (لبنان)'],
+    'امرؤالقیس': [44.50, 25.50, 'نجد'],
+    'محمد پیامبر اسلام': [39.83, 21.42, 'مکه'],
+    'علی بن ابی‌طالب': [39.83, 21.42, 'مکه'],
+    'حسین بن علی': [39.61, 24.47, 'مدینه'],
+    'خلیل بن احمد فراهیدی': [58.54, 23.61, 'عمان · بصره'],
+    'احمد بن ماجد': [55.95, 25.79, 'جلفار (رأس‌الخیمه)'],
+    'ایمحوتپ': [31.25, 29.85, 'ممفیس'],
+    'آخناتون': [32.64, 25.70, 'تبس (اقصر)'],
+    'کلئوپاترا هفتم': [29.92, 31.20, 'اسکندریه'],
+    'هیپاتیا': [29.92, 31.20, 'اسکندریه'],
+    'ابن یونس مصری': [31.24, 30.04, 'فسطاط (قاهره)'],
+    'ام‌کلثوم': [31.50, 30.88, 'دقهلیه · قاهره'],
+    'نجیب محفوظ': [31.24, 30.04, 'قاهره'],
+
+    // آسیای میانه، استپ، هند، چین، کره و ژاپن، جنوب شرق آسیا
+    'امام بخاری': [64.42, 39.77, 'بخارا'],
+    'احمد فرغانی': [71.78, 40.38, 'فرغانه'],
+    'الغ‌بیگ': [48.79, 36.43, 'سلطانیه · سمرقند'],
+    'علیشیر نوایی': [62.20, 34.35, 'هرات'],
+    'محمود طرزی': [68.42, 33.55, 'غزنی · کابل'],
+    'تونیوقوق': [106.90, 47.90, 'درهٔ اورخون (مغولستان)'],
+    'چنگیزخان': [109.00, 48.60, 'دلون بولداق (مغولستان)'],
+    'ابای قونانبای‌اولی': [80.25, 50.41, 'سمی (قزاقستان)'],
+    'بودا': [83.28, 27.47, 'لومبینی'],
+    'پانینی': [72.42, 34.02, 'گنداره (پنجاب)'],
+    'چاناکیا': [72.83, 33.75, 'تاکسیلا'],
+    'کالیداسا': [75.78, 23.18, 'اوجائین'],
+    'آریابهاتا': [85.14, 25.61, 'پاتالی‌پوترا'],
+    'امیرخسرو دهلوی': [78.66, 27.55, 'پتیالی · دهلی'],
+    'کبیر': [82.97, 25.32, 'بنارس (واراناسی)'],
+    'میرزا غالب': [78.01, 27.18, 'آگره · دهلی'],
+    'رابیندرانات تاگور': [88.36, 22.57, 'کلکته'],
+    'مهاتما گاندی': [69.61, 21.64, 'پوربندر (گجرات)'],
+    'محمد اقبال لاهوری': [74.53, 32.49, 'سیالکوت · لاهور'],
+    'سرینیواسا رامانوجان': [77.72, 11.34, 'ارود (تامیل نادو)'],
+    'لائوتسه': [115.48, 33.86, 'چو (هنان)'],
+    'کنفوسیوس': [116.99, 35.59, 'چوفو'],
+    'سون تزو': [118.47, 36.68, 'چی (شاندونگ)'],
+    'سیما چیان': [110.44, 35.48, 'لونگ‌من (شنشی)'],
+    'کای لون': [112.85, 26.42, 'لئی‌یانگ (هونان)'],
+    'لی بای': [75.20, 42.80, 'سویاب · چانگ‌آن'],
+    'دو فو': [112.98, 34.76, 'گونگ‌یی (هنان)'],
+    'ژنگ هه': [102.60, 24.67, 'یون‌نان · نانجینگ'],
+    'سون یات‌سن': [113.38, 22.52, 'گوانگ‌دونگ'],
+    'موراساکی شیکیبو': [135.77, 35.01, 'کیوتو'],
+    'سجونگ بزرگ': [126.98, 37.57, 'هانیانگ (سئول)'],
+    'یی سون‌شین': [126.98, 37.57, 'سئول'],
+    'میاموتو موساشی': [134.33, 35.10, 'هاریما (ژاپن)'],
+    'ماتسوئو باشو': [136.13, 34.77, 'ایگا · ادو'],
+    'هوکوسای': [139.69, 35.69, 'ادو (توکیو)'],
+    'آکیرا کوروساوا': [139.69, 35.69, 'توکیو'],
+    'هایائو میازاکی': [139.69, 35.69, 'توکیو'],
+    'سوریه‌وارمان دوم': [103.87, 13.41, 'آنگکور (کامبوج)'],
+    'گاجاه مادا': [112.38, -7.55, 'تروولان (جاوه)'],
+    'خوزه ریزال': [121.16, 14.21, 'کالامبا (فیلیپین)'],
+    'هو شی مین': [105.55, 18.67, 'نگه آن (ویتنام)'],
+
+    // اروپا
+    'هومر': [27.14, 38.42, 'اسمیرنا (ایونیه)'],
+    'سافو': [26.55, 39.10, 'لسبوس'],
+    'فیثاغورس': [26.97, 37.75, 'جزیرهٔ ساموس'],
+    'سوفوکل': [23.73, 37.98, 'آتن'],
+    'هرودوت': [27.43, 37.04, 'هالیکارناسوس (بدروم)'],
+    'سقراط': [23.73, 37.98, 'آتن'],
+    'بقراط': [27.29, 36.89, 'جزیرهٔ کوس'],
+    'توسیدید': [23.73, 37.98, 'آتن'],
+    'افلاطون': [23.73, 37.98, 'آتن'],
+    'ارسطو': [23.75, 40.59, 'استاگیرا (مقدونیه)'],
+    'اقلیدس': [29.92, 31.20, 'اسکندریه'],
+    'ارشمیدس': [15.29, 37.07, 'سیراکوز (سیسیل)'],
+    'سیسرون': [13.61, 41.65, 'آرپینو · رم'],
+    'ژولیوس سزار': [12.50, 41.90, 'رم'],
+    'ویرژیل': [10.79, 45.16, 'مانتوا'],
+    'بطلمیوس': [29.92, 31.20, 'اسکندریه'],
+    'جالینوس': [27.18, 39.12, 'پرگامون · رم'],
+    'آگوستین': [7.95, 36.29, 'تگاسته (الجزایر)'],
+    'فیبوناچی': [10.40, 43.72, 'پیزا'],
+    'توماس آکویناس': [13.64, 41.55, 'روکاسکا · ناپل'],
+    'مارکوپولو': [12.32, 45.44, 'ونیز'],
+    'دانته': [11.25, 43.77, 'فلورانس'],
+    'لئوناردو داوینچی': [10.92, 43.78, 'وینچی (فلورانس)'],
+    'ماکیاولی': [11.25, 43.77, 'فلورانس'],
+    'میکل‌آنژ': [11.98, 43.64, 'کاپرزه · فلورانس'],
+    'گالیله': [10.40, 43.72, 'پیزا · فلورانس'],
+    'آنتونیو ویوالدی': [12.32, 45.44, 'ونیز'],
+    'الساندرو ولتا': [9.08, 45.81, 'کومو'],
+    'گاریبالدی': [7.26, 43.71, 'نیس'],
+    'ماریا مونته‌سوری': [13.32, 43.60, 'کیاراواله · رم'],
+    'سنکا': [-4.78, 37.89, 'قرطبه'],
+    'ابن رشد': [-4.78, 37.89, 'قرطبه'],
+    'ابن میمون': [-4.78, 37.89, 'قرطبه'],
+    'ابن عربی': [-1.13, 37.99, 'مورسیا'],
+    'کریستف کلمب': [8.94, 44.41, 'جنوا · اسپانیا'],
+    'واسکو دو گاما': [-8.87, 37.95, 'سینش (پرتغال)'],
+    'ماژلان': [-7.58, 41.27, 'سابروزا (پرتغال)'],
+    'سروانتس': [-3.36, 40.48, 'آلکالا (مادرید)'],
+    'فرانسیسکو گویا': [-0.96, 41.34, 'آراگون · مادرید'],
+    'پیکاسو': [-4.42, 36.72, 'مالاگا'],
+    'ژاندارک': [5.67, 48.44, 'دومرمی · اورلئان'],
+    'دکارت': [0.70, 46.97, 'تورن (فرانسه)'],
+    'رامبرانت': [4.49, 52.16, 'لیدن · آمستردام'],
+    'مولیر': [2.35, 48.86, 'پاریس'],
+    'ولتر': [2.35, 48.86, 'پاریس'],
+    'روسو': [6.14, 46.20, 'ژنو'],
+    'آنتوان لاووازیه': [2.35, 48.86, 'پاریس'],
+    'ویکتور هوگو': [6.02, 47.24, 'بزانسون · پاریس'],
+    'لویی پاستور': [5.49, 47.09, 'دول · پاریس'],
+    'کلود مونه': [2.35, 48.86, 'پاریس · ژیورنی'],
+    'ونسان ون گوگ': [4.66, 51.47, 'زوندرت (هلند)'],
+    'ماری کوری': [21.01, 52.23, 'ورشو · پاریس'],
+    'آلبر کامو': [7.74, 36.76, 'موندووی · پاریس'],
+    'شکسپیر': [-1.71, 52.19, 'استراتفورد'],
+    'جان لاک': [-2.76, 51.36, 'سامرست · آکسفورد'],
+    'آیزاک نیوتن': [-0.63, 52.81, 'وولزتورپ · کمبریج'],
+    'آدام اسمیت': [-3.17, 56.11, 'کرکالدی (اسکاتلند)'],
+    'جین آستن': [-1.22, 51.23, 'همپشر'],
+    'مایکل فارادی': [-0.10, 51.49, 'لندن'],
+    'چارلز داروین': [-2.75, 52.71, 'شروزبری'],
+    'آدا لاولیس': [-0.13, 51.51, 'لندن'],
+    'وینستون چرچیل': [-1.36, 51.84, 'کاخ بلنهیم · لندن'],
+    'آلن تورینگ': [-0.18, 51.52, 'لندن'],
+    'استیون هاوکینگ': [-1.26, 51.75, 'آکسفورد · کمبریج'],
+    'گوتنبرگ': [8.25, 50.00, 'ماینتس'],
+    'کوپرنیک': [18.60, 53.01, 'تورون (لهستان)'],
+    'مارتین لوتر': [11.55, 51.53, 'آیسلبن · ویتنبرگ'],
+    'کپلر': [8.87, 48.75, 'وایل در اشتات'],
+    'لایبنیتس': [12.37, 51.34, 'لایپزیگ'],
+    'باخ': [10.32, 50.97, 'آیزناخ · لایپزیگ'],
+    'کانت': [20.51, 54.71, 'کونیگسبرگ'],
+    'گوته': [8.68, 50.11, 'فرانکفورت · وایمار'],
+    'موتسارت': [13.04, 47.80, 'سالزبورگ · وین'],
+    'بتهوون': [7.10, 50.73, 'بن · وین'],
+    'هگل': [9.18, 48.78, 'اشتوتگارت · برلین'],
+    'فردریک شوپن': [20.31, 52.26, 'ورشو'],
+    'بیسمارک': [12.02, 52.58, 'شون‌هاوزن · برلین'],
+    'کارل مارکس': [6.64, 49.75, 'تری‌یر · لندن'],
+    'نیچه': [12.11, 51.24, 'روکن (زاکسن)'],
+    'زیگموند فروید': [18.14, 49.64, 'فرایبرگ · وین'],
+    'آلبرت اینشتین': [9.99, 48.40, 'اولم'],
+    'فرانتس کافکا': [14.44, 50.08, 'پراگ'],
+    'تیکو براهه': [13.10, 56.00, 'اسکونه (دانمارک)'],
+    'کارل لینه': [14.20, 56.62, 'اسمولند · اوپسالا'],
+    'هانس کریستیان اندرسن': [10.39, 55.40, 'اودنسه'],
+    'سورن کیرکگور': [12.57, 55.68, 'کپنهاگ'],
+    'هنریک ایبسن': [9.61, 59.21, 'شین (نروژ)'],
+    'آلفرد نوبل': [18.07, 59.33, 'استکهلم'],
+    'ادوارد مونک': [11.34, 60.82, 'اسلو'],
+    'نیلز بور': [12.57, 55.68, 'کپنهاگ'],
+    'میخائیل لومونوسوف': [41.72, 64.22, 'آرخانگلسک · مسکو'],
+    'الکساندر پوشکین': [37.62, 55.76, 'مسکو'],
+    'داستایفسکی': [37.62, 55.76, 'مسکو · سن‌پترزبورگ'],
+    'تولستوی': [37.53, 54.08, 'یاسنایا پولیانا'],
+    'مندلیف': [68.26, 58.20, 'توبولسک · سن‌پترزبورگ'],
+    'چایکوفسکی': [53.99, 57.05, 'وتکینسک · مسکو'],
+    'آنتون چخوف': [38.93, 47.24, 'تاگانروگ'],
+    'یوری گاگارین': [35.00, 55.55, 'کلوشینو (اسمولنسک)'],
+
+    // آفریقا، آمریکا، اقیانوسیه
+    'هانیبال بارکا': [10.32, 36.85, 'کارتاژ'],
+    'محمد ادریسی': [-5.32, 35.89, 'سبته · پالرمو'],
+    'ابن بطوطه': [-5.80, 35.76, 'طنجه'],
+    'ابن خلدون': [10.18, 36.81, 'تونس'],
+    'سوندیاتا کیتا': [-8.00, 12.65, 'نیانی (مالی)'],
+    'منسا موسی': [-3.01, 16.77, 'مالی · تیمبوکتو'],
+    'شاکا زولو': [31.39, -28.58, 'زولولند (آفریقای جنوبی)'],
+    'نلسون ماندلا': [28.78, -31.59, 'موزو · ژوهانسبورگ'],
+    'چینوآ آچبه': [6.88, 6.15, 'اوگیدی (نیجریه)'],
+    'ونگاری ماتای': [36.95, -0.42, 'نیری · نایروبی'],
+    'پاکال بزرگ': [-92.05, 17.48, 'پالنکه (مکزیک)'],
+    'نتزاهوالکویوتل': [-98.88, 19.51, 'تکسکوکو (مکزیک)'],
+    'سور خوانا اینس': [-98.77, 18.98, 'مکزیکوسیتی'],
+    'بنیتو خوارز': [-96.48, 17.32, 'اوآخاکا'],
+    'فریدا کالو': [-99.16, 19.35, 'کویوآکان (مکزیکوسیتی)'],
+    'سیمون بولیوار': [-66.90, 10.48, 'کاراکاس'],
+    'خورخه لوئیس بورخس': [-58.38, -34.60, 'بوئنوس آیرس'],
+    'پابلو نرودا': [-71.82, -36.14, 'پارال (شیلی)'],
+    'گابریل گارسیا مارکز': [-74.19, 10.59, 'آراکاتاکا (کلمبیا)'],
+    'بنجامین فرانکلین': [-71.06, 42.36, 'بوستون · فیلادلفیا'],
+    'توماس جفرسون': [-78.45, 38.01, 'ویرجینیا'],
+    'آبراهام لینکلن': [-85.74, 37.53, 'کنتاکی · واشنگتن'],
+    'مارک تواین': [-91.79, 39.49, 'میزوری'],
+    'توماس ادیسون': [-82.61, 41.30, 'اوهایو'],
+    'نیکولا تسلا': [15.32, 44.56, 'سمیلیان (کرواسی) · نیویورک'],
+    'ارنست همینگوی': [-87.78, 41.89, 'شیکاگو'],
+    'مارتین لوتر کینگ': [-84.39, 33.75, 'آتلانتا'],
+    'نیل آرمسترانگ': [-84.19, 40.57, 'اوهایو'],
+    'ارنست رادرفورد': [173.13, -41.36, 'نلسون (نیوزیلند)'],
+    'پاتریک وایت': [151.21, -33.87, 'سیدنی'],
+    'ادموند هیلاری': [174.76, -36.85, 'آوکلند (نیوزیلند)'],
+    'ادی مابو': [144.05, -9.92, 'جزیرهٔ مری (استرالیا)']
+  };
+
+  // 2. Exact keyword/place coordinate table for battles, treaties, landmarks & events
+  //    Matched with Persian word-boundaries (never matching inside unrelated words!) and title-first priority.
+  TL.EVENT_GEO = [
+    // مکان‌ها و نبردهای دقیق تاریخ ایران
+    ['چغاگلان', 46.50, 33.35, 'چغاگلان (ایلام)'],
+    ['گنج‌دره', 47.48, 34.45, 'گنج‌دره (هرسین)'],
+    ['تپه سیلک', 51.40, 33.97, 'تپه سیلک (کاشان)'],
+    ['آغاز ایلامی', 48.25, 32.19, 'شوش'],
+    ['ایلامیان اور را', 46.10, 30.96, 'اور (سومر)'],
+    ['چغازنبیل', 48.52, 32.01, 'چغازنبیل (خوزستان)'],
+    ['غارت بابل', 44.42, 32.54, 'بابل'],
+    ['حسنلو', 45.46, 37.00, 'تپه حسنلو (آذربایجان غربی)'],
+    ['هالیس', 34.80, 40.50, 'رود هالیس (آناتولی)'],
+    ['کوروش ماد', 48.51, 34.80, 'هگمتانه (همدان)'],
+    ['لیدیه و سارد', 28.04, 38.49, 'سارد (لیدیه)'],
+    ['استوانهٔ کوروش', 44.42, 32.54, 'بابل'],
+    ['کمبوجیه مصر', 31.25, 29.85, 'پلوزیوم · ممفیس (مصر)'],
+    ['بیستون', 47.44, 34.39, 'بیستون (کرمانشاه)'],
+    ['تخت جمشید', 52.89, 29.93, 'تخت جمشید (پارس)'],
+    ['جشن‌های ۲۵۰۰ ساله', 52.89, 29.93, 'تخت جمشید (پارس)'],
+    ['ایونیه', 27.28, 37.53, 'میلتوس (ایونیه)'],
+    ['ماراتون', 23.96, 38.15, 'دشت ماراتون (یونان)'],
+    ['ترموپیل', 22.54, 38.80, 'ترموپیل و سالامیس (یونان)'],
+    ['کالیاس', 23.73, 37.98, 'آتن'],
+    ['کوناکسا', 43.95, 33.25, 'کوناکسا (نزدیک بابل)'],
+    ['ایسوس', 36.17, 36.84, 'ایسوس (کیلیکیه)'],
+    ['گوگمل', 43.40, 36.36, 'گوگمل (نزدیک اربیل)'],
+    ['عروسی‌های شوش', 48.25, 32.19, 'شوش'],
+    ['مهرداد یکم میان‌رودان', 44.52, 33.09, 'سلوکیه (تیسفون)'],
+    ['آنتیوخوس هفتم', 48.51, 34.80, 'هگمتانه (ماد)'],
+    ['حران', 39.03, 36.86, 'حران (کاره)'],
+    ['مارکوس آنتونیوس', 47.23, 36.60, 'فرااسپا (آذربایجان)'],
+    ['درفش‌های رومی', 39.03, 36.86, 'فرات · کاره'],
+    ['رندیا', 39.50, 38.70, 'رندیا (ارمنستان)'],
+    ['تیسفون', 44.58, 33.09, 'تیسفون'],
+    ['هرمزگان', 49.00, 32.00, 'دشت هرمزگان (خوزستان)'],
+    ['ادسا', 38.80, 37.16, 'ادسا (شانلی‌اورفه)'],
+    ['گندی‌شاپور', 48.52, 32.28, 'گندی‌شاپور (دزفول)'],
+    ['مرگ مانی', 48.52, 32.28, 'گندی‌شاپور'],
+    ['ژولیان', 44.00, 34.05, 'سامرا · تیسفون'],
+    ['تقسیم ارمنستان', 44.51, 40.18, 'ارمنستان'],
+    ['آوارایر', 45.05, 38.88, 'دشت آوارایر (آذربایجان غربی)'],
+    ['هپتالیان', 66.90, 36.76, 'تخارستان (بلخ)'],
+    ['مزدک', 44.58, 33.09, 'تیسفون'],
+    ['انوشیروان', 44.58, 33.09, 'تیسفون'],
+    ['صلح جاودان', 40.95, 37.18, 'دارا · میان‌رودان'],
+    ['گشودن یمن', 44.21, 15.37, 'صنعا (یمن)'],
+    ['اورشلیم', 35.21, 31.77, 'اورشلیم'],
+    ['قسطنطنیه', 28.98, 41.01, 'قسطنطنیه'],
+    ['نینوا', 43.15, 36.36, 'نینوا (موصل)'],
+    ['قادسیه', 44.36, 31.59, 'قادسیه (عراق)'],
+    ['نهاوند', 48.37, 34.19, 'نهاوند'],
+    ['یزدگرد سوم', 62.18, 37.66, 'مرو'],
+    ['دیوان‌ها از پارسی', 36.29, 33.51, 'دمشق · عراق'],
+    ['قیام ابومسلم', 62.18, 37.66, 'مرو (خراسان)'],
+    ['کشته‌شدن ابومسلم', 58.79, 36.21, 'نیشابور · تیسفون'],
+    ['سپیدجامگان', 65.80, 38.86, 'نسف (ماوراءالنهر)'],
+    ['برمکیان', 44.36, 33.31, 'بغداد'],
+    ['بابک خرمدین', 47.03, 38.87, 'قلعهٔ بذ (آذربایجان)'],
+    ['یعقوب لیث', 61.86, 30.96, 'زرنج (سیستان)'],
+    ['عمرو لیث', 66.90, 36.76, 'بلخ'],
+    ['آثارالباقیه', 54.44, 36.84, 'گرگان'],
+    ['قانون در طب', 48.51, 34.80, 'همدان · اصفهان'],
+    ['دندانقان', 61.82, 37.39, 'دندانقان (نزدیک مرو)'],
+    ['ملازگرد', 42.54, 39.14, 'ملازگرد (آناتولی شرقی)'],
+    ['الموت', 50.58, 36.44, 'قلعهٔ الموت (قزوین)'],
+    ['نظام‌الملک', 47.69, 34.48, 'صحنه (کرمانشاه)'],
+    ['قطوان', 66.96, 39.75, 'دشت قطوان (نزدیک سمرقند)'],
+    ['اترار', 68.30, 42.85, 'اترار (سیحون)'],
+    ['یورش چنگیزخان', 68.30, 42.85, 'اترار · ماوراءالنهر'],
+    ['نیشابور و مرو', 58.79, 36.21, 'نیشابور'],
+    ['رصدخانهٔ مراغه', 46.24, 37.39, 'مراغه'],
+    ['غازان خان', 46.29, 38.08, 'تبریز'],
+    ['گنبد سلطانیه', 48.79, 36.43, 'سلطانیه (زنجان)'],
+    ['مرگ ابوسعید', 48.79, 36.43, 'سلطانیه'],
+    ['یورش‌های تیمور', 62.20, 34.35, 'هرات · خراسان'],
+    ['آنکارا', 32.85, 39.93, 'آنکارا'],
+    ['گوهرشاد', 59.60, 36.29, 'مشهد'],
+    ['سمرقند', 66.96, 39.65, 'سمرقند'],
+    ['مسجد کبود', 46.29, 38.08, 'تبریز'],
+    ['اوتلوق‌بلی', 40.02, 39.97, 'اوتلوق‌بلی (آناتولی شرقی)'],
+    ['نبرد مرو', 62.18, 37.66, 'مرو'],
+    ['تبریز', 46.29, 38.08, 'تبریز'],
+    ['هرمز', 56.46, 27.07, 'جزیرهٔ هرمز'],
+    ['چالدران', 44.38, 39.09, 'دشت چالدران'],
+    ['آماسیه', 35.83, 40.65, 'آماسیه'],
+    ['اصفهان', 51.67, 32.65, 'اصفهان'],
+    ['ذهاب', 45.86, 34.46, 'قصر شیرین (ذهاب)'],
+    ['مهماندوست', 54.58, 36.22, 'مهماندوست (دامغان)'],
+    ['دشت مغان', 47.90, 39.60, 'دشت مغان (اردبیل)'],
+    ['کرنال', 76.98, 29.68, 'کرنال · دهلی'],
+    ['کشته‌شدن نادرشاه', 58.50, 37.11, 'فتح‌آباد (قوچان)'],
+    ['شیراز', 52.53, 29.59, 'شیراز'],
+    ['تفلیس', 44.80, 41.72, 'تفلیس'],
+    ['جنگ نخست ایران و روس', 46.36, 40.68, 'گنجه · قفقاز'],
+    ['گلستان', 46.60, 40.30, 'گلستان (قره‌باغ)'],
+    ['جنگ دوم ایران و روس', 46.29, 38.08, 'قفقاز · تبریز'],
+    ['ترکمنچای', 47.39, 37.58, 'ترکمنچای (آذربایجان شرقی)'],
+    ['اعلام دعوت باب', 52.53, 29.59, 'شیراز'],
+    ['کاشان', 51.44, 33.98, 'باغ فین کاشان'],
+    ['هرات', 62.20, 34.35, 'هرات'],
+    ['ترور ناصرالدین‌شاه', 51.43, 35.59, 'شهر ری'],
+    ['قرارداد روس و انگلیس', 30.33, 59.93, 'سن‌پترزبورگ'],
+    ['مسجدسلیمان', 49.30, 31.94, 'مسجدسلیمان (خوزستان)'],
+    ['خرمشهر', 48.18, 30.44, 'خرمشهر'],
+    ['رودبار', 49.41, 36.81, 'رودبار و منجیل (گیلان)'],
+    ['زلزلهٔ بم', 58.36, 29.11, 'بم (کرمان)'],
+    ['سینما رکس', 48.30, 30.34, 'آبادان'],
+    ['تهران', 51.39, 35.69, 'تهران'],
+    ['مشروطه', 51.39, 35.69, 'تهران'],
+    ['دارالفنون', 51.39, 35.69, 'تهران'],
+    ['امیرکبیر', 51.39, 35.69, 'تهران'],
+    ['امتیاز رویتر', 51.39, 35.69, 'تهران'],
+    ['به توپ بستن مجلس', 51.39, 35.69, 'تهران'],
+    ['اولتیماتوم روسیه', 51.39, 35.69, 'تهران'],
+    ['قرارداد ۱۹۱۹', 51.39, 35.69, 'تهران'],
+    ['کودتای ۳ اسفند', 51.39, 35.69, 'تهران'],
+    ['انقراض قاجار', 51.39, 35.69, 'تهران'],
+    ['کاپیتولاسیون', 51.39, 35.69, 'تهران'],
+    ['کشف حجاب', 51.39, 35.69, 'تهران'],
+    ['انقلاب سفید', 51.39, 35.69, 'تهران · قم'],
+    ['قطعنامهٔ ۵۹۸', 51.39, 35.69, 'تهران'],
+    ['درگذشت خمینی', 51.39, 35.69, 'تهران'],
+    ['دوم خرداد', 51.39, 35.69, 'تهران'],
+    ['جنبش ۱۸ تیر', 51.39, 35.69, 'تهران'],
+    ['جنبش سبز', 51.39, 35.69, 'تهران'],
+    ['زن، زندگی، آزادی', 51.39, 35.69, 'تهران · سقز'],
+    ['نفت', 51.39, 35.69, 'تهران · آبادان'],
+    ['شاهنامه', 59.51, 36.49, 'طوس'],
+    ['جلالی', 51.67, 32.65, 'اصفهان'],
+    ['بابل', 44.42, 32.54, 'بابل'],
+    ['شوش', 48.25, 32.19, 'شوش'],
+    ['مرو', 62.18, 37.66, 'مرو'],
+    ['بغداد', 44.36, 33.31, 'بغداد'],
+
+    // مکان‌ها و نبردهای دقیق تاریخ جهان
+    ['اوروک', 45.64, 31.32, 'اوروک (سومر)'],
+    ['اورنمو', 46.10, 30.96, 'اور'],
+    ['حمورابی', 44.42, 32.54, 'بابل'],
+    ['کربلا', 44.03, 32.62, 'کربلا'],
+    ['کویت', 47.98, 29.37, 'کویت'],
+    ['گوبکلی‌تپه', 38.92, 37.22, 'گوبکلی‌تپه (آناتولی)'],
+    ['لیدیه', 28.04, 38.49, 'سارد (لیدیه)'],
+    ['ایاصوفیه', 28.98, 41.01, 'قسطنطنیه'],
+    ['کوسه‌داغ', 37.90, 40.05, 'کوسه‌داغ (آناتولی)'],
+    ['نسل‌کشی ارمنیان', 41.27, 39.90, 'آناتولی شرقی'],
+    ['ارمنستان نخستین', 44.29, 40.16, 'واغارشاپات (ارمنستان)'],
+    ['الفبای ارمنی', 44.29, 40.16, 'ارمنستان'],
+    ['قره‌باغ', 46.75, 39.82, 'قره‌باغ'],
+    ['اریحا', 35.45, 31.87, 'اریحا'],
+    ['قادش', 36.52, 34.55, 'قادش (سوریه)'],
+    ['عین‌جالوت', 35.35, 32.55, 'عین‌جالوت (فلسطین)'],
+    ['عکا', 35.07, 32.92, 'عکا'],
+    ['غزه', 34.47, 31.50, 'غزه'],
+    ['مکه', 39.83, 21.42, 'مکه'],
+    ['حجرالاسود', 39.83, 21.42, 'مکه'],
+    ['مدینه', 39.61, 24.47, 'مدینه'],
+    ['جنگ جمل', 47.78, 30.51, 'بصره'],
+    ['جنگ یمن', 44.21, 15.37, 'صنعا (یمن)'],
+    ['نارمر', 31.25, 29.85, 'ممفیس (مصر)'],
+    ['زوسر', 31.22, 29.87, 'سقاره (مصر)'],
+    ['جیزه', 31.13, 29.98, 'جیزه (مصر)'],
+    ['اسکندریه', 29.92, 31.20, 'اسکندریه'],
+    ['قاهره', 31.24, 30.04, 'قاهره'],
+    ['الازهر', 31.26, 30.05, 'قاهره'],
+    ['سوئز', 32.55, 30.58, 'کانال سوئز'],
+    ['طلاس', 72.24, 42.52, 'رود طلاس'],
+    ['بخارا', 64.42, 39.77, 'بخارا'],
+    ['افغانستان', 69.17, 34.53, 'کابل'],
+    ['لهستان و مجارستان', 19.04, 47.50, 'دشت موهی (مجارستان)'],
+    ['موهنجودارو', 68.14, 27.33, 'موهنجودارو (درهٔ سند)'],
+    ['اسکندر در پنجاب', 73.70, 32.93, 'رود هیداسپ (پنجاب)'],
+    ['کلینگا', 85.82, 20.27, 'کلینگا (اوریسا)'],
+    ['فتح سند', 67.52, 24.75, 'دیبل (سند)'],
+    ['پانی‌پت', 76.97, 29.39, 'پانی‌پت (نزدیک دهلی)'],
+    ['تاج محل', 78.04, 27.17, 'آگره'],
+    ['پلاسی', 88.25, 23.80, 'پلاسی (بنگال)'],
+    ['شورش بزرگ هند', 77.70, 28.98, 'میروت · دهلی'],
+    ['راه‌پیمایی نمک', 72.81, 20.89, 'داندی (گجرات)'],
+    ['استقلال و تجزیهٔ هند', 77.21, 28.61, 'دهلی نو'],
+    ['دهلی', 77.21, 28.61, 'دهلی'],
+    ['بنگلادش', 90.41, 23.81, 'داکا'],
+    ['یکپارچگی چین', 108.94, 34.34, 'شیان‌یانگ (شی‌آن)'],
+    ['دیوار بزرگ', 116.00, 40.43, 'شمال چین'],
+    ['اختراع کاغذ', 112.45, 34.62, 'لوئویانگ'],
+    ['باروت', 114.31, 34.80, 'کایفنگ'],
+    ['حروف چاپی', 114.31, 34.80, 'کایفنگ'],
+    ['تای‌پینگ', 118.79, 32.06, 'نانجینگ'],
+    ['تریاک', 113.26, 23.13, 'گوانگ‌ژو (کانتون)'],
+    ['جنگ چین و ژاپن', 118.79, 32.06, 'پکن · نانجینگ'],
+    ['پکن', 116.40, 39.90, 'پکن'],
+    ['تیان‌آن‌من', 116.39, 39.90, 'پکن'],
+    ['انقلاب فرهنگی', 116.40, 39.90, 'پکن'],
+    ['دنگ شیائوپینگ', 116.40, 39.90, 'پکن · شنژن'],
+    ['کووید-۱۹', 114.30, 30.59, 'ووهان (چین)'],
+    ['یورش‌های مغول به ژاپن', 130.40, 33.60, 'خلیج هاکاتا (کیوشو)'],
+    ['یورش ژاپن به کره', 129.07, 35.18, 'بوسان · سئول'],
+    ['اصلاحات میجی', 139.69, 35.69, 'توکیو · کیوتو'],
+    ['پیروزی ژاپن بر روسیه', 129.40, 34.50, 'تنگهٔ تسوشیما'],
+    ['هیروشیما', 132.45, 34.39, 'هیروشیما'],
+    ['پرل هاربر', -157.95, 21.35, 'پرل هاربر (هاوایی)'],
+    ['فوکوشیما', 141.03, 37.42, 'فوکوشیما'],
+    ['هانگول', 126.98, 37.57, 'سئول'],
+    ['جنگ کره', 127.00, 38.00, 'شبه‌جزیرهٔ کره'],
+    ['انگکور', 103.87, 13.41, 'آنگکور (کامبوج)'],
+    ['ملاکا', 102.25, 2.19, 'ملاکا'],
+    ['جنگ ویتنام', 106.70, 10.78, 'سایگون · هانوی'],
+    ['کامبوج', 104.92, 11.56, 'پنوم‌پن'],
+    ['سونامی اقیانوس هند', 95.32, 5.55, 'آچه (سوماترا)'],
+    ['المپیک', 21.63, 37.64, 'المپیا (یونان)'],
+    ['پلوپونزی', 23.73, 37.98, 'آتن · اسپارت'],
+    ['سقراط', 23.73, 37.98, 'آتن'],
+    ['پارتنون', 23.73, 37.97, 'آتن'],
+    ['آتن', 23.73, 37.98, 'آتن'],
+    ['روم یونان', 22.93, 37.94, 'کورینت (یونان)'],
+    ['لپانتو', 21.40, 38.30, 'خلیج لپانتو (یونان)'],
+    ['استقلال یونان', 22.80, 37.57, 'ناپلیون · آتن'],
+    ['سارایوو', 18.41, 43.86, 'سارایوو'],
+    ['یوگسلاوی', 18.41, 43.86, 'سارایوو · بلگراد'],
+    ['پونیک', 10.32, 36.85, 'کارتاژ · سیسیل'],
+    ['هانیبال از آلپ', 6.86, 45.20, 'کوه‌های آلپ'],
+    ['ژولیوس سزار', 12.50, 41.90, 'رم'],
+    ['آگوستوس', 12.50, 41.90, 'رم'],
+    ['پمپئی', 14.48, 40.75, 'پمپئی (ناپل)'],
+    ['میلان', 9.19, 45.46, 'میلان'],
+    ['سقوط روم غربی', 12.20, 44.42, 'راونا · رم'],
+    ['مرگ سیاه', 15.55, 38.19, 'مسینا (ایتالیا)'],
+    ['گالیله', 11.25, 43.77, 'فلورانس · رم'],
+    ['یکپارچگی ایتالیا', 7.69, 45.07, 'تورین · رم'],
+    ['رم', 12.50, 41.90, 'رم'],
+    ['فتح اندلس', -5.60, 36.14, 'جبل‌الطارق · گوادالته'],
+    ['طلیطله', -4.02, 39.86, 'طلیطله (تولدو)'],
+    ['لاس ناواس د تولوسا', -3.57, 38.34, 'اندلس (اسپانیا)'],
+    ['غرناطه', -3.60, 37.18, 'غرناطه'],
+    ['تردسیاس', -5.00, 41.50, 'تردسیاس (اسپانیا)'],
+    ['واسکو دو گاما', 75.78, 11.26, 'کالیکوت (هند)'],
+    ['ماژلان', -5.98, 37.39, 'سویل · فیلیپین'],
+    ['لیسبون', -9.14, 38.72, 'لیسبون'],
+    ['جنگ داخلی اسپانیا', -3.70, 40.42, 'مادرید'],
+    ['آلسیا', 4.50, 47.54, 'آلسیا (فرانسه)'],
+    ['تور (پواتیه)', 0.69, 47.39, 'تور · پواتیه'],
+    ['وردن', 5.38, 49.16, 'وردن'],
+    ['فراخوان جنگ صلیبی', 3.09, 45.78, 'کلرمون (فرانسه)'],
+    ['جنگ صدساله', 1.89, 50.25, 'کرسی · فرانسه'],
+    ['اورلئان', 1.90, 47.90, 'اورلئان'],
+    ['انقلاب فرانسه', 2.35, 48.86, 'پاریس'],
+    ['ناپلئون امپراتور', 2.35, 48.86, 'پاریس'],
+    ['واترلو', 4.40, 50.68, 'واترلو (بلژیک)'],
+    ['بهار ملت‌ها', 2.35, 48.86, 'پاریس'],
+    ['پاریس', 2.35, 48.86, 'پاریس'],
+    ['ورسای', 2.12, 48.80, 'ورسای'],
+    ['نورماندی', -0.88, 49.37, 'سواحل نورماندی'],
+    ['مه ۶۸', 2.35, 48.86, 'پاریس'],
+    ['سرن', 6.05, 46.23, 'سرن (ژنو)'],
+    ['استون‌هنج', -1.83, 51.18, 'استون‌هنج (انگلستان)'],
+    ['فتح نورمن', 0.49, 50.91, 'هاستینگز (انگلستان)'],
+    ['مگنا کارتا', -0.56, 51.44, 'رانیمید (لندن)'],
+    ['آرمادای اسپانیا', -2.50, 50.10, 'کانال مانش'],
+    ['کمپانی هند شرقی', -0.12, 51.51, 'لندن'],
+    ['چارلز یکم', -0.12, 51.51, 'لندن'],
+    ['انقلاب شکوهمند', -0.12, 51.51, 'لندن'],
+    ['انقلاب صنعتی', -2.24, 53.48, 'منچستر · بیرمنگام'],
+    ['تجارت برده', -0.12, 51.51, 'لندن'],
+    ['داروین', -0.12, 51.51, 'لندن'],
+    ['پنی‌سیلین', -0.17, 51.52, 'لندن'],
+    ['ساختار DNA', 0.12, 52.20, 'کمبریج'],
+    ['برگزیت', -0.12, 51.51, 'لندن'],
+    ['تویتوبورگ', 8.13, 52.41, 'جنگل تویتوبورگ'],
+    ['گوتنبرگ', 8.25, 50.00, 'ماینتس'],
+    ['اصلاح دینی لوتر', 12.64, 51.87, 'ویتنبرگ (آلمان)'],
+    ['وین', 16.37, 48.21, 'وین'],
+    ['جنگ سی‌ساله', 14.42, 50.08, 'پراگ · آلمان'],
+    ['وستفالی', 7.63, 51.96, 'مونستر (وستفالی)'],
+    ['مانیفست کمونیست', -0.12, 51.51, 'لندن · کلن'],
+    ['یکپارچگی آلمان', 13.40, 52.52, 'برلین · ورسای'],
+    ['جنگ جهانی اول', 4.50, 49.50, 'جبههٔ غربی (اروپا)'],
+    ['هیتلر', 13.40, 52.52, 'برلین'],
+    ['جنگ جهانی دوم', 21.01, 52.23, 'ورشو · اروپا'],
+    ['هولوکاست', 19.20, 50.03, 'آشویتس (لهستان)'],
+    ['برلین', 13.40, 52.52, 'برلین'],
+    ['لیندیسفارن', -1.80, 55.67, 'لیندیسفارن'],
+    ['کالمار', 16.36, 56.66, 'کالمار (سوئد)'],
+    ['نووگورود', 31.27, 58.52, 'نووگورود'],
+    ['مسیحی‌شدن روس', 30.52, 50.45, 'کی‌یف'],
+    ['کیف', 30.52, 50.45, 'کی‌یف'],
+    ['کولیکوو', 38.67, 53.62, 'دشت کولیکوو'],
+    ['سلطهٔ تاتار', 36.10, 54.50, 'رود اوگرا · مسکو'],
+    ['ایوان مخوف', 37.62, 55.76, 'مسکو'],
+    ['سن‌پترزبورگ', 30.33, 59.93, 'سن‌پترزبورگ'],
+    ['پولتاوا', 34.55, 49.59, 'پولتاوا'],
+    ['ناپلئون به روسیه', 35.82, 55.52, 'بورودینو · مسکو'],
+    ['لغو سرواژ', 30.33, 59.93, 'سن‌پترزبورگ'],
+    ['انقلاب اکتبر', 30.33, 59.93, 'پتروگراد (سن‌پترزبورگ)'],
+    ['حملهٔ آلمان به شوروی', 30.52, 53.90, 'جبههٔ شرقی'],
+    ['استالینگراد', 44.51, 48.71, 'استالینگراد'],
+    ['اسپوتنیک', 63.34, 45.92, 'بایکونور'],
+    ['چرنوبیل', 30.10, 51.39, 'چرنوبیل'],
+    ['فروپاشی شوروی', 37.62, 55.76, 'مسکو'],
+    ['اوکراین', 30.52, 50.45, 'کی‌یف (اوکراین)'],
+    ['کارتاژ', 10.32, 36.85, 'کارتاژ'],
+    ['قیروان', 10.10, 35.68, 'قیروان (تونس)'],
+    ['قرویین', -5.00, 34.06, 'فاس (مراکش)'],
+    ['الجزایر', 3.06, 36.75, 'الجزیره'],
+    ['بهار عربی', 10.18, 36.81, 'تونس'],
+    ['اکسوم', 38.72, 14.13, 'آکسوم (اتیوپی)'],
+    ['منسا موسی', -3.01, 16.77, 'تیمبوکتو (مالی)'],
+    ['کیپ', 18.42, -33.92, 'کیپ‌تاون'],
+    ['عدوا', 38.90, 14.17, 'عدوا (اتیوپی)'],
+    ['آپارتاید', 28.05, -26.20, 'پرتوریا · ژوهانسبورگ'],
+    ['رواندا', 30.06, -1.94, 'کیگالی (رواندا)'],
+    ['ذرت', -97.39, 18.46, 'درهٔ تئواکان (مکزیک)'],
+    ['تنوچتیتلان', -99.13, 19.43, 'تنوچتیتلان (مکزیکوسیتی)'],
+    ['مکزیک', -99.13, 19.43, 'مکزیکوسیتی'],
+    ['ماچو پیچو', -72.54, -13.16, 'ماچو پیچو (پرو)'],
+    ['پیزارو', -78.51, -7.16, 'کاجامارکا · کوزکو'],
+    ['پوتوسی', -65.75, -19.58, 'پوتوسی (بولیوی)'],
+    ['وینلند', -55.53, 51.60, 'نیوفاندلند (وینلند)'],
+    ['جیمزتاون', -76.78, 37.21, 'جیمزتاون (ویرجینیا)'],
+    ['جنگ داخلی آمریکا', -77.23, 39.81, 'گتیسبورگ · ویرجینیا'],
+    ['برادران رایت', -75.67, 36.02, 'کیتی هاوک (کارولینا)'],
+    ['سازمان ملل', -73.97, 40.75, 'نیویورک'],
+    ['ترور کندی', -96.81, 32.78, 'دالاس (تگزاس)'],
+    ['آرپانت', -118.44, 34.07, 'لس‌آنجلس (کالیفرنیا)'],
+    ['۱۱ سپتامبر', -74.01, 40.71, 'نیویورک'],
+    ['کوبا', -82.37, 23.11, 'هاوانا (کوبا)'],
+    ['جیمز کوک', 151.23, -34.00, 'خلیج بوتانی (سیدنی)'],
+    ['سیدنی', 151.21, -33.87, 'سیدنی'],
+    ['فدراسیون استرالیا', 144.96, -37.81, 'ملبورن · سیدنی'],
+    ['وایتانگی', 174.08, -35.27, 'وایتانگی (نیوزیلند)']
+  ];
+
+  // Persian/Arabic letter check for safe word-boundary matching on short place names (e.g. رم، وین، مرو، کیف)
+  const FA_LET = /[\u0621-\u064A\u067E\u0686\u0698\u06A9\u06AF\u06CC\u200C]/;
+  function matchKey(txt, key) {
+    let idx = txt.indexOf(key);
+    while (idx !== -1) {
+      if (key.length > 4) return true;
+      const before = idx > 0 ? txt[idx - 1] : '';
+      const after = idx + key.length < txt.length ? txt[idx + key.length] : '';
+      if (!FA_LET.test(before) && !FA_LET.test(after)) return true;
+      idx = txt.indexOf(key, idx + 1);
+    }
+    return false;
+  }
+
+  // Fast resolver for any person or event -> [lon, lat, placeName]
+  TL.personGeo = function (p) {
+    if (TL.PEOPLE_GEO[p.n]) return TL.PEOPLE_GEO[p.n];
+    const anc = TL.MAP && TL.MAP.anchors && TL.MAP.anchors[p.r];
+    return anc ? [anc[0], anc[1], (TL.regionById[p.r] && TL.regionById[p.r].n) || ''] : null;
+  };
+  const evCache = new WeakMap();
+  TL.eventGeo = function (e) {
+    if (evCache.has(e)) return evCache.get(e);
+    const title = e.n || '', desc = e.d || '';
+    let found = null;
+    // Pass 1: exact match in event title
+    for (let i = 0; i < TL.EVENT_GEO.length; i++) {
+      const row = TL.EVENT_GEO[i];
+      if (matchKey(title, row[0])) { found = [row[1], row[2], row[3]]; break; }
+    }
+    // Pass 2: city name in event title
+    if (!found && TL.MAP && TL.MAP.cities) {
+      for (const k of Object.keys(TL.MAP.cities)) {
+        if (matchKey(title, k)) { const c = TL.MAP.cities[k]; found = [c[0], c[1], k]; break; }
+      }
+    }
+    // Pass 3: exact match in description
+    if (!found && desc) {
+      for (let i = 0; i < TL.EVENT_GEO.length; i++) {
+        const row = TL.EVENT_GEO[i];
+        if (matchKey(desc, row[0])) { found = [row[1], row[2], row[3]]; break; }
+      }
+    }
+    // Pass 4: city name in description
+    if (!found && desc && TL.MAP && TL.MAP.cities) {
+      for (const k of Object.keys(TL.MAP.cities)) {
+        if (matchKey(desc, k)) { const c = TL.MAP.cities[k]; found = [c[0], c[1], k]; break; }
+      }
+    }
+    if (!found) {
+      const anc = TL.MAP && TL.MAP.anchors && TL.MAP.anchors[e.r];
+      if (anc) found = [anc[0], anc[1], (TL.regionById[e.r] && TL.regionById[e.r].n) || ''];
+    }
+    evCache.set(e, found);
+    return found;
+  };
+})();
 
 /* data/dominion.js */
 /* سیطره: کدام ردیفِ یک سرزمین، فرمانروایی کدام امپراتوری بر آن است. کلید = حکومتِ محلی، مقدار = امپراتوری (یا چند امپراتوری پشت‌سرهم).
@@ -2514,38 +3532,53 @@ TL.dominion = {
     mcache.clear(); R.colorize();
   };
   const hsl = (h, s, l, a) => (a == null ? `hsl(${h} ${s}% ${l}%)` : `hsl(${h} ${s}% ${l}% / ${a})`);
-  // ---------- Swiss Editorial minimal color palette (restrained architectural ink tones, no rainbow!) ----------
+  // ---------- Swiss Editorial minimal palette: restrained matte saturation WITH distinct hues per dynasty! ----------
   R.colorize = function () {
     const byReg = {};
     TL.polities.forEach(p => { (byReg[p.r] = byReg[p.r] || []).push(p); });
-    const H_SHIFT = [0, 6, -5, 10, -8, 3, -3, 8];
-    const L_CADENCE = [0, -5, 4, -3, 2, -6];
+    // 8 curated restrained Swiss/Bauhaus mineral hues for Iranian dynasties so consecutive dynasties are unmistakably distinct!
+    const IRAN_HUES = [216, 178, 348, 34, 244, 152, 282, 16];
+    // Crisp hue steps inside each world continent so consecutive dynasties never blend together!
+    const WORLD_SHIFT = [0, 32, -28, 54, -46, 18, -18, 40];
+    const L_STEP = [0, -4, 3, -2, 4, -5];
+
     const pass = () => Object.keys(byReg).forEach(rid => {
       const reg = TL.regionById[rid];
-      const grp = GRP[reg.grp] || { h: 210, s: 24 };
-      // Each region gets a subtle fixed offset from its continent's Swiss pigment family
-      const regShift = ((reg.order % 5) - 2) * 5;
+      const grp = GRP[reg.grp] || { h: 210, s: 28 };
+      const regShift = ((reg.order % 5) - 2) * 10;
+      let irIdx = 0;
       byReg[rid].sort((a, b) => a.s - b.s).forEach((p, i) => {
         p.ir = TL.isIranian(p);
         const foreignInIran = rid === 'iran' && !p.ir;
         const lord = p.of ? TL.overlord(p) : null;
-        // Restrained Swiss hue: Iran stays pure Prussian/Swiss Cobalt; dominions inherit overlord's Swiss hue; regions stay in continent family
-        let hue = p.ir ? (218 + (i % 3 - 1) * 5) : ((lord ? lord.hue : (grp.h + regShift + H_SHIFT[i % H_SHIFT.length])) + 360) % 360;
-        let s = p.ir ? (S.dark ? 54 : 52) : (lord ? (lord.ir ? 48 : 32) : grp.s);
-        let l = (S.dark ? (p.ir ? 44 : 40) : (p.ir ? 41 : 46)) + L_CADENCE[i % L_CADENCE.length];
-        if (foreignInIran) { hue = 220; s = 10; l = S.dark ? 36 : 56; }
-        if (p.k === 'culture') { s = Math.max(12, s - 10); l += S.dark ? 2 : 8; }
-        if (p.lv === 3) { s = Math.max(14, s - 8); l += S.dark ? 1 : 6; }
+        let hue, s, l;
+        if (foreignInIran) {
+          hue = 220; s = 10; l = S.dark ? 36 : 55;
+        } else if (p.ir) {
+          // If this is an Iranian dominion abroad, inherit its exact Iranian overlord's hue!
+          hue = lord && lord.ir ? lord.hue : IRAN_HUES[(irIdx++) % IRAN_HUES.length];
+          s = S.dark ? 44 : 46; // Restrained Swiss matte saturation, never neon!
+          l = (S.dark ? 44 : 42) + L_STEP[i % L_STEP.length];
+        } else if (lord && lord.hue != null) {
+          hue = lord.hue;
+          s = S.dark ? 36 : 38;
+          l = (S.dark ? 41 : 45) + L_STEP[i % L_STEP.length];
+        } else {
+          hue = (grp.h + regShift + WORLD_SHIFT[i % WORLD_SHIFT.length] + 360) % 360;
+          s = Math.min(40, grp.s + 6);
+          l = (S.dark ? 40 : 46) + L_STEP[i % L_STEP.length];
+        }
+        if (p.k === 'culture') { s = Math.max(14, s - 12); l += S.dark ? 3 : 8; }
+        if (p.lv === 3) { s = Math.max(16, s - 8); l += S.dark ? 1 : 6; }
         p.hue = hue;
         p.base = hsl(hue, s, l);
-        // Flat Swiss architectural fill (minimal tonal modulation, zero rainbow gradient)
-        p.g = [hsl(hue, s, l + 2), p.base, hsl(hue, s, l - 3)];
+        p.g = [p.base, p.base, p.base];
         p.light = l >= 62;
-        p.txt = p.light ? '#18181b' : '#f7f7f5';
+        p.txt = p.light ? '#141416' : '#f7f7f5';
       });
     });
     pass();
-    // Second pass so dominions inherit exact Swiss overlord color cleanly
+    // Second pass so dominions abroad inherit their overlord's exact Swiss hue!
     pass();
   };
 
@@ -3049,12 +4082,13 @@ TL.dominion = {
 })();
 
 /* js/map.js */
-/* Real Time-Varying Historical World Map engine (window.M).
+/* Real Time-Varying Historical World Map engine (window.M) with TRUE POLYGON MORPHING.
    - Borderless Natural Earth 50m physical landmass, lakes, and rivers (ZERO modern borders).
    - 45 historically-audited world border snapshots (10,000 BC – 2010 AD) from TL.HIST.
-   - Smooth quadratic spline borders (organic, never jagged) with soft layered cartographic strokes.
-   - Cinematic dual-layer cross-dissolve + subtle expansion bloom + frontier shimmer on era transitions.
-   - Restrained Swiss-editorial palette harmonized with the timeline chart. */
+   - True vertex-to-vertex geometric polygon morphing (CCW resampled + optimal cyclic alignment)
+     between consecutive historical epochs — borders physically stretch, flow, and reshape!
+   - Smooth quadratic midpoint spline borders with soft layered editorial strokes.
+   - Exact geographic coordinates for all ~255 historical figures (birthplaces) & 474 battles/events. */
 (function () {
   const M = {}; window.M = M;
   const UI = '"Vazirmatn", Tahoma, "Segoe UI", sans-serif';
@@ -3066,10 +4100,9 @@ TL.dominion = {
     tLon: 50, tLat: 33, tZoom: 1.45,
     year: -480, tYear: -480,
     snapYear: -500,
-    // Border transition animation state
-    prevSnapYear: null,
-    trans: 1,       // 0 -> 1 eased crossfade + bloom
-    transDir: 1,    // +1 forward in time, -1 backward
+    // Geometric morph state
+    morphPlan: null, // array of { ringA, ringB, colA, colB, cxA, cyA, cxB, cyB, isIr, prec, effFa, effPid, ent }
+    trans: 1,
     layers: { routes: true, campaigns: true, rivers: true, domArcs: true, events: true, people: true, labels: true },
     hover: null,
     polyHits: [],
@@ -3084,7 +4117,7 @@ TL.dominion = {
       landEmpty: '#161b26', landStroke: 'rgba(255,255,255,.16)', coastGlow: 'rgba(90,130,200,.06)',
       sea: '#0a0e17', river: 'rgba(130,170,220,.24)', grat: 'rgba(255,255,255,.035)',
       ink: '#f3f3f0', sub: 'rgba(210,214,224,.72)', accent: '#5a8dee', gold: '#d8b46c',
-      fillAlpha: 0.44, iranAlpha: 0.62, borderAlpha: 0.56, dimAlpha: 0.16
+      fillAlpha: 0.45, iranAlpha: 0.62, borderAlpha: 0.56, dimAlpha: 0.16
     },
     light: {
       ocean1: '#e4e8ea', ocean2: '#d8dfe3',
@@ -3095,7 +4128,6 @@ TL.dominion = {
     }
   };
 
-  // Exact historical turning-point cutovers -> curated snapshot year in TL.HIST
   const SNAP_CUTS = [
     [-7000, -10000], [-3600, -5000], [-2400, -3000], [-1700, -2000], [-1200, -1500],
     [-678, -1000], [-550, -600], [-404, -500], [-330, -400], [-312, -323],
@@ -3108,13 +4140,13 @@ TL.dominion = {
     [1952, 1945], [1991, 1960], [2005, 1994], [9999, 2010]
   ];
 
-  // Restrained Swiss-editorial muted hue palette for unlinked historical realms (no neon rainbows!)
-  const SWISS_HUES = [212, 34, 158, 352, 24, 248, 188, 42, 142, 338, 200, 16];
+  // Restrained Swiss-editorial muted hues (distinct yet harmonious)
+  const SWISS_HUES = [214, 34, 158, 350, 22, 248, 184, 42, 140, 332, 198, 14];
+  const MORPH_N = 56;
 
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-  const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
   function makeGrain() {
     const g = document.createElement('canvas'); g.width = 96; g.height = 96;
@@ -3136,6 +4168,195 @@ TL.dominion = {
       out[i] = x / 10; out[i + 1] = y / 10;
     }
     return out;
+  }
+
+  // ---------- TRUE GEOMETRIC POLYGON MORPHING MATH ----------
+  function signedRingArea(ring) {
+    let a = 0; const n = ring.length;
+    for (let i = 0; i < n; i += 2) {
+      const nx = ring[(i + 2) % n], ny = ring[(i + 3) % n];
+      a += ring[i] * ny - nx * ring[i + 1];
+    }
+    return a * 0.5;
+  }
+
+  // Resample any Float32Array ring into N evenly-spaced CCW perimeter vertices
+  function resampleRing(ring, N) {
+    let n = ring.length, src = ring;
+    // Enforce consistent CCW winding so morphs NEVER turn inside-out!
+    if (signedRingArea(ring) < 0) {
+      src = new Float32Array(n);
+      for (let i = 0; i < n; i += 2) { src[i] = ring[n - 2 - i]; src[i + 1] = ring[n - 1 - i]; }
+    }
+    const pts = n / 2, cum = new Float32Array(pts + 1);
+    for (let i = 0; i < pts; i++) {
+      const x0 = src[i * 2], y0 = src[i * 2 + 1];
+      const x1 = src[((i + 1) % pts) * 2], y1 = src[((i + 1) % pts) * 2 + 1];
+      cum[i + 1] = cum[i] + Math.hypot(x1 - x0, y1 - y0);
+    }
+    const total = cum[pts] || 1, out = new Float32Array(N * 2);
+    let seg = 0;
+    for (let k = 0; k < N; k++) {
+      const target = (k / N) * total;
+      while (seg < pts - 1 && cum[seg + 1] < target) seg++;
+      const len = (cum[seg + 1] - cum[seg]) || 1, f = (target - cum[seg]) / len;
+      const x0 = src[seg * 2], y0 = src[seg * 2 + 1];
+      const x1 = src[((seg + 1) % pts) * 2], y1 = src[((seg + 1) % pts) * 2 + 1];
+      out[k * 2] = x0 + (x1 - x0) * f;
+      out[k * 2 + 1] = y0 + (y1 - y0) * f;
+    }
+    return out;
+  }
+
+  // Tiny circular seed ring centered at (cx, cy) for emerging/vanishing realms
+  function seedRing(cx, cy, r, N) {
+    const out = new Float32Array(N * 2);
+    for (let k = 0; k < N; k++) {
+      const a = (k / N) * Math.PI * 2;
+      out[k * 2] = cx + Math.cos(a) * r;
+      out[k * 2 + 1] = cy + Math.sin(a) * r;
+    }
+    return out;
+  }
+
+  // Find cyclic vertex rotation of ringB minimizing sum of squared distances to ringA (prevents twist!)
+  function alignRing(ringA, ringB) {
+    const N = ringA.length / 2;
+    let bestShift = 0, bestCost = 1e18;
+    for (let sh = 0; sh < N; sh += 2) {
+      let cost = 0;
+      for (let i = 0; i < N; i += 2) {
+        const bi = ((i + sh) % N) * 2;
+        const dx = ringA[i * 2] - ringB[bi], dy = ringA[i * 2 + 1] - ringB[bi + 1];
+        cost += dx * dx + dy * dy;
+      }
+      if (cost < bestCost) { bestCost = cost; bestShift = sh; }
+    }
+    if (bestShift === 0) return ringB;
+    const out = new Float32Array(ringB.length);
+    for (let i = 0; i < N; i++) {
+      const bi = ((i + bestShift) % N) * 2;
+      out[i * 2] = ringB[bi]; out[i * 2 + 1] = ringB[bi + 1];
+    }
+    return out;
+  }
+
+  function primaryRingOf(ent) {
+    if (ent._mainRing) return ent._mainRing;
+    let best = ent.rings[0], ba = -1;
+    for (let i = 0; i < ent.rings.length; i++) {
+      const a = Math.abs(signedRingArea(ent.rings[i]));
+      if (a > ba) { ba = a; best = ent.rings[i]; }
+    }
+    ent._mainRing = resampleRing(best, MORPH_N);
+    return ent._mainRing;
+  }
+
+  // Color parsing to RGB for smooth color morphing
+  const rgbCache = new Map();
+  function hslToRgb(h, s, l) {
+    h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
+    else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+  }
+  function parseColorRgb(str) {
+    if (rgbCache.has(str)) return rgbCache.get(str);
+    let out = [80, 120, 180];
+    if (str[0] === '#') {
+      const v = parseInt(str.slice(1), 16);
+      out = [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+    } else {
+      const m = str.match(/hsl\(\s*([\d.]+)[\s,]+([\d.]+)%[\s,]+([\d.]+)%/);
+      if (m) out = hslToRgb(+m[1], +m[2], +m[3]);
+    }
+    rgbCache.set(str, out);
+    return out;
+  }
+  function blendRgb(a, b, t) {
+    return `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`;
+  }
+
+  // Build geometric morph plan pairing empires between prevSnap and curSnap!
+  function buildMorphPlan(prevSnap, prevSy, curSnap, curSy, y) {
+    const usedPrev = new Set(), usedCur = new Set();
+    const pairs = [];
+    const effOf = (ent, sy) => {
+      if (ent.isIr && sy === 1960 && y >= 1979) return { pid: 'iri', fa: 'ایران (جمهوری اسلامی)' };
+      return { pid: ent.pid, fa: ent.fa };
+    };
+    const addPair = (pa, pb) => {
+      const rA = pa ? primaryRingOf(pa) : seedRing(pb.cx, pb.cy, 0.35, MORPH_N);
+      const rB = pb ? primaryRingOf(pb) : seedRing(pa.cx, pa.cy, 0.35, MORPH_N);
+      const alignedB = alignRing(rA, rB);
+      const ea = pa ? effOf(pa, prevSy) : null, eb = pb ? effOf(pb, curSy) : null;
+      const colA = parseColorRgb(pa ? entColor({ ...pa, pid: ea.pid }, MS.dark) : entColor({ ...pb, pid: eb.pid }, MS.dark));
+      const colB = parseColorRgb(pb ? entColor({ ...pb, pid: eb.pid }, MS.dark) : entColor({ ...pa, pid: ea.pid }, MS.dark));
+      pairs.push({
+        ringA: rA, ringB: alignedB,
+        colA, colB,
+        cxA: pa ? pa.cx : pb.cx, cyA: pa ? pa.cy : pb.cy,
+        cxB: pb ? pb.cx : pa.cx, cyB: pb ? pb.cy : pa.cy,
+        isIr: !!((pb && pb.isIr) || (pa && pa.isIr)),
+        prec: pb ? pb.prec : pa.prec,
+        area: pb ? pb.area : pa.area,
+        effFa: eb ? eb.fa : ea.fa,
+        effPid: eb ? eb.pid : ea.pid,
+        ent: pb || pa,
+        mode: pa && pb ? 'morph' : (pb ? 'grow' : 'shrink')
+      });
+    };
+
+    // Pass 1: Exact pid or exact name match
+    for (let j = 0; j < curSnap.length; j++) {
+      const b = curSnap[j];
+      for (let i = 0; i < prevSnap.length; i++) {
+        if (usedPrev.has(i)) continue;
+        const a = prevSnap[i];
+        if ((a.pid && a.pid === b.pid) || (a.en && a.en === b.en)) {
+          usedPrev.add(i); usedCur.add(j); addPair(a, b); break;
+        }
+      }
+    }
+    // Pass 2: Main Iranian realm continuity (Achaemenid -> Alexander -> Seleucid -> Parthian -> Sasanian -> Caliphate -> Seljuk -> Safavid -> Qajar!)
+    const findIranIdx = (arr, used) => {
+      let best = -1, ba = -1;
+      for (let i = 0; i < arr.length; i++) {
+        if (used.has(i)) continue;
+        const e = arr[i];
+        const nearIr = Math.hypot(e.cx - 52, e.cy - 33) < 16;
+        if ((e.isIr || nearIr) && e.area > ba) { ba = e.area; best = i; }
+      }
+      return best;
+    };
+    const irA = findIranIdx(prevSnap, usedPrev), irB = findIranIdx(curSnap, usedCur);
+    if (irA >= 0 && irB >= 0) { usedPrev.add(irA); usedCur.add(irB); addPair(prevSnap[irA], curSnap[irB]); }
+
+    // Pass 3: Regional successor morphing for major empires (Rome->Byzantium->Ottoman, Zhou->Han->Tang->Ming->Qing, etc.)
+    for (let j = 0; j < curSnap.length; j++) {
+      if (usedCur.has(j) || curSnap[j].area < 14) continue;
+      const b = curSnap[j];
+      let bestI = -1, bestD = 18;
+      for (let i = 0; i < prevSnap.length; i++) {
+        if (usedPrev.has(i) || prevSnap[i].area < 14) continue;
+        const d = Math.hypot(prevSnap[i].cx - b.cx, prevSnap[i].cy - b.cy);
+        if (d < bestD) { bestD = d; bestI = i; }
+      }
+      if (bestI >= 0) { usedPrev.add(bestI); usedCur.add(j); addPair(prevSnap[bestI], b); }
+    }
+
+    // Pass 4: Remaining emerging & vanishing states grow/contract organically from their heartlands
+    for (let j = 0; j < curSnap.length; j++) {
+      if (!usedCur.has(j) && curSnap[j].area >= 1.0) addPair(null, curSnap[j]);
+    }
+    for (let i = 0; i < prevSnap.length; i++) {
+      if (!usedPrev.has(i) && prevSnap[i].area >= 1.5) addPair(prevSnap[i], null);
+    }
+
+    pairs.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0) || b.area - a.area);
+    return pairs;
   }
 
   let landDecoded = null, lakesDecoded = null;
@@ -3167,15 +4388,12 @@ TL.dominion = {
       const fa = S_STR[faI] || '';
       const en = enI >= 0 ? S_STR[enI] : fa;
       const pid = pidI >= 0 ? S_STR[pidI] : '';
-      const isIr = !!(flags & 4);
-      const prec = flags & 3;
       return {
-        fa, en, pid, isIr, prec,
+        fa, en, pid, isIr: !!(flags & 4), prec: flags & 3,
         cx: cx10 / 10, cy: cy10 / 10, area: area10 / 10,
         rings: rings.map(decodeDeltaRing)
       };
     });
-    // Draw non-Iran first, Iran on top
     list.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0));
     decodedSnaps.set(sy, list);
     return list;
@@ -3232,8 +4450,7 @@ TL.dominion = {
   }
 
   function pointInFlatPoly(px, py, flat) {
-    let inside = false;
-    const n = flat.length;
+    let inside = false; const n = flat.length;
     for (let i = 0, j = n - 2; i < n; j = i, i += 2) {
       const xi = flat[i], yi = flat[i + 1], xj = flat[j], yj = flat[j + 1];
       if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / ((yj - yi) || 1e-6) + xi)) inside = !inside;
@@ -3241,30 +4458,19 @@ TL.dominion = {
     return inside;
   }
 
-  // Sharp coastline tracer (for crisp Natural Earth 50m landmasses & lakes)
   function traceCoastRing(ring, proj) {
     const n = ring.length; if (n < 6) return;
     let [sx, sy] = proj(ring[0], ring[1]);
     ctx.moveTo(sx, sy);
-    for (let i = 2; i < n; i += 2) {
-      [sx, sy] = proj(ring[i], ring[i + 1]);
-      ctx.lineTo(sx, sy);
-    }
+    for (let i = 2; i < n; i += 2) { [sx, sy] = proj(ring[i], ring[i + 1]); ctx.lineTo(sx, sy); }
     ctx.closePath();
   }
 
-  // SILKY SMOOTH quadratic midpoint spline tracer for historical border polygons!
-  // Eliminates all jagged/pointy corners and gives organic cartographic frontiers!
-  function traceSmoothBorderRing(ring, proj, collectScreen, scaleFactor, cxScreen, cyScreen) {
+  function traceSmoothRing(ring, proj, collectScreen) {
     const n = ring.length; if (n < 6) return null;
     const sp = new Float32Array(n);
-    const doScale = scaleFactor != null && Math.abs(scaleFactor - 1) > 0.0005;
     for (let i = 0; i < n; i += 2) {
-      let [sx, sy] = proj(ring[i], ring[i + 1]);
-      if (doScale) {
-        sx = cxScreen + (sx - cxScreen) * scaleFactor;
-        sy = cyScreen + (sy - cyScreen) * scaleFactor;
-      }
+      const [sx, sy] = proj(ring[i], ring[i + 1]);
       sp[i] = sx; sp[i + 1] = sy;
     }
     const lastX = sp[n - 2], lastY = sp[n - 1];
@@ -3277,35 +4483,45 @@ TL.dominion = {
     return collectScreen ? sp : null;
   }
 
+  function traceMorphedRing(ringA, ringB, e, proj) {
+    const n = ringA.length; if (n < 6) return;
+    const sp = new Float32Array(n);
+    for (let i = 0; i < n; i += 2) {
+      const lon = ringA[i] + (ringB[i] - ringA[i]) * e;
+      const lat = ringA[i + 1] + (ringB[i + 1] - ringA[i + 1]) * e;
+      const [sx, sy] = proj(lon, lat);
+      sp[i] = sx; sp[i + 1] = sy;
+    }
+    const lastX = sp[n - 2], lastY = sp[n - 1];
+    ctx.moveTo((lastX + sp[0]) * 0.5, (lastY + sp[1]) * 0.5);
+    for (let i = 0; i < n; i += 2) {
+      const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
+      ctx.quadraticCurveTo(sp[i], sp[i + 1], (sp[i] + nx) * 0.5, (sp[i + 1] + ny) * 0.5);
+    }
+    ctx.closePath();
+  }
+
   function traceOpenPts(pts, proj, isTenths) {
     if (pts.length < (isTenths ? 4 : 2)) return;
     if (isTenths) {
       let [x0, y0] = proj(pts[0] / 10, pts[1] / 10);
       ctx.moveTo(x0, y0);
-      for (let i = 2; i < pts.length; i += 2) {
-        const [x, y] = proj(pts[i] / 10, pts[i + 1] / 10);
-        ctx.lineTo(x, y);
-      }
+      for (let i = 2; i < pts.length; i += 2) { const [x, y] = proj(pts[i] / 10, pts[i + 1] / 10); ctx.lineTo(x, y); }
     } else {
       const s = pts.map(p => proj(p[0], p[1]));
       ctx.moveTo(s[0][0], s[0][1]);
-      for (let i = 1; i < s.length - 1; i++) {
-        ctx.quadraticCurveTo(s[i][0], s[i][1], (s[i][0] + s[i + 1][0]) / 2, (s[i][1] + s[i + 1][1]) / 2);
-      }
+      for (let i = 1; i < s.length - 1; i++) ctx.quadraticCurveTo(s[i][0], s[i][1], (s[i][0] + s[i + 1][0]) / 2, (s[i][1] + s[i + 1][1]) / 2);
       ctx.lineTo(s[s.length - 1][0], s[s.length - 1][1]);
     }
   }
 
-  // Swiss-minimal muted color for historical realms (harmonized with R.colorize)
   function entColor(ent, dark) {
-    if (ent.pid && TL.polityById[ent.pid] && TL.polityById[ent.pid].base) {
-      return TL.polityById[ent.pid].base;
-    }
+    if (ent.pid && TL.polityById[ent.pid] && TL.polityById[ent.pid].base) return TL.polityById[ent.pid].base;
     if (ent.isIr) return dark ? '#2f65d4' : '#1d4496';
     const hash = TL.hash(ent.en || ent.fa);
     const h = SWISS_HUES[hash % SWISS_HUES.length];
-    const s = 26 + (hash % 12); // Restrained Swiss saturation (26–38%)
-    const l = dark ? (38 + ((hash >> 4) % 10)) : (44 + ((hash >> 4) % 10));
+    const s = 28 + (hash % 12);
+    const l = dark ? (39 + ((hash >> 4) % 10)) : (45 + ((hash >> 4) % 10));
     return `hsl(${h} ${s}% ${l}%)`;
   }
 
@@ -3339,82 +4555,6 @@ TL.dominion = {
     M.flyTo(12, 16, Math.max(0.22, Math.min(zW, zH) * 0.94));
   };
 
-  // Helper to render one historical border snapshot layer with soft organic borders & optional motion alpha/bloom
-  function renderSnapshotLayer(snap, snapY, layerAlpha, bloomScale, shimmer, opts) {
-    const { T, y, S, proj, focusIds, hasFocus, collectHits } = opts;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-
-    for (let idx = 0; idx < snap.length; idx++) {
-      const ent = snap[idx];
-      let effPid = ent.pid, effFa = ent.fa;
-      if (ent.isIr && snapY === 1960 && y >= 1979) {
-        effPid = 'iri'; effFa = 'ایران (جمهوری اسلامی)';
-      }
-      const pol = effPid ? TL.polityById[effPid] : null;
-      const isFocus = !!(effPid && focusIds.has(effPid));
-      const isHover = !!(collectHits && MS.hover && MS.hover.type === 'hist' && MS.hover.ent === ent);
-
-      let filterDim = false;
-      if (S.show && !ent.isIr) {
-        const rid = pol ? pol.r : nearestRegion(ent.cx, ent.cy);
-        if (rid && !S.show.has(rid)) filterDim = true;
-      }
-      const dimmed = (hasFocus && !isFocus && !isHover) || filterDim;
-      const col = entColor({ ...ent, pid: effPid }, MS.dark);
-
-      const [cxS, cyS] = proj(ent.cx, ent.cy);
-      const sc = bloomScale != null ? (ent.isIr ? lerp(1, bloomScale, 1.25) : bloomScale) : 1;
-
-      const screenRings = [];
-      ctx.save();
-      ctx.beginPath();
-      for (let r = 0; r < ent.rings.length; r++) {
-        const sr = traceSmoothBorderRing(ent.rings[r], proj, collectHits, sc, cxS, cyS);
-        if (sr) screenRings.push(sr);
-      }
-
-      // 1. Soft translucent interior fill
-      const baseFill = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1));
-      ctx.globalAlpha = baseFill * layerAlpha;
-      ctx.fillStyle = col;
-      ctx.fill();
-
-      // 2. Soft cartographic inner-edge watercolor wash (softens border hardness dramatically!)
-      const bAlpha = T.borderAlpha * (dimmed ? 0.20 : 1) * layerAlpha;
-      if (!dimmed && bAlpha > 0.05) {
-        ctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22);
-        ctx.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-        ctx.lineWidth = (ent.isIr ? 4.2 : 2.8) + shimmer * 3.5;
-        ctx.stroke();
-      }
-
-      // 3. Refined delicate border hairline (rounded joins, never harsh!)
-      ctx.globalAlpha = bAlpha * (isHover ? 1.5 : (isFocus ? 1.35 : 0.85));
-      if (ent.prec === 1 && !isFocus && !isHover) ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
-        : (isFocus ? T.gold : (ent.isIr ? (MS.dark ? '#e4c47a' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.38)' : 'rgba(20,20,24,.32)')));
-      ctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? 1.35 : 0.75));
-      if ((isFocus || isHover || (ent.isIr && shimmer > 0.05)) && MS.dark) {
-        ctx.shadowColor = ent.isIr ? '#d8b46c' : col;
-        ctx.shadowBlur = isFocus || isHover ? 12 : shimmer * 16;
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // 4. Subtle luminous frontier shimmer pulse during era transitions on changed/Iranian borders!
-      if (shimmer > 0.02 && (ent.isIr || ent.area > 45) && !dimmed) {
-        ctx.globalAlpha = shimmer * (ent.isIr ? 0.65 : 0.28);
-        ctx.strokeStyle = MS.dark ? '#f5dca0' : '#1d4496';
-        ctx.lineWidth = ent.isIr ? 2.2 : 1.1;
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      if (collectHits) MS.polyHits.push({ ent, effPid, effFa, pol, screenRings });
-    }
-  }
-
   // ---------- draw frame ----------
   M.draw = function () {
     if (!ctx || !TL.MAP || !TL.HIST || MS.W < 20 || MS.H < 20) return;
@@ -3426,11 +4566,12 @@ TL.dominion = {
     const proj = M.proj;
     const mapData = TL.MAP;
 
-    // Detect snapshot change and trigger smooth cinematic cross-dissolve + expansion bloom!
+    // Trigger TRUE GEOMETRIC POLYGON MORPH whenever historical snapshot changes!
     const nextSy = pickSnapYear(y);
     if (nextSy !== MS.snapYear) {
-      MS.prevSnapYear = MS.snapYear;
-      MS.transDir = nextSy >= MS.snapYear ? 1 : -1;
+      const prevSnap = loadSnapshot(MS.snapYear);
+      const nextSnap = loadSnapshot(nextSy);
+      MS.morphPlan = buildMorphPlan(prevSnap, MS.snapYear, nextSnap, nextSy, y);
       MS.snapYear = nextSy;
       MS.trans = 0;
     }
@@ -3440,22 +4581,18 @@ TL.dominion = {
 
     ctx.setTransform(MS.dpr, 0, 0, MS.dpr, 0, 0);
 
-    // 1. Calm Swiss Ocean Backdrop
+    // 1. Ocean Backdrop
     const bg = ctx.createRadialGradient(W * 0.5, H * 0.5, 40, W * 0.5, H * 0.5, Math.max(W, H) * 0.8);
     bg.addColorStop(0, T.ocean1); bg.addColorStop(1, T.ocean2);
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-    // 2. Subtle Lat/Lon Graticule
+    // 2. Graticule
     ctx.strokeStyle = T.grat; ctx.lineWidth = 1;
     for (let lon = -180; lon <= 180; lon += 20) {
-      const [x] = proj(lon, 0);
-      if (x < -10 || x > W + 10) continue;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      const [x] = proj(lon, 0); if (x >= -10 && x <= W + 10) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     }
     for (let lat = -60; lat <= 75; lat += 15) {
-      const [, gy] = proj(0, lat);
-      if (gy < -10 || gy > H + 10) continue;
-      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+      const [, gy] = proj(0, lat); if (gy >= -10 && gy <= H + 10) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
     }
 
     // 3. Borderless Natural Earth 50m Physical Landmass
@@ -3467,7 +4604,7 @@ TL.dominion = {
     ctx.shadowBlur = 0;
     ctx.clip();
 
-    // 4. REAL TIME-VARYING HISTORICAL BORDERS WITH SMOOTH MOTION TRANSITION!
+    // 4. HISTORICAL BORDERS — TRUE VERTEX MORPH DURING TRANSITIONS, FULL MULTI-RING AT REST!
     const curSnap = loadSnapshot(MS.snapYear);
     const focusItem = S.focus ? S.focus.item : null;
     const focusPol = S.focus && S.focus.type === 'polity' ? focusItem
@@ -3475,42 +4612,100 @@ TL.dominion = {
     const focusEmp = focusPol && (focusPol.dom ? focusPol : TL.overlord(focusPol, y, y));
     const focusIds = new Set();
     if (focusPol) focusIds.add(focusPol.id);
-    if (focusEmp) {
-      focusIds.add(focusEmp.id);
-      if (focusEmp.dom) focusEmp.dom.forEach(d => focusIds.add(d.id));
-    }
+    if (focusEmp) { focusIds.add(focusEmp.id); if (focusEmp.dom) focusEmp.dom.forEach(d => focusIds.add(d.id)); }
     const hasFocus = focusIds.size > 0;
-    const baseOpts = { T, y, S, proj, focusIds, hasFocus };
 
-    const tRaw = clamp(MS.trans, 0, 1);
-    const tEase = easeInOutSine(tRaw);
-    const tCubic = easeOutCubic(tRaw);
-    // Shimmer wave peaks smoothly at t=0.35 and settles to 0
-    const shimmer = tRaw < 1 ? Math.sin(tRaw * Math.PI) * (1 - tRaw * 0.35) : 0;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    const morphing = MS.trans < 0.995 && MS.morphPlan;
 
-    // Outgoing era smoothly recedes & dissolves
-    if (tRaw < 0.995 && MS.prevSnapYear != null) {
-      const prevSnap = loadSnapshot(MS.prevSnapYear);
-      const outScale = lerp(1, MS.transDir > 0 ? 0.988 : 1.012, tEase);
-      renderSnapshotLayer(prevSnap, MS.prevSnapYear, 1 - tEase, outScale, 0, { ...baseOpts, collectHits: false });
+    if (morphing) {
+      const e = easeInOutCubic(clamp(MS.trans, 0, 1));
+      const shimmer = Math.sin(MS.trans * Math.PI);
+      for (let i = 0; i < MS.morphPlan.length; i++) {
+        const mp = MS.morphPlan[i];
+        const col = blendRgb(mp.colA, mp.colB, e);
+        const modeAlpha = mp.mode === 'shrink' ? (1 - e) : (mp.mode === 'grow' ? Math.min(1, e * 1.4) : 1);
+        if (modeAlpha < 0.02) continue;
+
+        ctx.save();
+        ctx.beginPath();
+        traceMorphedRing(mp.ringA, mp.ringB, e, proj);
+
+        ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * modeAlpha;
+        ctx.fillStyle = col; ctx.fill();
+
+        // Soft watercolor wash + delicate rounded frontier stroke
+        ctx.globalAlpha = T.borderAlpha * 0.30 * modeAlpha;
+        ctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
+        ctx.lineWidth = (mp.isIr ? 4.4 : 2.8) + shimmer * 2.5;
+        ctx.stroke();
+
+        ctx.globalAlpha = T.borderAlpha * 0.92 * modeAlpha;
+        ctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.38)' : 'rgba(20,20,24,.30)');
+        ctx.lineWidth = mp.isIr ? 1.55 : 0.8;
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else {
+      for (let idx = 0; idx < curSnap.length; idx++) {
+        const ent = curSnap[idx];
+        let effPid = ent.pid, effFa = ent.fa;
+        if (ent.isIr && MS.snapYear === 1960 && y >= 1979) { effPid = 'iri'; effFa = 'ایران (جمهوری اسلامی)'; }
+        const pol = effPid ? TL.polityById[effPid] : null;
+        const isFocus = !!(effPid && focusIds.has(effPid));
+        const isHover = !!(MS.hover && MS.hover.type === 'hist' && MS.hover.ent === ent);
+        let filterDim = false;
+        if (S.show && !ent.isIr) {
+          const rid = pol ? pol.r : nearestRegion(ent.cx, ent.cy);
+          if (rid && !S.show.has(rid)) filterDim = true;
+        }
+        const dimmed = (hasFocus && !isFocus && !isHover) || filterDim;
+        const col = entColor({ ...ent, pid: effPid }, MS.dark);
+
+        const screenRings = [];
+        ctx.save();
+        ctx.beginPath();
+        for (let r = 0; r < ent.rings.length; r++) {
+          const sr = traceSmoothRing(ent.rings[r], proj, true);
+          if (sr) screenRings.push(sr);
+        }
+
+        ctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1));
+        ctx.fillStyle = col; ctx.fill();
+
+        const bAlpha = T.borderAlpha * (dimmed ? 0.20 : 1);
+        if (!dimmed) {
+          ctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22);
+          ctx.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
+          ctx.lineWidth = ent.isIr ? 4.0 : 2.6;
+          ctx.stroke();
+        }
+        ctx.globalAlpha = bAlpha * (isHover ? 1.5 : (isFocus ? 1.35 : 0.85));
+        if (ent.prec === 1 && !isFocus && !isHover) ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
+          : (isFocus ? T.gold : (ent.isIr ? (MS.dark ? '#e4c47a' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.36)' : 'rgba(20,20,24,.30)')));
+        ctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? 1.35 : 0.72));
+        if ((isFocus || isHover) && MS.dark) { ctx.shadowColor = ent.isIr ? '#d8b46c' : col; ctx.shadowBlur = 12; }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        MS.polyHits.push({ ent, effPid, effFa, pol, screenRings });
+      }
     }
-    // Incoming era smoothly blooms & settles into place!
-    const inScale = tRaw < 1 ? lerp(MS.transDir > 0 ? 0.978 : 1.018, 1, tCubic) : 1;
-    renderSnapshotLayer(curSnap, MS.snapYear, tRaw < 1 ? (0.15 + 0.85 * tEase) : 1, inScale, shimmer, { ...baseOpts, collectHits: true });
 
     // 5. Real Natural Earth 50m Rivers
     if (MS.layers.rivers && mapData.rivers) {
       ctx.save();
-      ctx.strokeStyle = T.river;
-      ctx.lineWidth = clamp(0.8 * Math.sqrt(MS.zoom), 0.65, 1.6);
-      ctx.lineCap = 'round';
+      ctx.strokeStyle = T.river; ctx.lineWidth = clamp(0.8 * Math.sqrt(MS.zoom), 0.65, 1.6); ctx.lineCap = 'round';
       ctx.beginPath();
       for (let i = 0; i < mapData.rivers.length; i++) traceOpenPts(mapData.rivers[i], proj, true);
       ctx.stroke();
       ctx.restore();
     }
 
-    // 6. Carve Real Natural Earth 50m Lakes cleanly over historical territories
+    // 6. Real Natural Earth 50m Lakes
     ctx.save();
     ctx.beginPath();
     for (let i = 0; i < lakesDecoded.length; i++) traceCoastRing(lakesDecoded[i], proj);
@@ -3518,9 +4713,9 @@ TL.dominion = {
     ctx.strokeStyle = T.landStroke; ctx.lineWidth = 0.65; ctx.stroke();
     ctx.restore();
 
-    ctx.restore(); // END physical landmass clip!
+    ctx.restore(); // END physical landmass clip
 
-    // 7. Delicate outer coastline hairline
+    // 7. Outer coastline hairline
     ctx.save();
     ctx.beginPath();
     for (let i = 0; i < landDecoded.length; i++) traceCoastRing(landDecoded[i], proj);
@@ -3539,29 +4734,25 @@ TL.dominion = {
         const [x1, y1] = proj(aFrom[0], aFrom[1]), [x2, y2] = proj(aTo[0], aTo[1]);
         const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - Math.hypot(x2 - x1, y2 - y1) * 0.22;
         ctx.save();
-        ctx.globalAlpha = hasFocus && !isFoc ? 0.07 : (isFoc ? 0.80 : 0.30);
+        ctx.globalAlpha = hasFocus && !isFoc ? 0.07 : (isFoc ? 0.80 : 0.28);
         ctx.strokeStyle = TL.isIranian(lord) ? T.gold : (lord.base || T.gold);
         ctx.lineWidth = isFoc ? 1.8 : 1.0;
-        ctx.setLineDash([4, 4]);
-        ctx.lineDashOffset = -MS.t * 14;
+        ctx.setLineDash([4, 4]); ctx.lineDashOffset = -MS.t * 14;
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(mx, my, x2, y2); ctx.stroke();
         ctx.setLineDash([]);
         ctx.restore();
       });
     }
 
-    // 9. Animated Trade Routes
+    // 9. Trade Routes
     if (MS.layers.routes && mapData.routes) {
       for (const tr of mapData.routes) {
         if (y < tr.s || y > tr.e) continue;
         ctx.save();
         ctx.beginPath(); traceOpenPts(tr.pts, proj, false);
         ctx.strokeStyle = MS.dark ? 'rgba(216,180,108,.44)' : 'rgba(184,74,50,.44)';
-        ctx.lineWidth = 1.35;
-        ctx.setLineDash([5, 7]);
-        ctx.lineDashOffset = -MS.t * 18;
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.lineWidth = 1.35; ctx.setLineDash([5, 7]); ctx.lineDashOffset = -MS.t * 18;
+        ctx.stroke(); ctx.setLineDash([]);
         ctx.restore();
       }
     }
@@ -3574,15 +4765,13 @@ TL.dominion = {
         const fade = y < cmp.s ? 1 - (cmp.s - y) / 8 : (y > cmp.e ? 1 - (y - cmp.e) / 12 : 1);
         const pts = cmp.pts.map(p => proj(p[0], p[1]));
         ctx.save();
-        ctx.globalAlpha = fade;
-        ctx.strokeStyle = cmp.col; ctx.lineWidth = 2.2;
+        ctx.globalAlpha = fade; ctx.strokeStyle = cmp.col; ctx.lineWidth = 2.2;
         if (MS.dark) { ctx.shadowColor = cmp.col; ctx.shadowBlur = 10; }
         ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
         const segCount = pts.length - 1, totalPos = prog * segCount;
         let hx = pts[0][0], hy = pts[0][1], ang = 0;
         for (let i = 0; i < segCount; i++) {
-          const sp = clamp(totalPos - i, 0, 1);
-          if (sp <= 0) break;
+          const sp = clamp(totalPos - i, 0, 1); if (sp <= 0) break;
           const a = pts[i], b = pts[i + 1];
           const px = lerp(a[0], b[0], sp), py = lerp(a[1], b[1], sp);
           ctx.lineTo(px, py); hx = px; hy = py; ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
@@ -3604,7 +4793,7 @@ TL.dominion = {
       }
     }
 
-    // Shared 2D label collision registry
+    // Shared 2D collision registry
     const placed = [];
     const tryPlace = (x, y, w, h, force) => {
       const box = [x - w / 2 - 5, y - h / 2 - 3, x + w / 2 + 5, y + h / 2 + 3];
@@ -3613,18 +4802,27 @@ TL.dominion = {
       return true;
     };
 
-    // 11. Historical Empire & Kingdom Labels (smooth fade-in during transitions!)
+    // 11. Empire Labels (smoothly glide along morphed centroids during morph!)
     if (MS.layers.labels) {
-      const lblAlpha = tRaw < 1 ? (0.35 + 0.65 * tEase) : 1;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
-      const labelQueue = MS.polyHits.slice().sort((a, b) => (b.ent.isIr ? 1 : 0) - (a.ent.isIr ? 1 : 0) || b.ent.area - a.ent.area);
+      const eMorph = morphing ? easeInOutCubic(clamp(MS.trans, 0, 1)) : 1;
+      const queue = morphing
+        ? MS.morphPlan.filter(m => m.mode !== 'shrink').map(m => ({
+            ent: m.ent, effPid: m.effPid, effFa: m.effFa,
+            lon: lerp(m.cxA, m.cxB, eMorph), lat: lerp(m.cyA, m.cyB, eMorph),
+            alpha: m.mode === 'grow' ? eMorph : 1
+          }))
+        : MS.polyHits.slice().sort((a, b) => (b.ent.isIr ? 1 : 0) - (a.ent.isIr ? 1 : 0) || b.ent.area - a.ent.area).map(h => ({
+            ent: h.ent, effPid: h.effPid, effFa: h.effFa, lon: h.ent.cx, lat: h.ent.cy, alpha: 1
+          }));
+
       const seenNames = new Set();
-      for (const h of labelQueue) {
-        const { ent, effPid, effFa } = h;
+      for (const item of queue) {
+        const { ent, effPid, effFa, lon, lat, alpha } = item;
         if (!effFa || seenNames.has(effFa)) continue;
         const minArea = MS.zoom < 0.68 ? 42 : (MS.zoom < 1.0 ? 12 : (MS.zoom < 1.8 ? 4 : 0));
         if (ent.area < minArea && !ent.isIr) continue;
-        const [lx, ly] = proj(ent.cx, ent.cy);
+        const [lx, ly] = proj(lon, lat);
         if (lx < 24 || lx > W - 24 || ly < 42 || ly > H - 46) continue;
         const isFoc = !!(effPid && focusIds.has(effPid));
         const isHov = !!(MS.hover && MS.hover.type === 'hist' && MS.hover.ent === ent);
@@ -3637,14 +4835,13 @@ TL.dominion = {
         seenNames.add(effFa);
 
         ctx.save();
-        ctx.globalAlpha = (hasFocus && !isFoc && !isHov ? 0.28 : 1) * lblAlpha;
+        ctx.globalAlpha = (hasFocus && !isFoc && !isHov ? 0.28 : 1) * alpha;
         ctx.fillStyle = ent.isIr ? (MS.dark ? '#f5dca0' : '#163578') : T.ink;
         if (MS.dark) { ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 8; }
         else { ctx.shadowColor = 'rgba(255,255,255,.92)'; ctx.shadowBlur = 5; }
         ctx.fillText(effFa, lx, ly - (showRul ? 5 : 0));
         if (showRul) {
-          ctx.font = `500 9.5px ${UI}`;
-          ctx.fillStyle = T.gold;
+          ctx.font = `500 9.5px ${UI}`; ctx.fillStyle = T.gold;
           ctx.fillText(ruls[0].n, lx, ly + 10);
         }
         ctx.restore();
@@ -3654,10 +4851,8 @@ TL.dominion = {
     // 12. Active Historical Capitals
     const drawnCaps = new Set();
     TL.regions.forEach(reg => {
-      const p = M.primaryPolity(reg.id, y);
-      if (!p) return;
-      const cap = resolveCapital(p);
-      if (!cap || drawnCaps.has(cap.name)) return;
+      const p = M.primaryPolity(reg.id, y); if (!p) return;
+      const cap = resolveCapital(p); if (!cap || drawnCaps.has(cap.name)) return;
       drawnCaps.add(cap.name);
       const [cx, cy] = proj(cap.pt[0], cap.pt[1]);
       if (cx < -20 || cx > W + 20 || cy < 20 || cy > H - 40) return;
@@ -3670,8 +4865,7 @@ TL.dominion = {
         ctx.font = `${isIr ? 700 : 500} 9.5px ${UI}`;
         const tw = ctx.measureText(cap.name).width;
         if (tryPlace(cx, cy + 11, tw, 12, false)) {
-          ctx.fillStyle = isIr ? T.gold : T.sub;
-          ctx.textAlign = 'center';
+          ctx.fillStyle = isIr ? T.gold : T.sub; ctx.textAlign = 'center';
           if (MS.dark) { ctx.shadowColor = '#000'; ctx.shadowBlur = 5; }
           ctx.fillText(cap.name, cx, cy + 11);
         }
@@ -3679,52 +4873,57 @@ TL.dominion = {
       ctx.restore();
     });
 
-    // 13. Live Events
+    // 13. Live Events AT THEIR EXACT BATTLEFIELD / CITY COORDINATES (TL.eventGeo)!
     if (MS.layers.events && S.layers.events) {
       const win = y < -1000 ? 75 : (y < 500 ? 22 : (y < 1800 ? 12 : 4));
       const nearEvs = TL.events.filter(e => {
         const shown = e.r === 'iran' || !S.show || S.show.has(e.r);
         return shown && y >= e.y - win && y <= (e.y2 || e.y) + win;
       }).sort((a, b) => b.w - a.w);
-      const perReg = {};
+      const seenLoc = {};
       nearEvs.forEach(e => {
-        const anc = mapData.anchors[e.r]; if (!anc) return;
-        const idx = (perReg[e.r] = (perReg[e.r] || 0) + 1) - 1;
-        if (idx > 2) return;
-        const [bx, by] = proj(anc[0], anc[1]);
-        const ex = bx + (idx - 0.5) * 22, ey = by - 26 - (idx % 2) * 12;
+        const geo = TL.eventGeo ? TL.eventGeo(e) : null;
+        if (!geo) return;
+        const key = Math.round(geo[0] * 2) + ',' + Math.round(geo[1] * 2);
+        const dup = (seenLoc[key] = (seenLoc[key] || 0) + 1) - 1;
+        const [bx, by] = proj(geo[0], geo[1]);
+        const ex = bx + (dup ? Math.cos(dup * 2.1) * 11 : 0);
+        const ey = by + (dup ? Math.sin(dup * 2.1) * 11 : 0);
         if (ex < 12 || ex > W - 12 || ey < 48 || ey > H - 46) return;
         const col = (TL.KIND[e.k] || TL.KIND.pol).c;
         const dist = Math.min(Math.abs(y - e.y), Math.abs(y - (e.y2 || e.y)));
-        const alpha = clamp(1 - dist / (win + 1), 0.35, 1);
+        const alpha = clamp(1 - dist / (win + 1), 0.38, 1);
         const isHov = MS.hover && MS.hover.type === 'event' && MS.hover.item === e;
+        const isFoc = S.focus && S.focus.type === 'event' && S.focus.item === e;
 
         ctx.save();
         ctx.globalAlpha = alpha;
-        if (dist < win * 0.45) {
-          const wr = 5 + ((MS.t * 22 + idx * 7) % 18);
-          ctx.strokeStyle = col; ctx.lineWidth = 1.1; ctx.globalAlpha = alpha * (1 - wr / 24);
+        if (dist < win * 0.45 || isFoc) {
+          const wr = 5 + ((MS.t * 22 + dup * 7) % 18);
+          ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.globalAlpha = alpha * (1 - wr / 24);
           ctx.beginPath(); ctx.arc(ex, ey, wr, 0, Math.PI * 2); ctx.stroke();
           ctx.globalAlpha = alpha;
         }
         ctx.fillStyle = col;
-        if (MS.dark) { ctx.shadowColor = col; ctx.shadowBlur = isHov ? 12 : 6; }
+        if (MS.dark) { ctx.shadowColor = col; ctx.shadowBlur = isHov || isFoc ? 14 : 6; }
         if (e.k === 'war') {
           ctx.save(); ctx.translate(ex, ey); ctx.rotate(Math.PI / 4);
-          const sz = isHov ? 4.5 : 3.3; ctx.fillRect(-sz, -sz, sz * 2, sz * 2); ctx.restore();
+          const sz = isHov || isFoc ? 4.8 : 3.4; ctx.fillRect(-sz, -sz, sz * 2, sz * 2); ctx.restore();
         } else {
-          ctx.beginPath(); ctx.arc(ex, ey, isHov ? 5.0 : 3.6, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(ex, ey, isHov || isFoc ? 5.2 : 3.6, 0, Math.PI * 2); ctx.fill();
         }
         ctx.shadowBlur = 0;
-        if (e.w >= 3 || isHov || (e.r === 'iran' && MS.zoom >= 1.35)) {
-          ctx.font = `600 9.5px ${UI}`;
+        if (e.w >= 3 || isHov || isFoc || (e.r === 'iran' && MS.zoom >= 1.35)) {
+          ctx.font = `${isFoc ? 800 : 600} 9.5px ${UI}`;
           const tw = ctx.measureText(e.n).width;
-          if (tryPlace(ex, ey - 10, tw, 12, isHov)) {
-            ctx.fillStyle = MS.dark ? '#fff' : '#141416';
-            ctx.textAlign = 'center';
+          let ly = null;
+          if (tryPlace(ex, ey - 11, tw, 13, false)) ly = ey - 11;
+          else if ((isHov || isFoc) && tryPlace(ex, ey + 13, tw, 13, true)) ly = ey + 13;
+          if (ly != null) {
+            ctx.fillStyle = MS.dark ? '#fff' : '#141416'; ctx.textAlign = 'center';
             if (MS.dark) { ctx.shadowColor = '#000'; ctx.shadowBlur = 5; }
             else { ctx.shadowColor = 'rgba(255,255,255,.92)'; ctx.shadowBlur = 4; }
-            ctx.fillText(e.n, ex, ey - 10);
+            ctx.fillText(e.n, ex, ly);
           }
         }
         ctx.restore();
@@ -3732,20 +4931,22 @@ TL.dominion = {
       });
     }
 
-    // 14. Living Historical Figures
+    // 14. Living Historical Figures AT THEIR EXACT BIRTHPLACE COORDINATES (TL.personGeo)!
     if (MS.layers.people && S.layers.people) {
       const alive = TL.people.filter(p => {
         const shown = p.r === 'iran' || !S.show || S.show.has(p.r);
         return shown && y >= p.s && y <= p.e;
       });
-      const perReg = {};
+      const seenCity = {};
       alive.forEach(p => {
-        const anc = mapData.anchors[p.r]; if (!anc) return;
-        const idx = (perReg[p.r] = (perReg[p.r] || 0) + 1) - 1;
-        if (idx > (p.r === 'iran' ? 3 : 1)) return;
-        const [bx, by] = proj(anc[0], anc[1]);
-        const ang = (idx * 2.15) + 0.65, rad = p.r === 'iran' ? 28 + idx * 10 : 24;
-        const px = bx + Math.cos(ang) * rad, py = by + Math.sin(ang) * rad * 0.75;
+        const geo = TL.personGeo ? TL.personGeo(p) : null;
+        if (!geo) return;
+        const key = Math.round(geo[0] * 2) + ',' + Math.round(geo[1] * 2);
+        const dup = (seenCity[key] = (seenCity[key] || 0) + 1) - 1;
+        const [bx, by] = proj(geo[0], geo[1]);
+        // Micro-spiral only when multiple figures were born in the exact same city (e.g. Shiraz / Athens / Tehran)
+        const px = bx + (dup ? Math.cos(dup * 2.2) * (9 + dup * 2.5) : 0);
+        const py = by + (dup ? Math.sin(dup * 2.2) * (9 + dup * 2.5) : 0);
         if (px < 12 || px > W - 12 || py < 48 || py > H - 46) return;
         const isHov = MS.hover && MS.hover.type === 'person' && MS.hover.item === p;
         const isFoc = S.focus && S.focus.type === 'person' && S.focus.item === p;
@@ -3754,18 +4955,20 @@ TL.dominion = {
         ctx.save();
         ctx.fillStyle = p.r === 'iran' || isFoc ? T.gold : col;
         if (MS.dark) { ctx.shadowColor = p.r === 'iran' || isFoc ? T.gold : col; ctx.shadowBlur = isHov || isFoc ? 14 : 6; }
-        ctx.beginPath(); ctx.arc(px, py, isHov || isFoc ? 4.8 : 3.1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, isHov || isFoc ? 5.0 : 3.2, 0, Math.PI * 2); ctx.fill();
         ctx.shadowBlur = 0;
-        if (isFoc || isHov || (p.r === 'iran' && MS.zoom >= 1.25) || MS.zoom >= 1.55) {
+        if (isFoc || isHov || (p.r === 'iran' && MS.zoom >= 1.2) || MS.zoom >= 1.45) {
           const lbl = '★ ' + p.n;
           ctx.font = `${isFoc ? 800 : 600} 9.5px ${UI}`;
           const tw = ctx.measureText(lbl).width;
-          if (tryPlace(px, py - 10, tw, 12, isHov || isFoc)) {
-            ctx.fillStyle = p.r === 'iran' || isFoc ? T.gold : T.ink;
-            ctx.textAlign = 'center';
+          let ly = null;
+          if (tryPlace(px, py - 11, tw, 13, false)) ly = py - 11;
+          else if ((isHov || isFoc) && tryPlace(px, py + 13, tw, 13, true)) ly = py + 13;
+          if (ly != null) {
+            ctx.fillStyle = p.r === 'iran' || isFoc ? T.gold : T.ink; ctx.textAlign = 'center';
             if (MS.dark) { ctx.shadowColor = '#000'; ctx.shadowBlur = 5; }
             else { ctx.shadowColor = 'rgba(255,255,255,.92)'; ctx.shadowBlur = 4; }
-            ctx.fillText(lbl, px, py - 10);
+            ctx.fillText(lbl, px, ly);
           }
         }
         ctx.restore();
@@ -3807,10 +5010,10 @@ TL.dominion = {
   };
   M.step = function (dt) {
     MS.t += dt;
-    // Smooth 700ms era border cross-dissolve & bloom!
+    // Silky 850ms vertex-to-vertex geometric polygon morph!
     if (MS.trans < 1) {
-      MS.trans = Math.min(1, MS.trans + dt / 0.72);
-      if (MS.trans >= 1) MS.prevSnapYear = null;
+      MS.trans = Math.min(1, MS.trans + dt / 0.85);
+      if (MS.trans >= 1) MS.morphPlan = null;
     }
     MS.lon = lerp(MS.lon, MS.tLon, 0.14);
     MS.lat = lerp(MS.lat, MS.tLat, 0.14);
@@ -4026,9 +5229,15 @@ TL.dominion = {
       targetY = (type === 'polity' && item.p != null) ? item.p : (s + endCap) / 2;
     }
     setActiveYear(targetY, false, true);
-    // Fly map cleanly to the item's region!
-    const rid = type === 'ruler' ? (TL.polityById[item.pid] || {}).r : item.r;
-    if (rid) M.flyToRegion(rid, rid === 'iran' ? 1.65 : 1.35);
+    // Fly map cleanly to the item's EXACT birthplace/battlefield (or region anchor)!
+    if (type === 'person' && TL.personGeo) {
+      const g = TL.personGeo(item); if (g) M.flyTo(g[0], g[1], 1.9);
+    } else if (type === 'event' && TL.eventGeo) {
+      const g = TL.eventGeo(item); if (g) M.flyTo(g[0], g[1], 1.9);
+    } else {
+      const rid = type === 'ruler' ? (TL.polityById[item.pid] || {}).r : item.r;
+      if (rid) M.flyToRegion(rid, rid === 'iran' ? 1.65 : 1.35);
+    }
     if (zoom) { const pad = Math.max(12, (endCap - s) * 0.6); animateTo(s - pad, endCap + pad); }
     updatePanel(); redrawTL(); openPanel(true); syncHash();
   }
@@ -4089,7 +5298,7 @@ TL.dominion = {
     else if (k === 'ArrowUp' || k === 'ArrowDown') { S.scrollY += k === 'ArrowDown' ? 80 : -80; R.clampView(); redrawTL(); }
     else if (k === '+' || k === '=') zoomAt(S.PW / 2, 1.35);
     else if (k === '-') zoomAt(S.PW / 2, 1 / 1.35);
-    else if (k === 'Escape') { S.focus = null; updatePanel(); redrawTL(); $('about').hidden = true; $('layers').hidden = true; $('regions').hidden = true; }
+    else if (k === 'Escape') { S.focus = null; updatePanel(); redrawTL(); $('about').hidden = true; $('layers').hidden = true; $('regions').hidden = true; $('moreEras').hidden = true; }
   });
 
   // ---------- tooltips ----------
@@ -4102,10 +5311,14 @@ TL.dominion = {
     const it = h.item, t = h.type; let sub = '', extra = '';
     if (t === 'polity') { sub = TL.regionById[it.r].n; if (it.cap) extra += `<p>پایتخت: ${esc(it.cap)}</p>`; }
     if (t === 'ruler') { const p = TL.polityById[it.pid]; sub = p ? p.n : ''; if (it.t) sub = it.t + ' · ' + sub; }
-    if (t === 'event') sub = (TL.KIND[it.k] || TL.KIND.pol).n + ' · ' + (TL.regionById[it.r] ? TL.regionById[it.r].n : '');
+    if (t === 'event') {
+      const g = TL.eventGeo ? TL.eventGeo(it) : null;
+      sub = (TL.KIND[it.k] || TL.KIND.pol).n + ' · ' + (g && g[2] ? g[2] : (TL.regionById[it.r] ? TL.regionById[it.r].n : ''));
+    }
     if (t === 'person') {
+      const g = TL.personGeo ? TL.personGeo(it) : null;
       const age = S.pinYear != null && S.pinYear >= it.s && S.pinYear <= it.e ? ` (${TL.fa(Math.floor(S.pinYear - it.s))} ساله در این سال)` : '';
-      sub = (TL.PKIND[it.k] || '') + ' · ' + (TL.regionById[it.r] ? TL.regionById[it.r].n : '') + age;
+      sub = (TL.PKIND[it.k] || '') + (g && g[2] ? ' · زادگاه: ' + g[2] : '') + age;
     }
     const dur = t !== 'event' ? ` · ${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال` : '';
     return `<h4>${esc(it.n)}</h4>${it.en ? `<div class="en">${esc(it.en)}</div>` : ''}<div class="yr">${itemYears(it, t)}${dur}</div>` +
@@ -4184,11 +5397,15 @@ TL.dominion = {
       meta += maxA >= 0.4 ? `<span>بیشینهٔ قلمرو: <b>${TL.fa(maxA.toFixed(1))} م.ک²</b></span>` : '';
       meta += `<span>مدت: <b>${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال</b></span>`;
     } else if (type === 'person' || type === 'ruler') {
-      // Show contemporaries!
+      const g = type === 'person' && TL.personGeo ? TL.personGeo(it) : null;
+      if (g && g[2]) meta += `<div class="feat-meta"><span>زادگاه: <b>${esc(g[2])}</b></span></div>`;
       const cont = TL.people.filter(p => p !== it && over(p.s, p.e, it.s, it.e)).slice(0, 6);
       if (cont.length) {
-        meta = `<div class="feat-cont"><b>هم‌روزگاران نامدار:</b>${cont.map(p => esc(p.n)).join(' · ')}</div>`;
+        meta += `<div class="feat-cont"><b>هم‌روزگاران نامدار:</b>${cont.map(p => esc(p.n)).join(' · ')}</div>`;
       }
+    } else if (type === 'event' && TL.eventGeo) {
+      const g = TL.eventGeo(it);
+      if (g && g[2]) meta = `<div class="feat-meta"><span>مکان: <b>${esc(g[2])}</b></span></div>`;
     }
     return `<div class="feat-card" style="--c:${col || 'var(--gold)'}">
       <div class="feat-k"><span>${esc(kindLbl)}</span><button type="button" class="feat-x" id="clearFocus" title="پاک‌کردن انتخاب">×</button></div>
@@ -4302,8 +5519,9 @@ TL.dominion = {
   TL.people.forEach(p => index.push([p, 'person', TL.PKIND[p.k] || 'چهره']));
   index.forEach(row => {
     const o = row[0];
+    const loc = row[1] === 'person' && TL.personGeo ? (TL.personGeo(o)?.[2] || '') : (row[1] === 'event' && TL.eventGeo ? (TL.eventGeo(o)?.[2] || '') : '');
     row.nameKey = TL.norm(o.n + ' ' + (o.en || ''));
-    row.fullKey = row.nameKey + ' ' + TL.norm((o.cap || '') + ' ' + (o.d || ''));
+    row.fullKey = row.nameKey + ' ' + TL.norm((o.cap || '') + ' ' + loc + ' ' + (o.d || ''));
   });
 
   function parseYearQuery(raw) {
@@ -4353,26 +5571,38 @@ TL.dominion = {
   qres.addEventListener('pointerdown', (ev) => { const li = ev.target.closest('li[data-i]'); if (li) { ev.preventDefault(); pick(+li.dataset.i); } });
   q.addEventListener('blur', () => setTimeout(() => (qres.hidden = true), 150));
 
-  // ---------- era chips ----------
+  // ---------- era chips (clean 12 primary eras + "سایر دوره‌ها" dropdown so ZERO clipping!) ----------
+  const PRIMARY_ERAS = new Set(['همهٔ تاریخ', 'ایلام', 'ماد و هخامنشی', 'اشکانیان', 'ساسانیان', 'ورود اسلام', 'سامانیان و آل‌بویه', 'سلجوقیان', 'مغول و ایلخانان', 'تیموریان', 'صفویه', 'افشار و زند', 'قاجار', 'امروز']);
   const chipHTML = (c) => `<button class="chip ${c.iran ? 'iran' : ''}" data-i="${TL.chips.indexOf(c)}">${esc(c.n)}</button>`;
-  $('eraChips').innerHTML = TL.chips.filter(c => c.iran).map(chipHTML).join('') + '<span class="chip-sep" aria-hidden="true"></span>' + TL.chips.filter(c => !c.iran).map(chipHTML).join('');
-  $('eraChips').addEventListener('click', (ev) => {
-    const b = ev.target.closest('.chip'); if (!b) return;
+  const mainChips = TL.chips.filter(c => PRIMARY_ERAS.has(c.n));
+  const extraIran = TL.chips.filter(c => c.iran && !PRIMARY_ERAS.has(c.n));
+  const extraWorld = TL.chips.filter(c => !c.iran && !PRIMARY_ERAS.has(c.n));
+  $('eraChips').innerHTML = mainChips.map(chipHTML).join('');
+  $('moreEras').innerHTML =
+    (extraIran.length ? '<div class="m-sec">دوره‌های ایران</div>' + extraIran.map(chipHTML).join('') : '') +
+    (extraWorld.length ? '<div class="m-sec">دوره‌های جهان</div>' + extraWorld.map(chipHTML).join('') : '');
+
+  function handleEraClick(ev) {
+    const b = ev.target.closest('.chip[data-i]'); if (!b) return;
     document.querySelectorAll('.chip.on').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    $('moreEras').hidden = true;
     const c = TL.chips[+b.dataset.i];
     stopPlay(); S.focus = null;
     const mid = Math.min(TL.NOW, (c.s + c.e) / 2);
-    setActiveYear(mid, false);
+    setActiveYear(mid, false, true);
     animateTo(c.s, c.e);
     if (c.iran) M.presetEurasia(); else M.presetWorld();
     updatePanel(); syncHash();
-  });
+  }
+  $('eraChips').addEventListener('click', handleEraClick);
+  $('moreEras').addEventListener('click', handleEraClick);
+  $('btnMoreEras').onclick = () => { const m = $('moreEras'); m.hidden = !m.hidden; $('layers').hidden = true; $('regions').hidden = true; $('btnMoreEras').setAttribute('aria-expanded', String(!m.hidden)); };
 
   // ---------- toolbar ----------
   $('btnScale').onclick = () => {
     const c = R.yearAt(S.PW / 2), [v0, v1] = R.visRange();
     TL.scaleMode = TL.scaleMode === 'warp' ? 'linear' : 'warp';
-    $('btnScale').textContent = 'مقیاس: ' + (TL.scaleMode === 'warp' ? 'فشرده' : 'خطی');
+    $('btnScale').textContent = TL.scaleMode === 'warp' ? 'فشرده' : 'خطی';
     R.fit(v0, v1, 0); if (TL.scaleMode === 'linear') { S.u0 = TL.u(c) - S.PW / S.k / 2; R.clampView(); } redrawTL();
   };
   $('btnDir').onclick = () => {
@@ -4385,14 +5615,15 @@ TL.dominion = {
   try { const sv = localStorage.getItem('jam-atlas-theme'); if (sv) dark = sv === 'dark'; } catch (e) { }
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    $('btnTheme').textContent = dark ? '☀ روشن' : '☾ تیره';
+    $('btnTheme').textContent = dark ? '☀' : '☾';
+    $('btnTheme').title = dark ? 'تغییر به پوستهٔ روشن' : 'تغییر به پوستهٔ تیره';
     MS.dark = dark;
     try { localStorage.setItem('jam-atlas-theme', dark ? 'dark' : 'light'); } catch (e) { }
     R.readTheme(); redrawTL();
   }
   $('btnTheme').onclick = () => { dark = !dark; applyTheme(); };
 
-  $('btnLayers').onclick = () => { const l = $('layers'); l.hidden = !l.hidden; $('regions').hidden = true; $('btnLayers').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('btnLayers').onclick = () => { const l = $('layers'); l.hidden = !l.hidden; $('regions').hidden = true; $('moreEras').hidden = true; $('btnLayers').setAttribute('aria-expanded', String(!l.hidden)); };
   [['lyRulers', 'rulers'], ['lyEvents', 'events'], ['lyPeople', 'people'], ['lyLinks', 'links']].forEach(([id, k]) => {
     $(id).addEventListener('change', (ev) => { S.layers[k] = ev.target.checked; relayout(true); });
   });
@@ -4429,17 +5660,18 @@ TL.dominion = {
   $('rgNone').onclick = () => setShow(new Set(), true);
   $('rgNear').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'caucasus', 'levant', 'arabia', 'egypt', 'central_asia', 'south_asia']), true);
   $('rgSilk').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'central_asia', 'steppe', 'south_asia', 'china', 'italy', 'greece']), true);
-  $('btnRegions').onclick = () => { const l = $('regions'); l.hidden = !l.hidden; $('layers').hidden = true; $('btnRegions').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('btnRegions').onclick = () => { const l = $('regions'); l.hidden = !l.hidden; $('layers').hidden = true; $('moreEras').hidden = true; $('btnRegions').setAttribute('aria-expanded', String(!l.hidden)); };
   try { const v = localStorage.getItem('jam-regions'); if (v) S.show = new Set(v === '-' ? [] : v.split(',')); } catch (e) { }
 
   // Close popovers on outside click
   document.addEventListener('pointerdown', (ev) => {
     if (!ev.target.closest('#layers,#btnLayers')) $('layers').hidden = true;
     if (!ev.target.closest('#regions,#btnRegions')) $('regions').hidden = true;
+    if (!ev.target.closest('#moreEras,#btnMoreEras')) $('moreEras').hidden = true;
   });
 
   // ---------- about modal ----------
-  $('btnAbout').onclick = () => { $('about').hidden = false; };
+  $('btnAbout').onclick = () => { $('layers').hidden = true; $('about').hidden = false; };
   $('aboutX').onclick = () => { $('about').hidden = true; };
   $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') $('about').hidden = true; });
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;
