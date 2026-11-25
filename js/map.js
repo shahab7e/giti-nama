@@ -58,7 +58,7 @@
 
   // Restrained Swiss-editorial muted hues (distinct yet harmonious)
   const SWISS_HUES = [214, 34, 158, 350, 22, 248, 184, 42, 140, 332, 198, 14];
-  const MORPH_N = 56;
+  const MORPH_N = 64;
 
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -130,22 +130,21 @@
     return out;
   }
 
-  // Tiny circular seed ring centered at (cx, cy) for emerging/vanishing realms
-  function seedRing(cx, cy, r, N) {
-    const out = new Float32Array(N * 2);
-    for (let k = 0; k < N; k++) {
-      const a = (k / N) * Math.PI * 2;
-      out[k * 2] = cx + Math.cos(a) * r;
-      out[k * 2 + 1] = cy + Math.sin(a) * r;
+  // Gently contracted version of a ring around its own centroid (clean in-place unfold/dissolve, no flying bubbles!)
+  function scaleRing(ring, cx, cy, f) {
+    const out = new Float32Array(ring.length);
+    for (let i = 0; i < ring.length; i += 2) {
+      out[i] = cx + (ring[i] - cx) * f;
+      out[i + 1] = cy + (ring[i + 1] - cy) * f;
     }
     return out;
   }
 
-  // Find cyclic vertex rotation of ringB minimizing sum of squared distances to ringA (prevents twist!)
+  // Find exact cyclic vertex rotation of ringB minimizing squared distance to ringA (prevents any twist!)
   function alignRing(ringA, ringB) {
     const N = ringA.length / 2;
     let bestShift = 0, bestCost = 1e18;
-    for (let sh = 0; sh < N; sh += 2) {
+    for (let sh = 0; sh < N; sh++) {
       let cost = 0;
       for (let i = 0; i < N; i += 2) {
         const bi = ((i + sh) % N) * 2;
@@ -163,15 +162,49 @@
     return out;
   }
 
-  function primaryRingOf(ent) {
-    if (ent._mainRing) return ent._mainRing;
+  // Cache primary ring + its own exact bounding box, centroid & area (prevents colonial/multi-ring jumps!)
+  function ringMetaOf(ent) {
+    if (ent._rm) return ent._rm;
     let best = ent.rings[0], ba = -1;
     for (let i = 0; i < ent.rings.length; i++) {
       const a = Math.abs(signedRingArea(ent.rings[i]));
       if (a > ba) { ba = a; best = ent.rings[i]; }
     }
-    ent._mainRing = resampleRing(best, MORPH_N);
-    return ent._mainRing;
+    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, sx = 0, sy = 0;
+    const n = best.length;
+    for (let i = 0; i < n; i += 2) {
+      const x = best[i], y = best[i + 1];
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+      sx += x; sy += y;
+    }
+    const pts = (n / 2) || 1;
+    ent._rm = {
+      ring: resampleRing(best, MORPH_N),
+      box: [minX, minY, maxX, maxY],
+      rcx: sx / pts, rcy: sy / pts,
+      rArea: Math.max(0.05, ba)
+    };
+    return ent._rm;
+  }
+
+  function boxOverlapMetrics(a, b) {
+    const ix = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]));
+    const iy = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+    const inter = ix * iy;
+    if (inter <= 0) return { ratio: 0, iou: 0 };
+    const areaA = Math.max(1e-4, (a[2] - a[0]) * (a[3] - a[1]));
+    const areaB = Math.max(1e-4, (b[2] - b[0]) * (b[3] - b[1]));
+    return { ratio: inter / Math.min(areaA, areaB), iou: inter / (areaA + areaB - inter) };
+  }
+
+  function canMorphPair(ma, mb, minOverlap, maxDist) {
+    const ov = boxOverlapMetrics(ma.box, mb.box);
+    if (ov.ratio < minOverlap) return null;
+    const d = Math.hypot(ma.rcx - mb.rcx, ma.rcy - mb.rcy);
+    const sizeCap = Math.max(4.5, Math.min(maxDist, (Math.sqrt(ma.rArea) + Math.sqrt(mb.rArea)) * 0.72));
+    if (d > sizeCap) return null;
+    return { d, ratio: ov.ratio, iou: ov.iou };
   }
 
   // Color parsing to RGB for smooth color morphing
@@ -201,80 +234,143 @@
     return `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`;
   }
 
-  // Build geometric morph plan pairing empires between prevSnap and curSnap!
+  // Build spatially-verified geometric morph plan: ZERO cross-continent jumps, static lock for unchanged countries!
   function buildMorphPlan(prevSnap, prevSy, curSnap, curSy, y) {
     const usedPrev = new Set(), usedCur = new Set();
     const pairs = [];
+    const metaA = prevSnap.map(ringMetaOf);
+    const metaB = curSnap.map(ringMetaOf);
+
     const effOf = (ent, sy) => {
       if (ent.isIr && sy === 1960 && y >= 1979) return { pid: 'iri', fa: 'ایران (جمهوری اسلامی)' };
       return { pid: ent.pid, fa: ent.fa };
     };
-    const addPair = (pa, pb) => {
-      const rA = pa ? primaryRingOf(pa) : seedRing(pb.cx, pb.cy, 0.35, MORPH_N);
-      const rB = pb ? primaryRingOf(pb) : seedRing(pa.cx, pa.cy, 0.35, MORPH_N);
-      const alignedB = alignRing(rA, rB);
+    const addPair = (iA, iB, sameName) => {
+      const pa = iA >= 0 ? prevSnap[iA] : null;
+      const pb = iB >= 0 ? curSnap[iB] : null;
+      const ma = iA >= 0 ? metaA[iA] : null;
+      const mb = iB >= 0 ? metaB[iB] : null;
       const ea = pa ? effOf(pa, prevSy) : null, eb = pb ? effOf(pb, curSy) : null;
       const colA = parseColorRgb(pa ? entColor({ ...pa, pid: ea.pid }, MS.dark) : entColor({ ...pb, pid: eb.pid }, MS.dark));
       const colB = parseColorRgb(pb ? entColor({ ...pb, pid: eb.pid }, MS.dark) : entColor({ ...pa, pid: ea.pid }, MS.dark));
+
+      // Lock unchanged states so they NEVER wobble, jump, or blink secondary islands!
+      let mode = pa && pb ? 'morph' : (pb ? 'grow' : 'shrink');
+      let rA = null, alignedB = null;
+      if (pa && pb) {
+        const ov = boxOverlapMetrics(ma.box, mb.box);
+        const cd = Math.hypot(ma.rcx - mb.rcx, ma.rcy - mb.rcy);
+        const areaDiff = Math.abs(ma.rArea - mb.rArea) / Math.max(ma.rArea, mb.rArea);
+        const isUnchanged = sameName
+          ? (ov.iou >= 0.72 && cd < 1.5 && areaDiff < 0.18)
+          : (ov.iou >= 0.86 && cd < 0.85 && areaDiff < 0.12);
+        if (isUnchanged) {
+          mode = 'static';
+        } else {
+          rA = ma.ring;
+          alignedB = alignRing(ma.ring, mb.ring);
+        }
+      } else if (pb) {
+        rA = scaleRing(mb.ring, mb.rcx, mb.rcy, 0.72);
+        alignedB = mb.ring;
+      } else {
+        rA = ma.ring;
+        alignedB = scaleRing(ma.ring, ma.rcx, ma.rcy, 0.72);
+      }
+
       pairs.push({
         ringA: rA, ringB: alignedB,
+        staticRings: mode === 'static' ? pb.rings : null,
         colA, colB,
-        cxA: pa ? pa.cx : pb.cx, cyA: pa ? pa.cy : pb.cy,
-        cxB: pb ? pb.cx : pa.cx, cyB: pb ? pb.cy : pa.cy,
+        cxA: ma ? ma.rcx : mb.rcx, cyA: ma ? ma.rcy : mb.rcy,
+        cxB: mb ? mb.rcx : ma.rcx, cyB: mb ? mb.rcy : ma.rcy,
         isIr: !!((pb && pb.isIr) || (pa && pa.isIr)),
         prec: pb ? pb.prec : pa.prec,
         area: pb ? pb.area : pa.area,
         effFa: eb ? eb.fa : ea.fa,
         effPid: eb ? eb.pid : ea.pid,
         ent: pb || pa,
-        mode: pa && pb ? 'morph' : (pb ? 'grow' : 'shrink')
+        mode
       });
     };
 
-    // Pass 1: Exact pid or exact name match
+    // Count pid occurrences so grouped modern pids (africa_states, sa_states, ca_states, etc.) NEVER mismatch countries!
+    const pidCntA = {}, pidCntB = {};
+    prevSnap.forEach(e => { if (e.pid) pidCntA[e.pid] = (pidCntA[e.pid] || 0) + 1; });
+    curSnap.forEach(e => { if (e.pid) pidCntB[e.pid] = (pidCntB[e.pid] || 0) + 1; });
+
+    // Pass 1: Exact country/empire name match WITH strict geographic overlap check!
     for (let j = 0; j < curSnap.length; j++) {
       const b = curSnap[j];
+      let bestI = -1, bestIou = -1;
       for (let i = 0; i < prevSnap.length; i++) {
         if (usedPrev.has(i)) continue;
         const a = prevSnap[i];
-        if ((a.pid && a.pid === b.pid) || (a.en && a.en === b.en)) {
-          usedPrev.add(i); usedCur.add(j); addPair(a, b); break;
+        const sameName = (a.en && b.en && a.en === b.en) || (a.fa && b.fa && a.fa === b.fa);
+        if (!sameName) continue;
+        const ok = canMorphPair(metaA[i], metaB[j], 0.18, 12);
+        if (ok && ok.iou > bestIou) { bestIou = ok.iou; bestI = i; }
+      }
+      if (bestI >= 0) { usedPrev.add(bestI); usedCur.add(j); addPair(bestI, j, true); }
+    }
+
+    // Pass 2: Unique 1-to-1 polity ID continuity (e.g. Persia -> Iran, Siam -> Thailand), NEVER grouped pids!
+    for (let j = 0; j < curSnap.length; j++) {
+      if (usedCur.has(j)) continue;
+      const b = curSnap[j];
+      if (!b.pid || pidCntB[b.pid] !== 1 || pidCntA[b.pid] !== 1) continue;
+      for (let i = 0; i < prevSnap.length; i++) {
+        if (usedPrev.has(i) || prevSnap[i].pid !== b.pid) continue;
+        if (canMorphPair(metaA[i], metaB[j], 0.22, 12)) {
+          usedPrev.add(i); usedCur.add(j); addPair(i, j, true); break;
         }
       }
     }
-    // Pass 2: Main Iranian realm continuity (Achaemenid -> Alexander -> Seleucid -> Parthian -> Sasanian -> Caliphate -> Seljuk -> Safavid -> Qajar!)
-    const findIranIdx = (arr, used) => {
-      let best = -1, ba = -1;
-      for (let i = 0; i < arr.length; i++) {
-        if (used.has(i)) continue;
-        const e = arr[i];
-        const nearIr = Math.hypot(e.cx - 52, e.cy - 33) < 16;
-        if ((e.isIr || nearIr) && e.area > ba) { ba = e.area; best = i; }
-      }
-      return best;
-    };
-    const irA = findIranIdx(prevSnap, usedPrev), irB = findIranIdx(curSnap, usedCur);
-    if (irA >= 0 && irB >= 0) { usedPrev.add(irA); usedCur.add(irB); addPair(prevSnap[irA], curSnap[irB]); }
 
-    // Pass 3: Regional successor morphing for major empires (Rome->Byzantium->Ottoman, Zhou->Han->Tang->Ming->Qing, etc.)
-    for (let j = 0; j < curSnap.length; j++) {
-      if (usedCur.has(j) || curSnap[j].area < 14) continue;
-      const b = curSnap[j];
-      let bestI = -1, bestD = 18;
-      for (let i = 0; i < prevSnap.length; i++) {
-        if (usedPrev.has(i) || prevSnap[i].area < 14) continue;
-        const d = Math.hypot(prevSnap[i].cx - b.cx, prevSnap[i].cy - b.cy);
-        if (d < bestD) { bestD = d; bestI = i; }
+    // Pass 3: Iranian historical dynasty continuity (Achaemenid -> Parthian -> Sasanian -> Safavid -> Qajar -> Pahlavi)
+    // Runs ONLY if Iran was not already matched in Pass 1 or Pass 2!
+    const irAlreadyA = prevSnap.some((e, i) => e.isIr && usedPrev.has(i));
+    const irAlreadyB = curSnap.some((e, j) => e.isIr && usedCur.has(j));
+    if (!irAlreadyA && !irAlreadyB) {
+      const findIran = (arr, used) => {
+        let best = -1, ba = -1;
+        for (let i = 0; i < arr.length; i++) {
+          if (used.has(i)) continue;
+          const e = arr[i];
+          if (e.isIr && e.area > ba) { ba = e.area; best = i; }
+        }
+        return best;
+      };
+      const irA = findIran(prevSnap, usedPrev), irB = findIran(curSnap, usedCur);
+      if (irA >= 0 && irB >= 0 && boxOverlapMetrics(metaA[irA].box, metaB[irB].box).ratio >= 0.20) {
+        usedPrev.add(irA); usedCur.add(irB); addPair(irA, irB);
       }
-      if (bestI >= 0) { usedPrev.add(bestI); usedCur.add(j); addPair(prevSnap[bestI], b); }
     }
 
-    // Pass 4: Remaining emerging & vanishing states grow/contract organically from their heartlands
+    // Pass 4: Best-first spatial successor morphing sorted by highest IoU overlap (Rome->Byzantium->Ottoman, USSR->Russia, Ming->Qing)
+    const cands = [];
     for (let j = 0; j < curSnap.length; j++) {
-      if (!usedCur.has(j) && curSnap[j].area >= 1.0) addPair(null, curSnap[j]);
+      if (usedCur.has(j) || curSnap[j].area < 6) continue;
+      for (let i = 0; i < prevSnap.length; i++) {
+        if (usedPrev.has(i) || prevSnap[i].area < 6) continue;
+        const ratioArea = Math.max(metaA[i].rArea, metaB[j].rArea) / Math.min(metaA[i].rArea, metaB[j].rArea);
+        if (ratioArea > 12) continue;
+        const ok = canMorphPair(metaA[i], metaB[j], 0.36, 11);
+        if (ok && ok.iou >= 0.22) cands.push({ i, j, iou: ok.iou });
+      }
+    }
+    cands.sort((x, y) => y.iou - x.iou);
+    for (const c of cands) {
+      if (usedPrev.has(c.i) || usedCur.has(c.j)) continue;
+      usedPrev.add(c.i); usedCur.add(c.j); addPair(c.i, c.j);
+    }
+
+    // Pass 5: Remaining genuinely emerging / vanishing states unfold or dissolve cleanly right in place!
+    for (let j = 0; j < curSnap.length; j++) {
+      if (!usedCur.has(j) && curSnap[j].area >= 1.0) addPair(-1, j);
     }
     for (let i = 0; i < prevSnap.length; i++) {
-      if (!usedPrev.has(i) && prevSnap[i].area >= 1.5) addPair(prevSnap[i], null);
+      if (!usedPrev.has(i) && prevSnap[i].area >= 1.2) addPair(i, -1);
     }
 
     pairs.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0) || b.area - a.area);
@@ -578,12 +674,16 @@
       for (let i = 0; i < MS.morphPlan.length; i++) {
         const mp = MS.morphPlan[i];
         const col = blendRgb(mp.colA, mp.colB, e);
-        const modeAlpha = mp.mode === 'shrink' ? (1 - e) : (mp.mode === 'grow' ? Math.min(1, e * 1.4) : 1);
+        const modeAlpha = mp.mode === 'shrink' ? (1 - e) : (mp.mode === 'grow' ? e : 1);
         if (modeAlpha < 0.02) continue;
 
         ctx.save();
         ctx.beginPath();
-        traceMorphedRing(mp.ringA, mp.ringB, e, mSmooth, proj);
+        if (mp.mode === 'static' && mp.staticRings) {
+          for (let r = 0; r < mp.staticRings.length; r++) traceEraRing(mp.staticRings[r], proj, mSmooth, false);
+        } else {
+          traceMorphedRing(mp.ringA, mp.ringB, e, mSmooth, proj);
+        }
 
         ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * modeAlpha;
         ctx.fillStyle = col; ctx.fill();
@@ -592,7 +692,7 @@
         if (mSmooth > 0.05) {
           ctx.globalAlpha = T.borderAlpha * 0.30 * mSmooth * modeAlpha;
           ctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-          ctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + shimmer * 2.2 * mSmooth;
+          ctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + (mp.mode === 'static' ? 0 : shimmer * 2.2 * mSmooth);
           ctx.stroke();
         }
 
