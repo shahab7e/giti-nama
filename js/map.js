@@ -9,7 +9,7 @@
   const M = {}; window.M = M;
   const UI = '"Vazirmatn", Tahoma, "Segoe UI", sans-serif';
   const DISPLAY = '"Gulzar", "Vazirmatn", serif';
-  let cv, ctx, paperPatLight = null, paperPatDark = null;
+  let cv, ctx, fillCv = null, fctx = null, paperPatLight = null, paperPatDark = null;
 
   const MS = M.S = {
     W: 0, H: 0, dpr: 1,
@@ -490,7 +490,8 @@
         rings: rings.map(r => decodeDeltaRing(r, q))
       };
     });
-    list.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0));
+    // Draw broadest/background polities first, smaller specific states & enclaves later, and Iran ALWAYS on top!
+    list.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0) || b.area - a.area);
     decodedSnaps.set(sy, list);
     return list;
   }
@@ -566,49 +567,49 @@
   //   smooth = 0   -> exact straight vertex-to-vertex polyline (modern surveyed borders, ZERO curving!)
   //   smooth = 1   -> full quadratic midpoint spline (organic pre-modern frontiers)
   //   0 < s < 1    -> straight segments with gently eased corners (19th-c. treaty era & morph transitions)
-  function traceScreenPoly(sp, smooth) {
+  function traceScreenPoly(c, sp, smooth) {
     const n = sp.length;
     if (smooth <= 0.01) {
-      ctx.moveTo(sp[0], sp[1]);
-      for (let i = 2; i < n; i += 2) ctx.lineTo(sp[i], sp[i + 1]);
-      ctx.closePath();
+      c.moveTo(sp[0], sp[1]);
+      for (let i = 2; i < n; i += 2) c.lineTo(sp[i], sp[i + 1]);
+      c.closePath();
       return;
     }
     if (smooth >= 0.99) {
       const lastX = sp[n - 2], lastY = sp[n - 1];
-      ctx.moveTo((lastX + sp[0]) * 0.5, (lastY + sp[1]) * 0.5);
+      c.moveTo((lastX + sp[0]) * 0.5, (lastY + sp[1]) * 0.5);
       for (let i = 0; i < n; i += 2) {
         const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
-        ctx.quadraticCurveTo(sp[i], sp[i + 1], (sp[i] + nx) * 0.5, (sp[i + 1] + ny) * 0.5);
+        c.quadraticCurveTo(sp[i], sp[i + 1], (sp[i] + nx) * 0.5, (sp[i + 1] + ny) * 0.5);
       }
-      ctx.closePath();
+      c.closePath();
       return;
     }
     const f = smooth * 0.5;
     const x0 = sp[0], y0 = sp[1], px0 = sp[n - 2], py0 = sp[n - 1];
-    ctx.moveTo(x0 + (px0 - x0) * f, y0 + (py0 - y0) * f);
+    c.moveTo(x0 + (px0 - x0) * f, y0 + (py0 - y0) * f);
     for (let i = 0; i < n; i += 2) {
       const vx = sp[i], vy = sp[i + 1];
       const px = sp[(i - 2 + n) % n], py = sp[(i - 1 + n) % n];
       const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
-      if (i > 0) ctx.lineTo(vx + (px - vx) * f, vy + (py - vy) * f);
-      ctx.quadraticCurveTo(vx, vy, vx + (nx - vx) * f, vy + (ny - vy) * f);
+      if (i > 0) c.lineTo(vx + (px - vx) * f, vy + (py - vy) * f);
+      c.quadraticCurveTo(vx, vy, vx + (nx - vx) * f, vy + (ny - vy) * f);
     }
-    ctx.closePath();
+    c.closePath();
   }
 
-  function traceEraRing(ring, proj, smooth, collectScreen) {
+  function traceEraRing(c, ring, proj, smooth, collectScreen) {
     const n = ring.length; if (n < 6) return null;
     const sp = new Float32Array(n);
     for (let i = 0; i < n; i += 2) {
       const [sx, sy] = proj(ring[i], ring[i + 1]);
       sp[i] = sx; sp[i + 1] = sy;
     }
-    traceScreenPoly(sp, smooth);
+    traceScreenPoly(c, sp, smooth);
     return collectScreen ? sp : null;
   }
 
-  function traceMorphedRing(ringA, ringB, e, smooth, proj) {
+  function traceMorphedRing(c, ringA, ringB, e, smooth, proj) {
     const n = ringA.length; if (n < 6) return;
     const sp = new Float32Array(n);
     for (let i = 0; i < n; i += 2) {
@@ -617,7 +618,7 @@
       const [sx, sy] = proj(lon, lat);
       sp[i] = sx; sp[i + 1] = sy;
     }
-    traceScreenPoly(sp, smooth);
+    traceScreenPoly(c, sp, smooth);
   }
 
   function traceOpenPts(pts, proj, isTenths) {
@@ -764,15 +765,22 @@
     const curSmooth = borderSmooth(MS.snapYear);
     const morphing = MS.trans < 0.995 && MS.morphPlan;
 
+    // Offscreen carve-out layer guarantees ZERO overlapping border seams, ZERO double-tinting, and clean enclaves!
+    if (!fillCv) { fillCv = document.createElement('canvas'); fctx = fillCv.getContext('2d'); }
+    if (fillCv.width !== cv.width || fillCv.height !== cv.height) { fillCv.width = cv.width; fillCv.height = cv.height; }
+    fctx.setTransform(1, 0, 0, 1, 0, 0);
+    fctx.clearRect(0, 0, fillCv.width, fillCv.height);
+    fctx.setTransform(MS.dpr, 0, 0, MS.dpr, 0, 0);
+
     if (morphing) {
       const e = easeInOutCubic(clamp(MS.trans, 0, 1));
       const shimmer = Math.sin(MS.trans * Math.PI);
       const smA = MS.morphSmooth ? MS.morphSmooth[0] : curSmooth;
       const smB = MS.morphSmooth ? MS.morphSmooth[1] : curSmooth;
       const mSmooth = lerp(smA, smB, e);
-      ctx.lineJoin = mSmooth <= 0.05 ? 'miter' : 'round';
-      ctx.miterLimit = 2.4;
-      ctx.lineCap = mSmooth <= 0.05 ? 'butt' : 'round';
+      fctx.lineJoin = mSmooth <= 0.05 ? 'miter' : 'round';
+      fctx.miterLimit = 2.4;
+      fctx.lineCap = mSmooth <= 0.05 ? 'butt' : 'round';
 
       for (let i = 0; i < MS.morphPlan.length; i++) {
         const mp = MS.morphPlan[i];
@@ -784,39 +792,42 @@
         const filterDim = isEntFilteredOut(mp.ent, mp.effPid, lerp(mp.cxA, mp.cxB, e), lerp(mp.cyA, mp.cyB, e));
         const dimmed = (hasFocus && !isFocus) || filterDim;
 
-        ctx.save();
-        ctx.beginPath();
+        fctx.save();
+        fctx.beginPath();
         if (mp.mode === 'static' && mp.staticRings) {
-          for (let r = 0; r < mp.staticRings.length; r++) traceEraRing(mp.staticRings[r], proj, mSmooth, false);
+          for (let r = 0; r < mp.staticRings.length; r++) traceEraRing(fctx, mp.staticRings[r], proj, mSmooth, false);
         } else {
-          traceMorphedRing(mp.ringA, mp.ringB, e, mSmooth, proj);
+          traceMorphedRing(fctx, mp.ringA, mp.ringB, e, mSmooth, proj);
         }
 
-        ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim ? 0.06 : (dimmed ? T.dimAlpha : 1)) * modeAlpha;
-        if (!MS.dark) ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = col; ctx.fill();
-        if (!MS.dark) ctx.globalCompositeOperation = 'source-over';
+        // Carve out any lower-priority territory/border underneath this polygon so zero overlap seams ever show!
+        fctx.globalCompositeOperation = 'destination-out';
+        fctx.globalAlpha = modeAlpha;
+        fctx.fillStyle = '#000'; fctx.fill();
+
+        fctx.globalCompositeOperation = 'source-over';
+        fctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim ? 0.06 : (dimmed ? T.dimAlpha : 1)) * modeAlpha;
+        fctx.fillStyle = col; fctx.fill();
 
         const bAlpha = T.borderAlpha * (filterDim ? 0.08 : (dimmed ? 0.20 : 1)) * modeAlpha;
-        // Soft watercolor wash ONLY for organic pre-modern eras and non-dimmed entities
         if (!dimmed && mSmooth > 0.05) {
-          ctx.globalAlpha = bAlpha * 0.30 * mSmooth;
-          ctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-          ctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + (mp.mode === 'static' ? 0 : shimmer * 2.2 * mSmooth);
-          ctx.stroke();
+          fctx.globalAlpha = bAlpha * 0.30 * mSmooth;
+          fctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
+          fctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + (mp.mode === 'static' ? 0 : shimmer * 2.2 * mSmooth);
+          fctx.stroke();
         }
 
-        ctx.globalAlpha = bAlpha * (mSmooth <= 0.05 ? 1.0 : 0.92);
-        ctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.42)' : 'rgba(20,20,24,.34)');
-        ctx.lineWidth = mp.isIr ? 1.5 : 0.8;
-        ctx.stroke();
-        ctx.restore();
+        fctx.globalAlpha = bAlpha * (mSmooth <= 0.05 ? 1.0 : 0.92);
+        fctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.42)' : 'rgba(20,20,24,.34)');
+        fctx.lineWidth = mp.isIr ? 1.5 : 0.8;
+        fctx.stroke();
+        fctx.restore();
       }
     } else {
       const isModern = curSmooth <= 0.01;
-      ctx.lineJoin = isModern ? 'miter' : 'round';
-      ctx.miterLimit = 2.4;
-      ctx.lineCap = isModern ? 'butt' : 'round';
+      fctx.lineJoin = isModern ? 'miter' : 'round';
+      fctx.miterLimit = 2.4;
+      fctx.lineCap = isModern ? 'butt' : 'round';
 
       for (let idx = 0; idx < curSnap.length; idx++) {
         const ent = curSnap[idx];
@@ -830,39 +841,48 @@
         const col = entColor({ ...ent, pid: effPid }, MS.dark);
 
         const screenRings = [];
-        ctx.save();
-        ctx.beginPath();
+        fctx.save();
+        fctx.beginPath();
         for (let r = 0; r < ent.rings.length; r++) {
-          const sr = traceEraRing(ent.rings[r], proj, curSmooth, true);
+          const sr = traceEraRing(fctx, ent.rings[r], proj, curSmooth, true);
           if (sr) screenRings.push(sr);
         }
 
-        ctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim && !isHover ? 0.06 : (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1)));
-        if (!MS.dark) ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = col; ctx.fill();
-        if (!MS.dark) ctx.globalCompositeOperation = 'source-over';
+        // Carve out any lower-priority territory or ghost frontier lines underneath this polygon!
+        fctx.globalCompositeOperation = 'destination-out';
+        fctx.globalAlpha = 1;
+        fctx.fillStyle = '#000'; fctx.fill();
+
+        fctx.globalCompositeOperation = 'source-over';
+        fctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim && !isHover ? 0.06 : (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1)));
+        fctx.fillStyle = col; fctx.fill();
 
         const bAlpha = T.borderAlpha * (filterDim && !isHover ? 0.08 : (dimmed ? 0.20 : 1));
-        // Watercolor frontier wash ONLY for pre-modern eras; modern surveyed borders stay razor-crisp!
         if (!dimmed && curSmooth > 0.05) {
-          ctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22) * curSmooth;
-          ctx.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-          ctx.lineWidth = ent.isIr ? 4.0 : 2.6;
-          ctx.stroke();
+          fctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22) * curSmooth;
+          fctx.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
+          fctx.lineWidth = ent.isIr ? 4.0 : 2.6;
+          fctx.stroke();
         }
-        ctx.globalAlpha = bAlpha * (isHover ? 1.55 : (isFocus ? 1.4 : (isModern ? 1.05 : 0.85)));
-        if (ent.prec === 1 && !isModern && !isFocus && !isHover) ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
+        fctx.globalAlpha = bAlpha * (isHover ? 1.55 : (isFocus ? 1.4 : (isModern ? 1.05 : 0.85)));
+        if (ent.prec === 1 && !isModern && !isFocus && !isHover) fctx.setLineDash([4, 4]);
+        fctx.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
           : (isFocus ? T.gold : (ent.isIr ? (MS.dark ? '#e4c47a' : '#1d4496') : (MS.dark ? (isModern ? 'rgba(255,255,255,.46)' : 'rgba(255,255,255,.36)') : (isModern ? 'rgba(20,20,24,.38)' : 'rgba(20,20,24,.30)'))));
-        ctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? (isModern ? 1.45 : 1.35) : (isModern ? 0.82 : 0.72)));
-        if ((isFocus || isHover) && MS.dark) { ctx.shadowColor = ent.isIr ? '#d8b46c' : col; ctx.shadowBlur = 12; }
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
+        fctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? (isModern ? 1.45 : 1.35) : (isModern ? 0.82 : 0.72)));
+        if ((isFocus || isHover) && MS.dark) { fctx.shadowColor = ent.isIr ? '#d8b46c' : col; fctx.shadowBlur = 12; }
+        fctx.stroke();
+        fctx.setLineDash([]);
+        fctx.restore();
 
         MS.polyHits.push({ ent, effPid, effFa, pol, screenRings });
       }
     }
+
+    // Composite clean non-overlapping territory layer onto landmass (multiply on Light parchment!)
+    ctx.save();
+    if (!MS.dark) ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(fillCv, 0, 0, W, H);
+    ctx.restore();
 
     // 5. Real Natural Earth 50m Rivers
     if (MS.layers.rivers && mapData.rivers) {
