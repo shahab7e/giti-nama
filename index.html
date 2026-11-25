@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>جام جهان‌نما — اطلس زندهٔ تاریخ ایران و جهان</title>
+<title>گیتی‌نما — اطلس زندهٔ تاریخ ایران و جهان</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gulzar&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap">
@@ -15,7 +15,7 @@
   <header class="top">
     <div class="brand">
       <div class="brand-orb" aria-hidden="true"></div>
-      <h1 class="brand-title">جام <b>جهان‌نما</b></h1>
+      <h1 class="brand-title">گیتی<b>‌نما</b></h1>
     </div>
 
     <div class="search-wrap">
@@ -72,7 +72,7 @@
         <button id="btnDir" class="sbtn" type="button">چپ←راست</button>
       </div>
       <div class="set-foot">
-        <button id="btnAbout" class="lnk" type="button">دربارهٔ جام جهان‌نما و منابع گاه‌شماری</button>
+        <button id="btnAbout" class="lnk" type="button">دربارهٔ گیتی‌نما و منابع گاه‌شماری</button>
       </div>
     </div>
   </header>
@@ -110,6 +110,10 @@
           <span><svg viewBox="0 0 16 16"><path d="M6.2,2.5h3.6v3.7h3.7v3.6h-3.7v3.7H6.2V9.8H2.5V6.2h3.7z" fill="#c58be0"/></svg>دین</span>
           <span><svg viewBox="0 0 16 16"><polygon points="8,2.3 13.8,13 2.2,13" fill="#9aa3b5"/></svg>فاجعه</span>
           <span><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1.2" fill="#7cc47a"/></svg>اقتصاد</span>
+        </div>
+        <div class="time-dial" id="timeDial" role="slider" tabindex="0" aria-label="چرخ زمان" title="بچرخانید تا زمان جابه‌جا شود (ساعت‌گرد = جلو) · چرخ موس و کلیدهای جهت هم کار می‌کنند">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="td-track" cx="50" cy="50" r="44"/><g id="tdTicks"></g></svg>
+          <div class="td-core"><b id="tdYear"></b><span>چرخ زمان</span></div>
         </div>
         <div class="play-deck" id="playDeck">
           <button class="pbtn" id="stepBack" title="۵۰ سال به عقب">◄ ۵۰-</button>
@@ -152,7 +156,7 @@
   <div class="modal" id="about" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="aboutT">
       <button class="modal-x" id="aboutX" aria-label="بستن">×</button>
-      <h2 id="aboutT">دربارهٔ جام جهان‌نما و منابع گاه‌شماری</h2>
+      <h2 id="aboutT">دربارهٔ گیتی‌نما و منابع گاه‌شماری</h2>
       <div id="aboutBody"></div>
     </div>
   </div>

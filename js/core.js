@@ -1,4 +1,4 @@
-/* جام جهان‌نما — data registry + shared helpers. Data files call TL.add*(). Years: negative = BC (‎-550 = ۵۵۰ پ.م). */
+/* گیتی‌نما — data registry + shared helpers. Data files call TL.add*(). Years: negative = BC (‎-550 = ۵۵۰ پ.م). */
 (function () {
   const TL = {
     regions: [], regionById: {}, polities: [], polityById: {}, rulers: [], events: [], people: [],

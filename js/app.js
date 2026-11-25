@@ -48,6 +48,7 @@
     const sy = M.snapYearFor ? M.snapYearFor(y) : MS.snapYear;
     const ep = sy != null ? (sy === 2010 && y >= 2005 ? ' · مرزهای دقیق کنونی' : ` · مرز تاریخی ${TL.yearLabel(sy)}`) : '';
     $('mapYearSub').textContent = (ir ? (ir.n + (rul ? ' · ' + rul.n : '')) : 'پیش از تاریخ') + ep;
+    if (dial) updateDial();
   }
 
   // ---------- timeline zoom / pan ----------
@@ -262,6 +263,47 @@
   $('mIran').onclick = () => M.presetIran();
   $('mEurasia').onclick = () => M.presetEurasia();
   $('mWorld').onclick = () => M.presetWorld();
+
+  // ---------- time dial: clockwise = forward; years per degree shrink toward the dense modern era ----------
+  const dial = $('timeDial'), DIAL_SEG = [[-3000, 10], [-500, 3], [1500, 1], [1900, 0.5], [Infinity, 0.2]];
+  const degOf = (y) => { // cumulative degrees from TL.T0 (piecewise-linear, so it inverts exactly)
+    let d = 0, a = TL.T0;
+    for (const [b, r] of DIAL_SEG) { if (y <= b) return d + (y - a) / r; d += (b - a) / r; a = b; }
+    return d;
+  };
+  const yearOfDeg = (deg) => {
+    let d = 0, a = TL.T0;
+    for (const [b, r] of DIAL_SEG) { const span = (b - a) / r; if (deg <= d + span) return a + (deg - d) * r; d += span; a = b; }
+    return TL.NOW;
+  };
+  $('tdTicks').innerHTML = Array.from({ length: 36 }, (_, i) =>
+    `<line class="${i % 9 ? '' : 'maj'}" x1="50" y1="${i % 9 ? 8.5 : 7}" x2="50" y2="${i % 9 ? 13 : 15}" transform="rotate(${i * 10} 50 50)"/>`).join('');
+  dial.setAttribute('aria-valuemin', TL.T0); dial.setAttribute('aria-valuemax', TL.NOW);
+  function updateDial() {
+    const y = Math.floor(MS.tYear);
+    $('tdTicks').setAttribute('transform', `rotate(${(degOf(MS.tYear) % 360).toFixed(2)} 50 50)`);
+    $('tdYear').textContent = TL.yearLabel(y);
+    dial.setAttribute('aria-valuenow', y); dial.setAttribute('aria-valuetext', TL.yearLabel(y));
+  }
+  const turnBy = (deg) => { stopPlay(); setActiveYear(yearOfDeg(degOf(MS.tYear) + deg), true); };
+  let dialDrag = null, dialPanelT = 0;
+  const dialAng = (ev) => { const r = dial.getBoundingClientRect(); return Math.atan2(ev.clientY - r.top - r.height / 2, ev.clientX - r.left - r.width / 2) * 180 / Math.PI; };
+  dial.addEventListener('pointerdown', (ev) => { dialDrag = dialAng(ev); dial.setPointerCapture(ev.pointerId); dial.classList.add('drag'); ev.preventDefault(); });
+  dial.addEventListener('pointermove', (ev) => {
+    if (dialDrag == null) return;
+    const a = dialAng(ev); let d = a - dialDrag; dialDrag = a;
+    if (d > 180) d -= 360; else if (d < -180) d += 360;
+    turnBy(d);
+    if (ev.timeStamp - dialPanelT > 250) { dialPanelT = ev.timeStamp; updatePanel(); }
+  });
+  const endDial = () => { if (dialDrag == null) return; dialDrag = null; dial.classList.remove('drag'); updatePanel(); syncHash(); };
+  dial.addEventListener('pointerup', endDial); dial.addEventListener('pointercancel', endDial);
+  dial.addEventListener('wheel', (ev) => { ev.preventDefault(); ev.stopPropagation(); turnBy(Math.sign(ev.deltaY) * 10); updatePanel(); }, { passive: false });
+  dial.addEventListener('keydown', (ev) => {
+    const step = { ArrowRight: 10, ArrowUp: 10, ArrowLeft: -10, ArrowDown: -10, PageUp: 90, PageDown: -90 }[ev.key];
+    if (step == null) return;
+    ev.preventDefault(); ev.stopPropagation(); turnBy(step); updatePanel(); syncHash();
+  });
 
   // ---------- keyboard ----------
   window.addEventListener('keydown', (ev) => {
@@ -650,7 +692,7 @@
   $('aboutX').onclick = () => { $('about').hidden = true; };
   $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') $('about').hidden = true; });
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;
-  $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>جام جهان‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی و متغیرِ مرزهای تاریخی جهان</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
+  $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>گیتی‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی و متغیرِ مرزهای تاریخی جهان</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
   <ul>
   <li><b>مرزهای واقعی و متناسب با دقت هر دوره:</b> در دوران باستان و سده‌های میانه مرزها به‌صورت منحنی‌های نرم و تاریخی رسم می‌شوند؛ از عصر معاهدات سدهٔ ۱۹ به‌تدریج دقیق‌تر شده و از ۱۹۱۴ میلادی تا مرزهای کنونی (برگرفته از Natural Earth 50m) به‌صورت خطوط دقیق، تیز و کاملاً هم‌تراز با مرزهای رسمی جهان نمایش داده می‌شوند.</li>
   <li><b>پخش تاریخ:</b> دکمهٔ پخش (یا کلید Space) زمان را به‌آرامی پیش می‌برد تا رشد و جابه‌جایی مرزهای امپراتوری‌ها را زنده روی نقشه تماشا کنید.</li>
@@ -769,5 +811,5 @@
     ['400 12px Vazirmatn', '700 12px Vazirmatn', '700 20px Gulzar'].forEach(f => document.fonts.load(f, 'ایران').then(fontsReady, () => { }));
     document.fonts.ready.then(fontsReady);
   }
-  window.JAM = { S, MS, R, M, TL, select, updatePanel, setActiveYear };
+  window.GITI = { S, MS, R, M, TL, select, updatePanel, setActiveYear };
 })();

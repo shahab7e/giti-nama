@@ -21,5 +21,5 @@ ${js}
 </script>
 `;
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
-fs.writeFileSync(path.join(root, 'dist/jam.html'), out);
-console.log('dist/jam.html', (out.length / 1024).toFixed(0) + ' KB');
+fs.writeFileSync(path.join(root, 'dist/giti-nama.html'), out);
+console.log('dist/giti-nama.html', (out.length / 1024).toFixed(0) + ' KB');
