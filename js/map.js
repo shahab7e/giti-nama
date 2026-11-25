@@ -8,7 +8,8 @@
 (function () {
   const M = {}; window.M = M;
   const UI = '"Vazirmatn", Tahoma, "Segoe UI", sans-serif';
-  let cv, ctx, grainPat = null;
+  const DISPLAY = '"Gulzar", "Vazirmatn", serif';
+  let cv, ctx, paperPatLight = null, paperPatDark = null;
 
   const MS = M.S = {
     W: 0, H: 0, dpr: 1,
@@ -29,18 +30,22 @@
 
   const THEME = {
     dark: {
-      ocean1: '#0e131d', ocean2: '#080b12',
-      landEmpty: '#161b26', landStroke: 'rgba(255,255,255,.16)', coastGlow: 'rgba(90,130,200,.06)',
-      sea: '#0a0e17', river: 'rgba(130,170,220,.24)', grat: 'rgba(255,255,255,.035)',
-      ink: '#f3f3f0', sub: 'rgba(210,214,224,.72)', accent: '#5a8dee', gold: '#d8b46c',
-      fillAlpha: 0.45, iranAlpha: 0.62, borderAlpha: 0.56, dimAlpha: 0.16
+      ocean1: '#101621', ocean2: '#080c13',
+      landEmpty: '#1b1e26', landStroke: 'rgba(222,204,170,.28)',
+      ripple1: 'rgba(136,168,204,.07)', ripple2: 'rgba(156,184,216,.13)',
+      river: 'rgba(126,164,204,.26)', grat: 'rgba(216,180,108,.055)', tropic: 'rgba(216,180,108,.11)',
+      seaInk: 'rgba(166,186,208,.36)', frame: 'rgba(216,180,108,.20)', vig: 'rgba(4,6,10,.36)',
+      ink: '#f3efe6', sub: 'rgba(214,208,196,.74)', accent: '#5a8dee', gold: '#d8b46c',
+      fillAlpha: 0.44, iranAlpha: 0.62, borderAlpha: 0.56, dimAlpha: 0.16
     },
     light: {
-      ocean1: '#e4e8ea', ocean2: '#d8dfe3',
-      landEmpty: '#f3f2ee', landStroke: 'rgba(24,24,28,.22)', coastGlow: 'rgba(60,80,100,.06)',
-      sea: '#dce2e6', river: 'rgba(72,115,152,.34)', grat: 'rgba(24,24,28,.055)',
-      ink: '#141416', sub: 'rgba(48,48,54,.74)', accent: '#1d4496', gold: '#b84a32',
-      fillAlpha: 0.36, iranAlpha: 0.50, borderAlpha: 0.52, dimAlpha: 0.16
+      ocean1: '#e0dac7', ocean2: '#cdc4ab',
+      landEmpty: '#f2ead6', landStroke: 'rgba(58,42,26,.46)',
+      ripple1: 'rgba(72,58,40,.08)', ripple2: 'rgba(68,54,36,.15)',
+      river: 'rgba(68,98,120,.42)', grat: 'rgba(92,70,44,.11)', tropic: 'rgba(130,86,44,.20)',
+      seaInk: 'rgba(66,56,42,.44)', frame: 'rgba(74,54,32,.32)', vig: 'rgba(94,72,42,.20)',
+      ink: '#221a12', sub: 'rgba(66,52,38,.78)', accent: '#1d4496', gold: '#9e4228',
+      fillAlpha: 0.46, iranAlpha: 0.58, borderAlpha: 0.56, dimAlpha: 0.16
     }
   };
 
@@ -64,15 +69,86 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-  function makeGrain() {
-    const g = document.createElement('canvas'); g.width = 96; g.height = 96;
-    const gx = g.getContext('2d'), img = gx.createImageData(96, 96);
-    for (let i = 0; i < img.data.length; i += 4) {
-      const v = 130 + Math.random() * 35;
-      img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v - 4; img.data[i + 3] = 7;
+  // Seamless 256x256 procedural antique rag-paper texture (laid fibers + organic mottling + mineral flecks)
+  function makePaperPattern(dark) {
+    const sz = 256;
+    const g = document.createElement('canvas'); g.width = sz; g.height = sz;
+    const gx = g.getContext('2d');
+    const img = gx.createImageData(sz, sz);
+    let seed = dark ? 1337 : 4242;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+
+    for (let y = 0; y < sz; y++) {
+      // Authentic handmade laid-paper horizontal rib cadence
+      const rib = Math.sin((y / 3.0) * Math.PI * 2) * (dark ? 2.2 : 3.2);
+      for (let x = 0; x < sz; x++) {
+        const i = (y * sz + x) * 4;
+        // Subtle vertical chain-line every 32px + low-frequency cloud mottling
+        const chain = (x % 32 === 0) ? (dark ? 3 : -4) : 0;
+        const mottle = (Math.sin(x * 0.049 + y * 0.024) + Math.cos(y * 0.049 - x * 0.024)) * (dark ? 3.5 : 5.5);
+        const grain = (rnd() - 0.5) * (dark ? 18 : 22);
+        const speck = rnd() > 0.9965 ? (dark ? 18 : -28) : 0;
+        const delta = rib + chain + mottle + grain + speck;
+        if (dark) {
+          img.data[i] = clamp(128 + delta + 4, 0, 255);
+          img.data[i + 1] = clamp(126 + delta + 1, 0, 255);
+          img.data[i + 2] = clamp(120 + delta - 4, 0, 255);
+          img.data[i + 3] = 24;
+        } else {
+          // Warm cotton-rag vellum tone for multiply blending
+          img.data[i] = clamp(246 + delta * 0.65, 200, 255);
+          img.data[i + 1] = clamp(240 + delta * 0.68, 192, 252);
+          img.data[i + 2] = clamp(226 + delta * 0.72, 174, 244);
+          img.data[i + 3] = 155;
+        }
+      }
     }
     gx.putImageData(img, 0, 0);
+    // Faint organic paper fibers
+    gx.strokeStyle = dark ? 'rgba(218,200,168,.03)' : 'rgba(118,90,54,.045)';
+    gx.lineWidth = 0.7;
+    for (let k = 0; k < 48; k++) {
+      const fx = rnd() * sz, fy = rnd() * sz, fl = 6 + rnd() * 14, fa = rnd() * Math.PI * 2;
+      gx.beginPath(); gx.moveTo(fx, fy); gx.lineTo(fx + Math.cos(fa) * fl, fy + Math.sin(fa) * fl); gx.stroke();
+    }
     return ctx.createPattern(g, 'repeat');
+  }
+
+  // Minimalist antique 8-point engraved compass rose in open bottom-right corner
+  function drawCompassRose(cx, cy, r, T, dark) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.globalAlpha = dark ? 0.42 : 0.56;
+    const ink = dark ? '#d8b46c' : '#4a3620';
+    const inkSoft = dark ? 'rgba(216,180,108,.45)' : 'rgba(74,54,32,.42)';
+    // Outer engraved double circle
+    ctx.strokeStyle = inkSoft; ctx.lineWidth = 0.75;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, r - 2.6, 0, Math.PI * 2); ctx.stroke();
+    // Minor intercardinal points
+    for (let k = 0; k < 4; k++) {
+      ctx.save(); ctx.rotate((k * Math.PI) / 2 + Math.PI / 4);
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.62); ctx.lineTo(2.4, 0); ctx.lineTo(0, 0); ctx.closePath();
+      ctx.fillStyle = inkSoft; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.62); ctx.lineTo(-2.4, 0); ctx.lineTo(0, 0); ctx.closePath();
+      ctx.strokeStyle = inkSoft; ctx.lineWidth = 0.5; ctx.stroke();
+      ctx.restore();
+    }
+    // Major cardinal points (half-shaded antique engraving)
+    for (let k = 0; k < 4; k++) {
+      ctx.save(); ctx.rotate((k * Math.PI) / 2);
+      const len = k === 0 ? r * 0.96 : r * 0.82;
+      ctx.beginPath(); ctx.moveTo(0, -len); ctx.lineTo(3.4, 0); ctx.lineTo(0, 0); ctx.closePath();
+      ctx.fillStyle = ink; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -len); ctx.lineTo(-3.4, 0); ctx.lineTo(0, 0); ctx.closePath();
+      ctx.fillStyle = dark ? '#0e131d' : '#f2ead6'; ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 0.65; ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath(); ctx.arc(0, 0, 1.8, 0, Math.PI * 2); ctx.fillStyle = ink; ctx.fill();
+    ctx.font = `700 8.5px ${UI}`; ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('ش', 0, -r - 3);
+    ctx.restore();
   }
 
   // Historical cartographic border precision:
@@ -377,7 +453,7 @@
     return pairs;
   }
 
-  let landDecoded = null, lakesDecoded = null;
+  let landDecoded = null, lakesDecoded = null, caspianDecoded = null;
   const snapByYear = new Map();
   const decodedSnaps = new Map();
 
@@ -385,6 +461,7 @@
     if (!TL.MAP) return;
     if (!landDecoded) landDecoded = TL.MAP.land.map(r => decodeDeltaRing(r, 10));
     if (!lakesDecoded) lakesDecoded = TL.MAP.lakes.map(r => decodeDeltaRing(r, 10));
+    if (!caspianDecoded && TL.MAP.caspian) caspianDecoded = decodeDeltaRing(TL.MAP.caspian, 50);
     if (TL.HIST && !snapByYear.size) {
       TL.HIST.k.forEach(([sy, items]) => snapByYear.set(sy, items));
     }
@@ -625,28 +702,44 @@
 
     ctx.setTransform(MS.dpr, 0, 0, MS.dpr, 0, 0);
 
-    // 1. Ocean Backdrop
-    const bg = ctx.createRadialGradient(W * 0.5, H * 0.5, 40, W * 0.5, H * 0.5, Math.max(W, H) * 0.8);
+    // 1. Antique Parchment / Nocturnal Ocean Backdrop
+    const bg = ctx.createRadialGradient(W * 0.5, H * 0.48, 30, W * 0.5, H * 0.5, Math.max(W, H) * 0.78);
     bg.addColorStop(0, T.ocean1); bg.addColorStop(1, T.ocean2);
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-    // 2. Graticule
-    ctx.strokeStyle = T.grat; ctx.lineWidth = 1;
+    // 2. Engraved Graticule (with subtle dashed Equator & Tropics!)
+    ctx.save();
+    ctx.strokeStyle = T.grat; ctx.lineWidth = 0.75;
     for (let lon = -180; lon <= 180; lon += 20) {
-      const [x] = proj(lon, 0); if (x >= -10 && x <= W + 10) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      const [x] = proj(lon, 0); if (x >= 8 && x <= W - 8) { ctx.beginPath(); ctx.moveTo(x, 8); ctx.lineTo(x, H - 8); ctx.stroke(); }
     }
     for (let lat = -60; lat <= 75; lat += 15) {
-      const [, gy] = proj(0, lat); if (gy >= -10 && gy <= H + 10) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+      const [, gy] = proj(0, lat); if (gy >= 8 && gy <= H - 8) { ctx.beginPath(); ctx.moveTo(8, gy); ctx.lineTo(W - 8, gy); ctx.stroke(); }
     }
+    ctx.strokeStyle = T.tropic; ctx.setLineDash([4, 5]); ctx.lineWidth = 0.8;
+    [0, 23.44, -23.44].forEach(lat => {
+      const [, gy] = proj(0, lat); if (gy >= 12 && gy <= H - 12) { ctx.beginPath(); ctx.moveTo(8, gy); ctx.lineTo(W - 8, gy); ctx.stroke(); }
+    });
+    ctx.setLineDash([]);
+    ctx.restore();
 
-    // 3. Borderless Natural Earth 50m Physical Landmass
+    // 3. Engraved Copperplate Coastal Ripples (ocean-side water-lining) + Physical Landmass
     ctx.save();
     ctx.beginPath();
     for (let i = 0; i < landDecoded.length; i++) traceCoastRing(landDecoded[i], proj);
-    ctx.shadowColor = T.coastGlow; ctx.shadowBlur = 14;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = T.ripple1; ctx.lineWidth = 10; ctx.stroke();
+    ctx.strokeStyle = T.ripple2; ctx.lineWidth = 4.2; ctx.stroke();
     ctx.fillStyle = T.landEmpty; ctx.fill();
-    ctx.shadowBlur = 0;
     ctx.clip();
+
+    // Pre-tint land with subtle rag-paper fiber in Light mode so empires absorb into the paper via multiply!
+    if (!MS.dark) {
+      if (!paperPatLight) paperPatLight = makePaperPattern(false);
+      ctx.save(); ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = paperPatLight; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
 
     // 4. HISTORICAL BORDERS — TRUE VERTEX MORPH DURING TRANSITIONS, FULL MULTI-RING AT REST!
     const curSnap = loadSnapshot(MS.snapYear);
@@ -700,7 +793,9 @@
         }
 
         ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim ? 0.06 : (dimmed ? T.dimAlpha : 1)) * modeAlpha;
+        if (!MS.dark) ctx.globalCompositeOperation = 'multiply';
         ctx.fillStyle = col; ctx.fill();
+        if (!MS.dark) ctx.globalCompositeOperation = 'source-over';
 
         const bAlpha = T.borderAlpha * (filterDim ? 0.08 : (dimmed ? 0.20 : 1)) * modeAlpha;
         // Soft watercolor wash ONLY for organic pre-modern eras and non-dimmed entities
@@ -743,7 +838,9 @@
         }
 
         ctx.globalAlpha = (ent.isIr ? T.iranAlpha : T.fillAlpha) * (filterDim && !isHover ? 0.06 : (dimmed ? T.dimAlpha : (isFocus || isHover ? 1.28 : 1)));
+        if (!MS.dark) ctx.globalCompositeOperation = 'multiply';
         ctx.fillStyle = col; ctx.fill();
+        if (!MS.dark) ctx.globalCompositeOperation = 'source-over';
 
         const bAlpha = T.borderAlpha * (filterDim && !isHover ? 0.08 : (dimmed ? 0.20 : 1));
         // Watercolor frontier wash ONLY for pre-modern eras; modern surveyed borders stay razor-crisp!
@@ -777,12 +874,26 @@
       ctx.restore();
     }
 
-    // 6. Real Natural Earth 50m Lakes
+    // 6. Real Natural Earth 50m Caspian Sea + Inland Lakes — EXACT SAME OCEAN COLOR & ENGRAVED RIPPLE!
     ctx.save();
     ctx.beginPath();
     for (let i = 0; i < lakesDecoded.length; i++) traceCoastRing(lakesDecoded[i], proj);
-    ctx.fillStyle = T.sea; ctx.fill();
-    ctx.strokeStyle = T.landStroke; ctx.lineWidth = 0.65; ctx.stroke();
+    if (caspianDecoded) traceCoastRing(caspianDecoded, proj);
+    ctx.fillStyle = bg; ctx.fill();
+    if (caspianDecoded) {
+      ctx.save();
+      ctx.beginPath();
+      traceCoastRing(caspianDecoded, proj);
+      ctx.clip();
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = T.ripple1; ctx.lineWidth = 8.5; ctx.stroke();
+      ctx.strokeStyle = T.ripple2; ctx.lineWidth = 3.5; ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    for (let i = 0; i < lakesDecoded.length; i++) traceCoastRing(lakesDecoded[i], proj);
+    if (caspianDecoded) traceCoastRing(caspianDecoded, proj);
+    ctx.strokeStyle = T.landStroke; ctx.lineWidth = 0.78; ctx.stroke();
     ctx.restore();
 
     ctx.restore(); // END physical landmass clip
@@ -791,8 +902,25 @@
     ctx.save();
     ctx.beginPath();
     for (let i = 0; i < landDecoded.length; i++) traceCoastRing(landDecoded[i], proj);
-    ctx.strokeStyle = T.landStroke; ctx.lineWidth = 0.75; ctx.stroke();
+    ctx.strokeStyle = T.landStroke; ctx.lineWidth = 0.85; ctx.stroke();
     ctx.restore();
+
+    // 7b. Subtle Antique Persian Sea Labels (دریای خزر، خلیج فارس، دریای سیاه، مدیترانه، ...)
+    if (MS.layers.labels && mapData.seas) {
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+      ctx.fillStyle = T.seaInk;
+      for (const [sn, slon, slat, minZ] of mapData.seas) {
+        if (MS.zoom < minZ) continue;
+        const [sx, sy] = proj(slon, slat);
+        if (sx < 36 || sx > W - 36 || sy < 44 || sy > H - 46) continue;
+        const isOcean = sn.startsWith('اقیانوس');
+        const fs = isOcean ? (MS.zoom < 0.6 ? 11.5 : 13) : (MS.zoom >= 1.5 ? 10.5 : 9.2);
+        ctx.font = `italic 500 ${fs}px ${DISPLAY}`;
+        ctx.fillText(sn, sx, sy);
+      }
+      ctx.restore();
+    }
 
     // 8. Dominion Arcs
     if (MS.layers.domArcs) {
@@ -1051,10 +1179,38 @@
       });
     }
 
-    if (!MS.dark) {
-      if (!grainPat) grainPat = makeGrain();
-      ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W, H);
+    // 15. Continuous Antique Paper Grain + Aged Edge Vignette + Engraved Cartographic Frame & Compass Rose
+    ctx.save();
+    if (MS.dark) {
+      if (!paperPatDark) paperPatDark = makePaperPattern(true);
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.fillStyle = paperPatDark; ctx.fillRect(0, 0, W, H);
+    } else {
+      if (!paperPatLight) paperPatLight = makePaperPattern(false);
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = 0.42;
+      ctx.fillStyle = paperPatLight; ctx.fillRect(0, 0, W, H);
     }
+    ctx.restore();
+
+    // Subtle aged-paper radial edge vignette
+    ctx.save();
+    const vig = ctx.createRadialGradient(W * 0.5, H * 0.5, Math.min(W, H) * 0.34, W * 0.5, H * 0.5, Math.max(W, H) * 0.72);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, T.vig);
+    ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // Delicate double-hairline engraved atlas border frame
+    ctx.save();
+    ctx.strokeStyle = T.frame; ctx.lineWidth = 0.85;
+    ctx.strokeRect(5.5, 5.5, W - 11, H - 11);
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(8.5, 8.5, W - 17, H - 17);
+    ctx.restore();
+
+    // Minimalist antique compass rose in open bottom-right corner
+    if (W > 420 && H > 220) drawCompassRose(W - 36, H - 36, 17, T, MS.dark);
   };
 
   // ---------- hit testing ----------

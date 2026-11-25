@@ -665,7 +665,7 @@
   function drawMini() {
     if (!mW) return;
     mctx.clearRect(0, 0, mW, mH);
-    mctx.fillStyle = S.dark ? '#0f1219' : '#f4f4f0'; mctx.fillRect(0, 0, mW, mH);
+    mctx.fillStyle = S.dark ? '#0f1219' : '#efe7d4'; mctx.fillRect(0, 0, mW, mH);
     const n = TL.regions.length, lh = (mH - 16) / n;
     TL.polities.forEach(p => {
       const ri = TL.regionById[p.r].order, xa = mx(p.s), xb = mx(Math.min(p.e, TL.NOW));

@@ -12,12 +12,12 @@
   color-scheme:dark;
 }
 :root[data-theme="light"]{
-  --bg:#fafaf8; --surface:#ffffff; --sunk:#f2f2ee; --glass:rgba(255,255,255,.92);
-  --ink:#141416; --ink2:#4a4a52; --muted:#84848e;
-  --line:rgba(17,17,19,.09); --line2:rgba(17,17,19,.18);
-  --accent:#1d4496; --accent-ink:#163372; --gold:#b84a32;
-  --tint:rgba(29,68,150,.08); --tint2:rgba(184,74,50,.10);
-  --shadow:0 10px 30px rgba(0,0,0,.09);
+  --bg:#f4eee0; --surface:#faf6eb; --sunk:#ebe3cf; --glass:rgba(250,246,235,.93);
+  --ink:#221a12; --ink2:#544638; --muted:#857663;
+  --line:rgba(66,48,28,.12); --line2:rgba(66,48,28,.24);
+  --accent:#1d4496; --accent-ink:#163372; --gold:#9e4228;
+  --tint:rgba(29,68,150,.09); --tint2:rgba(158,66,40,.11);
+  --shadow:0 10px 30px rgba(48,34,16,.12);
   color-scheme:light;
 }
 *{box-sizing:border-box}

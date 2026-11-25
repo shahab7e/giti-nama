@@ -427,9 +427,9 @@
   };
   const yearTxt = (y) => (y < 0 ? TL.fa(-y) + ' پ.م' : (y === 0 ? '۱ م' : TL.fa(y)));
   function drawAxis(ticks) {
-    ctx.fillStyle = S.dark ? '#0f1219' : '#fafaf8';
+    ctx.fillStyle = S.dark ? '#0f1219' : '#f7f1e3';
     ctx.fillRect(0, 0, S.W, S.AX);
-    ctx.fillStyle = S.dark ? 'rgba(255,255,255,.10)' : 'rgba(17,17,19,.12)';
+    ctx.fillStyle = S.dark ? 'rgba(255,255,255,.10)' : 'rgba(66,48,28,.14)';
     ctx.fillRect(0, S.AX - 1, S.W, 1);
     TL.eras.forEach(er => {
       const [xa, xb] = span(er.s, er.e); if (xb < 0 || xa > S.PW) return;
@@ -445,7 +445,7 @@
   }
   function drawCalendar(ticks) {
     const y0 = S.H - S.CAL;
-    ctx.fillStyle = S.dark ? '#0f1219' : '#f4f4f0'; ctx.fillRect(0, y0, S.W, S.CAL);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#efe7d4'; ctx.fillRect(0, y0, S.W, S.CAL);
     ctx.fillStyle = S.C.line; ctx.fillRect(0, y0, S.W, 1);
     ticks.forEach(t => {
       if (t.y < 623) return; const c = TL.calendars(t.y); if (!c) return;
@@ -455,7 +455,7 @@
   }
   function laneBg(L) {
     if (S.dark) return L.idx % 2 ? '#0e1118' : '#0a0d13';
-    return L.idx % 2 ? '#f6f6f3' : '#fbfbfa';
+    return L.idx % 2 ? '#f1ead9' : '#f7f2e5';
   }
 
   // ---------- frame ----------
@@ -467,7 +467,7 @@
     S.focusSet = emp && emp.dom ? new Set([emp, ...emp.dom]) : null;
     ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
-    ctx.fillStyle = S.dark ? '#0a0d13' : '#fafaf8'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = S.dark ? '#0a0d13' : '#f7f2e5'; ctx.fillRect(0, 0, W, H);
     const ticks = R.ticks(), ir = S.iran, wTop = S.worldTop, wBot = H - S.CAL;
     const grid = (y0, y1) => ticks.forEach(t => {
       ctx.fillStyle = S.dark ? 'rgba(255,255,255,.05)' : 'rgba(60,42,20,.07)';
@@ -571,7 +571,7 @@
 
   function drawLabels(oy) {
     const x0 = S.PW, W = S.W, ir = S.iran;
-    ctx.fillStyle = S.dark ? '#0f1219' : '#fafaf8'; ctx.fillRect(x0, 0, S.LW, S.H);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#f7f1e3'; ctx.fillRect(x0, 0, S.LW, S.H);
     ctx.fillStyle = S.C.line; ctx.fillRect(x0, S.AX, 1, S.H - S.AX);
 
     // Clean Swiss Iran track header
@@ -599,8 +599,8 @@
     });
     ctx.restore();
 
-    ctx.fillStyle = S.dark ? '#0f1219' : '#fafaf8'; ctx.fillRect(x0, 0, S.LW, S.AX);
-    ctx.fillStyle = S.dark ? '#0f1219' : '#f4f4f0'; ctx.fillRect(x0, S.H - S.CAL, S.LW, S.CAL);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#f7f1e3'; ctx.fillRect(x0, 0, S.LW, S.AX);
+    ctx.fillStyle = S.dark ? '#0f1219' : '#efe7d4'; ctx.fillRect(x0, S.H - S.CAL, S.LW, S.CAL);
     text('سال میلادی', W - 12, S.AX - 12, F(700, 10.5), S.C.ink);
     text('خورشیدی · قمری', W - 12, S.H - S.CAL + 11, F(600, 9.5), S.C.ink2);
     ctx.textAlign = 'center';
