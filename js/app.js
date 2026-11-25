@@ -45,7 +45,9 @@
     $('mapYearVal').textContent = TL.yearLabel(y);
     const ir = M.primaryPolity('iran', y);
     const rul = ir ? M.activeRulers(ir.id, y)[0] : null;
-    $('mapYearSub').textContent = ir ? (ir.n + (rul ? ' · ' + rul.n : '')) : 'پیش از تاریخ';
+    const sy = M.snapYearFor ? M.snapYearFor(y) : MS.snapYear;
+    const ep = sy != null ? ` · مرز تاریخی ${TL.yearLabel(sy)}` : '';
+    $('mapYearSub').textContent = (ir ? (ir.n + (rul ? ' · ' + rul.n : '')) : 'پیش از تاریخ') + ep;
   }
 
   // ---------- timeline zoom / pan ----------
@@ -176,10 +178,9 @@
         stopPlay();
         if (h.type === 'event' || h.type === 'person') {
           select(h.item, h.type, true);
-        } else if (h.type === 'region') {
-          const targetPol = h.lord || h.item;
-          if (targetPol) select(targetPol, 'polity', true);
-          else M.flyToRegion(h.regId);
+        } else if (h.type === 'hist') {
+          if (h.item) select(h.item, 'polity', true);
+          else if (h.ent) M.flyTo(h.ent.cx, h.ent.cy, Math.max(1.4, MS.zoom));
         }
       } else {
         S.focus = null; updatePanel(); redrawTL();
@@ -300,17 +301,20 @@
   function showTip(h, cx, cy) { tip.innerHTML = tipHTML(h); tip.hidden = false; placeTip(cx, cy); }
   function showMapTip(h, cx, cy) {
     if (h.type === 'event' || h.type === 'person') { showTip(h, cx, cy); return; }
-    const y = Math.floor(MS.year), p = h.item, lord = h.lord, reg = h.reg;
-    if (!p) {
-      tip.innerHTML = `<h4>${esc(reg.n)}</h4><div class="en">${esc(reg.en)}</div><p>در ${TL.yearLabel(y)} دولت یا تمدن ثبت‌شده‌ای در این سرزمین نیست.</p>`;
-    } else {
+    const y = Math.floor(MS.year), p = h.item, ent = h.ent;
+    if (p) {
       const ruls = M.activeRulers(p.id, y);
       const area = p.prof ? R.areaAt(p, y) : 0;
-      tip.innerHTML = `<h4>${esc(p.n)}</h4><div class="en">${esc(reg.n)}${lord ? ' · زیر فرمان ' + esc(lord.n) : ''}</div>` +
+      const regN = TL.regionById[p.r] ? TL.regionById[p.r].n : '';
+      tip.innerHTML = `<h4>${esc(h.effFa || p.n)}</h4><div class="en">${esc(ent.en || p.en || regN)}</div>` +
         `<div class="yr">${TL.spanLabel(p.s, p.e, p.a)}${area >= 0.4 ? ' · حدود ' + TL.fa(area.toFixed(1)) + ' م.ک²' : ''}</div>` +
         (ruls.length ? `<p>فرمانروا در این سال: <b>${esc(ruls.map(r => r.n).join('، '))}</b></p>` : '') +
         (p.cap ? `<p>مرکز: ${esc(p.cap)}</p>` : '') +
         (p.d ? `<p>${esc(p.d)}</p>` : '');
+    } else if (ent) {
+      const precTxt = ent.prec === 1 ? 'مرز تقریبی تاریخی' : 'مرز تاریخی مستند';
+      tip.innerHTML = `<h4>${esc(h.effFa || ent.fa)}</h4>${ent.en && ent.en !== h.effFa ? `<div class="en">${esc(ent.en)}</div>` : ''}` +
+        `<div class="yr">نقشهٔ دورهٔ ${TL.yearLabel(MS.snapYear)} · ${precTxt}</div>`;
     }
     tip.hidden = false; placeTip(cx, cy);
   }
@@ -617,10 +621,10 @@
   $('aboutX').onclick = () => { $('about').hidden = true; };
   $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') $('about').hidden = true; });
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;
-  $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>جام جهان‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی جهان (Natural Earth 50m)</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
+  $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>جام جهان‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی و متغیرِ مرزهای تاریخی جهان</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
   <ul>
-  <li><b>نقشهٔ زنده:</b> همهٔ ۲۷ منطقهٔ جهان با خطوط ساحلی، دریاچه‌ها و رودهای واقعی (خلیج فارس، خزر، ارومیه، دجله و فرات، نیل، جیحون، سند، رود زرد…) بر اساس حکومت فعال همان سال رنگ می‌گیرند و در دوره‌های سیطرهٔ امپراتوری‌ها (مانند هخامنشیان، ساسانیان، روم، خلافت، مغول و عثمانی) با رنگ و کمان‌های سیطره یکپارچه می‌شوند.</li>
-  <li><b>پخش تاریخ:</b> دکمهٔ پخش (یا کلید Space) زمان را به‌آرامی پیش می‌برد تا رشد و فروپاشی تمدن‌ها را زنده روی نقشه تماشا کنید.</li>
+  <li><b>مرزهای واقعی هر دوره (بدون مرزهای امروزی):</b> زمینِ پایه تنها خطوط ساحلی، دریاچه‌ها و رودهای طبیعی (Natural Earth 50m) است و مرزهای سیاسی در ۴۴ برش زمانی مستند از ۱۰٬۰۰۰ پ.م تا امروز (برگرفته از مجموعهٔ Historical Basemaps با اصلاح خطاهای تاریخی ایران و جهان) همراه با گذر زمان تغییر می‌کنند.</li>
+  <li><b>پخش تاریخ:</b> دکمهٔ پخش (یا کلید Space) زمان را به‌آرامی پیش می‌برد تا رشد و جابه‌جایی مرزهای امپراتوری‌ها را زنده روی نقشه تماشا کنید.</li>
   <li><b>تقویم سه‌گانه:</b> سال میلادی بالا، و خورشیدی و قمری پایین نمودار؛ جست‌وجو با نام، پایتخت یا پرش مستقیم به سال (مثلاً <code>۵۵۰ پ.م</code> یا <code>۱۳۵۷ ش</code>).</li>
   <li><b>میان‌برها:</b> <code>/</code> جست‌وجو · <code>Space</code> پخش/توقف · <code>← →</code> جابه‌جایی زمان · <code>+ −</code> بزرگ‌نمایی · <code>Esc</code> پاک‌کردن انتخاب.</li>
   </ul>`;
