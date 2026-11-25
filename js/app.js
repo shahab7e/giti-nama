@@ -356,17 +356,20 @@
   const mx = (y) => { const t = (TL.u(y) - TL.U0()) / (TL.U1() - TL.U0()); return S.dir === 'ltr' ? t * mW : mW - t * mW; };
   function drawMini() {
     if (!mW) return; const C = S.C; mctx.clearRect(0, 0, mW, mH);
-    mctx.fillStyle = C.paper2; mctx.fillRect(0, 0, mW, mH);
-    // density of polities per region (one thin line per lane)
-    const n = TL.regions.length, lh = (mH - 18) / n;
-    TL.polities.forEach(p => {
-      const ri = TL.regionById[p.r].order, xa = mx(p.s), xb = mx(Math.min(p.e, TL.NOW));
-      mctx.fillStyle = p.base || C.muted; mctx.globalAlpha = p.ir ? 0.9 : 0.6;
-      mctx.fillRect(Math.min(xa, xb), 3 + ri * lh, Math.max(Math.abs(xb - xa), 1), Math.max(lh - 0.8, 0.8));
-    });
-    mctx.globalAlpha = 1;
+    mctx.fillStyle = C.sunk; mctx.fillRect(0, 0, mW, mH);
+    // the pinned Iran band in miniature (all 27 lands in 40px came out thinner than a pixel)
+    const rows = S.iran.rows, lh = (mH - 15) / rows.length;
+    rows.forEach((row, ri) => row.forEach(p => {
+      const xa = mx(p.s), xb = mx(Math.min(p.e, TL.NOW));
+      mctx.fillStyle = p.base; mctx.fillRect(Math.min(xa, xb), 1 + ri * lh, Math.max(Math.abs(xb - xa), 1), lh - 0.6);
+    }));
     mctx.font = '500 9.5px Vazirmatn, Tahoma, sans-serif'; mctx.fillStyle = C.muted; mctx.textAlign = 'center'; mctx.textBaseline = 'bottom'; mctx.direction = 'rtl';
-    [-8000, -5000, -3000, -2000, -1000, 0, 500, 1000, 1500, 1800, 2000].forEach(y => mctx.fillText(y < 0 ? TL.fa(-y) + ' پ.م' : TL.fa(y || 1), mx(y), mH - 1));
+    const placed = [];
+    [-8000, -5000, -3000, -2000, -1000, 0, 500, 1000, 1500, 1800, 2000].forEach(y => {
+      const t = y < 0 ? TL.fa(-y) + ' پ.م' : TL.fa(y || 1), x = mx(y), w = mctx.measureText(t).width + 8;
+      if (x < w / 2 || x > mW - w / 2 || placed.some(px => Math.abs(px - x) < w)) return;
+      placed.push(x); mctx.fillText(t, x, mH - 1);
+    });
     const [v0, v1] = R.visRange(), xa = mx(v0), xb = mx(v1);
     mctx.strokeStyle = C.accent; mctx.lineWidth = 1.2; mctx.fillStyle = S.dark ? 'rgba(126,162,255,.10)' : 'rgba(44,91,208,.08)';
     mctx.fillRect(Math.min(xa, xb), 1, Math.abs(xb - xa), mH - 14); mctx.strokeRect(Math.min(xa, xb), 1, Math.abs(xb - xa), mH - 14);
@@ -384,7 +387,10 @@
   // ---------- boot ----------
   applyTheme();
   if (S.show) setShow(S.show, true);
-  R.resize(); R.layout(); sizeMini(); R.fit(-4600, 2030, 0.01);
+  R.resize(); R.layout(); sizeMini();
+  // a phone can't show 6,600 years in ~290px, so it opens on the last five centuries
+  if (S.W < 640) R.fit(1500, 2030, 0.02); else R.fit(-4600, 2030, 0.01);
+  if (matchMedia('(pointer: coarse)').matches) $('hint').textContent = 'کشیدن = جابه‌جایی · دو انگشت = بزرگ‌نمایی · لمس = ثابت‌کردن برش زمان';
   if (window.innerWidth <= 1100) openPanel(false);
   updatePanel(); redraw();
   const fontsReady = () => { R.clearCache(); R.layout(); redraw(); };

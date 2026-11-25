@@ -172,12 +172,6 @@
       ly += 5; L.h = ly - wy; wy = ly; lanes.push(L);
     };
     const shown = (id) => !S.show || S.show.has(id);
-    if (shown('iran_local')) lane({ reg: { id: 'iran_local', n: 'دودمان‌های محلی ایران', en: 'Local dynasties of Iran', hue: 220, grp: 'ایران' }, grpHead: 'ایران از نزدیک', iranX: true }, ipLocal, [], []);
-    if (S.layers.people && shown('iran_people')) {
-      const ipp = TL.people.filter(p => p.r === 'iran').sort((a, b) => a.s - b.s);
-      const PL = { reg: { id: 'iran_people', n: 'چهره‌های ایران', en: 'Iranian figures', hue: 220, grp: 'ایران' }, people: true, iranX: true, idx: li++ };
-      PL.top = wy; PL.pplRows = pack(ipp, mobile ? 8 : 14); PL.pplY = wy + 6; PL.h = PL.pplRows.length * 15 + 14; wy += PL.h; lanes.push(PL);
-    }
     let lastGrp = 'ایران';
     TL.regions.forEach(reg => {
       if (reg.id === 'iran' || !shown(reg.id)) return;
@@ -185,6 +179,15 @@
       lane(L, (polByReg[reg.id] || []).slice().sort(sorter), (rulByReg[reg.id] || []).slice().sort((a, b) => a.s - b.s),
         (evByReg[reg.id] || []).slice().sort((a, b) => a.y - b.y));
     });
+    // "Iran up close" comes after the world: right under the pinned band it filled the first screen and hid every other land
+    let iranHead = 'ایران از نزدیک';
+    if (shown('iran_local')) { lane({ reg: { id: 'iran_local', n: 'دودمان‌های محلی ایران', en: 'Local dynasties of Iran', hue: 220, grp: 'ایران' }, grpHead: iranHead, iranX: true }, ipLocal, [], []); iranHead = null; }
+    if (S.layers.people && shown('iran_people')) {
+      const ipp = TL.people.filter(p => p.r === 'iran').sort((a, b) => a.s - b.s);
+      const PL = { reg: { id: 'iran_people', n: 'چهره‌های ایران', en: 'Iranian figures', hue: 220, grp: 'ایران' }, people: true, grpHead: iranHead, iranX: true, idx: li++ };
+      if (iranHead) { PL.grpY = wy; wy += 28; }
+      PL.top = wy; PL.pplRows = pack(ipp, mobile ? 8 : 14); PL.pplY = wy + 6; PL.h = PL.pplRows.length * 15 + 14; wy += PL.h; lanes.push(PL);
+    }
     if (S.layers.people && shown('people')) {
       const wp = TL.people.filter(p => p.r !== 'iran' && (!S.show || S.show.has(p.r))).sort((a, b) => a.s - b.s);
       const PL = { reg: { id: 'people', n: 'چهره‌های جهان', en: 'World figures', hue: 30, grp: '' }, people: true, grpHead: 'چهره‌های ماندگار جهان', idx: li++ };
