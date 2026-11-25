@@ -46,7 +46,7 @@
     const ir = M.primaryPolity('iran', y);
     const rul = ir ? M.activeRulers(ir.id, y)[0] : null;
     const sy = M.snapYearFor ? M.snapYearFor(y) : MS.snapYear;
-    const ep = sy != null ? ` · مرز تاریخی ${TL.yearLabel(sy)}` : '';
+    const ep = sy != null ? (sy === 2010 && y >= 2005 ? ' · مرزهای دقیق کنونی' : ` · مرز تاریخی ${TL.yearLabel(sy)}`) : '';
     $('mapYearSub').textContent = (ir ? (ir.n + (rul ? ' · ' + rul.n : '')) : 'پیش از تاریخ') + ep;
   }
 
@@ -322,9 +322,9 @@
         (p.cap ? `<p>مرکز: ${esc(p.cap)}</p>` : '') +
         (p.d ? `<p>${esc(p.d)}</p>` : '');
     } else if (ent) {
-      const precTxt = ent.prec === 1 ? 'مرز تقریبی تاریخی' : 'مرز تاریخی مستند';
+      const precTxt = MS.snapYear === 2010 && y >= 2005 ? 'مرز دقیق کنونی (Natural Earth 50m)' : (MS.snapYear >= 1914 ? 'مرز دقیق نقشه‌برداری‌شده' : (ent.prec === 1 ? 'مرز تقریبی تاریخی' : 'مرز تاریخی مستند'));
       tip.innerHTML = `<h4>${esc(h.effFa || ent.fa)}</h4>${ent.en && ent.en !== h.effFa ? `<div class="en">${esc(ent.en)}</div>` : ''}` +
-        `<div class="yr">نقشهٔ دورهٔ ${TL.yearLabel(MS.snapYear)} · ${precTxt}</div>`;
+        `<div class="yr">${MS.snapYear === 2010 && y >= 2005 ? precTxt : `نقشهٔ دورهٔ ${TL.yearLabel(MS.snapYear)} · ${precTxt}`}</div>`;
     }
     tip.hidden = false; placeTip(cx, cy);
   }
@@ -652,7 +652,7 @@
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;
   $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>جام جهان‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی و متغیرِ مرزهای تاریخی جهان</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
   <ul>
-  <li><b>مرزهای واقعی هر دوره (بدون مرزهای امروزی):</b> زمینِ پایه تنها خطوط ساحلی، دریاچه‌ها و رودهای طبیعی (Natural Earth 50m) است و مرزهای سیاسی در ۴۴ برش زمانی مستند از ۱۰٬۰۰۰ پ.م تا امروز (برگرفته از مجموعهٔ Historical Basemaps با اصلاح خطاهای تاریخی ایران و جهان) همراه با گذر زمان تغییر می‌کنند.</li>
+  <li><b>مرزهای واقعی و متناسب با دقت هر دوره:</b> در دوران باستان و سده‌های میانه مرزها به‌صورت منحنی‌های نرم و تاریخی رسم می‌شوند؛ از عصر معاهدات سدهٔ ۱۹ به‌تدریج دقیق‌تر شده و از ۱۹۱۴ میلادی تا مرزهای کنونی (برگرفته از Natural Earth 50m) به‌صورت خطوط دقیق، تیز و کاملاً هم‌تراز با مرزهای رسمی جهان نمایش داده می‌شوند.</li>
   <li><b>پخش تاریخ:</b> دکمهٔ پخش (یا کلید Space) زمان را به‌آرامی پیش می‌برد تا رشد و جابه‌جایی مرزهای امپراتوری‌ها را زنده روی نقشه تماشا کنید.</li>
   <li><b>تقویم سه‌گانه:</b> سال میلادی بالا، و خورشیدی و قمری پایین نمودار؛ جست‌وجو با نام، پایتخت یا پرش مستقیم به سال (مثلاً <code>۵۵۰ پ.م</code> یا <code>۱۳۵۷ ش</code>).</li>
   <li><b>میان‌برها:</b> <code>/</code> جست‌وجو · <code>Space</code> پخش/توقف · <code>← →</code> جابه‌جایی زمان · <code>+ −</code> بزرگ‌نمایی · <code>Esc</code> پاک‌کردن انتخاب.</li>

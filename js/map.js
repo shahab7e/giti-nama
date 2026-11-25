@@ -75,13 +75,19 @@
     return ctx.createPattern(g, 'repeat');
   }
 
-  function decodeDeltaRing(arr) {
+  // Historical cartographic border precision:
+  //   Pre-1815: organic frontier zones (1.0 quadratic spline + watercolor wash)
+  //   1815–1913: treaty-demarcated imperial borders (0.32 subtly eased corners)
+  //   1914–Present: exact surveyed modern international borders (0.0 crisp straight segments!)
+  const borderSmooth = (sy) => (sy >= 1914 ? 0 : (sy >= 1815 ? 0.32 : 1));
+
+  function decodeDeltaRing(arr, scale = 10) {
     const n = arr.length, out = new Float32Array(n);
     let x = arr[0], y = arr[1];
-    out[0] = x / 10; out[1] = y / 10;
+    out[0] = x / scale; out[1] = y / scale;
     for (let i = 2; i < n; i += 2) {
       x += arr[i]; y += arr[i + 1];
-      out[i] = x / 10; out[i + 1] = y / 10;
+      out[i] = x / scale; out[i + 1] = y / scale;
     }
     return out;
   }
@@ -281,8 +287,8 @@
 
   function ensureBaseDecoded() {
     if (!TL.MAP) return;
-    if (!landDecoded) landDecoded = TL.MAP.land.map(decodeDeltaRing);
-    if (!lakesDecoded) lakesDecoded = TL.MAP.lakes.map(decodeDeltaRing);
+    if (!landDecoded) landDecoded = TL.MAP.land.map(r => decodeDeltaRing(r, 10));
+    if (!lakesDecoded) lakesDecoded = TL.MAP.lakes.map(r => decodeDeltaRing(r, 10));
     if (TL.HIST && !snapByYear.size) {
       TL.HIST.k.forEach(([sy, items]) => snapByYear.set(sy, items));
     }
@@ -299,6 +305,7 @@
     if (decodedSnaps.has(sy)) return decodedSnaps.get(sy);
     const raw = snapByYear.get(sy) || [];
     const S_STR = TL.HIST.s;
+    const q = (TL.HIST.q && TL.HIST.q[sy]) || 10;
     const list = raw.map(row => {
       const [faI, enI, pidI, flags, cx10, cy10, area10, rings] = row;
       const fa = S_STR[faI] || '';
@@ -307,7 +314,7 @@
       return {
         fa, en, pid, isIr: !!(flags & 4), prec: flags & 3,
         cx: cx10 / 10, cy: cy10 / 10, area: area10 / 10,
-        rings: rings.map(decodeDeltaRing)
+        rings: rings.map(r => decodeDeltaRing(r, q))
       };
     });
     list.sort((a, b) => (a.isIr ? 1 : 0) - (b.isIr ? 1 : 0));
@@ -382,24 +389,53 @@
     ctx.closePath();
   }
 
-  function traceSmoothRing(ring, proj, collectScreen) {
+  // Trace a ring with continuous era-adaptive smoothness:
+  //   smooth = 0   -> exact straight vertex-to-vertex polyline (modern surveyed borders, ZERO curving!)
+  //   smooth = 1   -> full quadratic midpoint spline (organic pre-modern frontiers)
+  //   0 < s < 1    -> straight segments with gently eased corners (19th-c. treaty era & morph transitions)
+  function traceScreenPoly(sp, smooth) {
+    const n = sp.length;
+    if (smooth <= 0.01) {
+      ctx.moveTo(sp[0], sp[1]);
+      for (let i = 2; i < n; i += 2) ctx.lineTo(sp[i], sp[i + 1]);
+      ctx.closePath();
+      return;
+    }
+    if (smooth >= 0.99) {
+      const lastX = sp[n - 2], lastY = sp[n - 1];
+      ctx.moveTo((lastX + sp[0]) * 0.5, (lastY + sp[1]) * 0.5);
+      for (let i = 0; i < n; i += 2) {
+        const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
+        ctx.quadraticCurveTo(sp[i], sp[i + 1], (sp[i] + nx) * 0.5, (sp[i + 1] + ny) * 0.5);
+      }
+      ctx.closePath();
+      return;
+    }
+    const f = smooth * 0.5;
+    const x0 = sp[0], y0 = sp[1], px0 = sp[n - 2], py0 = sp[n - 1];
+    ctx.moveTo(x0 + (px0 - x0) * f, y0 + (py0 - y0) * f);
+    for (let i = 0; i < n; i += 2) {
+      const vx = sp[i], vy = sp[i + 1];
+      const px = sp[(i - 2 + n) % n], py = sp[(i - 1 + n) % n];
+      const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
+      if (i > 0) ctx.lineTo(vx + (px - vx) * f, vy + (py - vy) * f);
+      ctx.quadraticCurveTo(vx, vy, vx + (nx - vx) * f, vy + (ny - vy) * f);
+    }
+    ctx.closePath();
+  }
+
+  function traceEraRing(ring, proj, smooth, collectScreen) {
     const n = ring.length; if (n < 6) return null;
     const sp = new Float32Array(n);
     for (let i = 0; i < n; i += 2) {
       const [sx, sy] = proj(ring[i], ring[i + 1]);
       sp[i] = sx; sp[i + 1] = sy;
     }
-    const lastX = sp[n - 2], lastY = sp[n - 1];
-    ctx.moveTo((lastX + sp[0]) * 0.5, (lastY + sp[1]) * 0.5);
-    for (let i = 0; i < n; i += 2) {
-      const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
-      ctx.quadraticCurveTo(sp[i], sp[i + 1], (sp[i] + nx) * 0.5, (sp[i + 1] + ny) * 0.5);
-    }
-    ctx.closePath();
+    traceScreenPoly(sp, smooth);
     return collectScreen ? sp : null;
   }
 
-  function traceMorphedRing(ringA, ringB, e, proj) {
+  function traceMorphedRing(ringA, ringB, e, smooth, proj) {
     const n = ringA.length; if (n < 6) return;
     const sp = new Float32Array(n);
     for (let i = 0; i < n; i += 2) {
@@ -408,13 +444,7 @@
       const [sx, sy] = proj(lon, lat);
       sp[i] = sx; sp[i + 1] = sy;
     }
-    const lastX = sp[n - 2], lastY = sp[n - 1];
-    ctx.moveTo((lastX + sp[0]) * 0.5, (lastY + sp[1]) * 0.5);
-    for (let i = 0; i < n; i += 2) {
-      const nx = sp[(i + 2) % n], ny = sp[(i + 3) % n];
-      ctx.quadraticCurveTo(sp[i], sp[i + 1], (sp[i] + nx) * 0.5, (sp[i + 1] + ny) * 0.5);
-    }
-    ctx.closePath();
+    traceScreenPoly(sp, smooth);
   }
 
   function traceOpenPts(pts, proj, isTenths) {
@@ -488,6 +518,7 @@
       const prevSnap = loadSnapshot(MS.snapYear);
       const nextSnap = loadSnapshot(nextSy);
       MS.morphPlan = buildMorphPlan(prevSnap, MS.snapYear, nextSnap, nextSy, y);
+      MS.morphSmooth = [borderSmooth(MS.snapYear), borderSmooth(nextSy)];
       MS.snapYear = nextSy;
       MS.trans = 0;
     }
@@ -531,13 +562,19 @@
     if (focusEmp) { focusIds.add(focusEmp.id); if (focusEmp.dom) focusEmp.dom.forEach(d => focusIds.add(d.id)); }
     const hasFocus = focusIds.size > 0;
 
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
+    const curSmooth = borderSmooth(MS.snapYear);
     const morphing = MS.trans < 0.995 && MS.morphPlan;
 
     if (morphing) {
       const e = easeInOutCubic(clamp(MS.trans, 0, 1));
       const shimmer = Math.sin(MS.trans * Math.PI);
+      const smA = MS.morphSmooth ? MS.morphSmooth[0] : curSmooth;
+      const smB = MS.morphSmooth ? MS.morphSmooth[1] : curSmooth;
+      const mSmooth = lerp(smA, smB, e);
+      ctx.lineJoin = mSmooth <= 0.05 ? 'miter' : 'round';
+      ctx.miterLimit = 2.4;
+      ctx.lineCap = mSmooth <= 0.05 ? 'butt' : 'round';
+
       for (let i = 0; i < MS.morphPlan.length; i++) {
         const mp = MS.morphPlan[i];
         const col = blendRgb(mp.colA, mp.colB, e);
@@ -546,24 +583,31 @@
 
         ctx.save();
         ctx.beginPath();
-        traceMorphedRing(mp.ringA, mp.ringB, e, proj);
+        traceMorphedRing(mp.ringA, mp.ringB, e, mSmooth, proj);
 
         ctx.globalAlpha = (mp.isIr ? T.iranAlpha : T.fillAlpha) * modeAlpha;
         ctx.fillStyle = col; ctx.fill();
 
-        // Soft watercolor wash + delicate rounded frontier stroke
-        ctx.globalAlpha = T.borderAlpha * 0.30 * modeAlpha;
-        ctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
-        ctx.lineWidth = (mp.isIr ? 4.4 : 2.8) + shimmer * 2.5;
-        ctx.stroke();
+        // Soft watercolor wash ONLY for organic pre-modern eras; fades out as borders lock into modern straight lines!
+        if (mSmooth > 0.05) {
+          ctx.globalAlpha = T.borderAlpha * 0.30 * mSmooth * modeAlpha;
+          ctx.strokeStyle = mp.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
+          ctx.lineWidth = (mp.isIr ? 4.2 : 2.6) + shimmer * 2.2 * mSmooth;
+          ctx.stroke();
+        }
 
-        ctx.globalAlpha = T.borderAlpha * 0.92 * modeAlpha;
-        ctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.38)' : 'rgba(20,20,24,.30)');
-        ctx.lineWidth = mp.isIr ? 1.55 : 0.8;
+        ctx.globalAlpha = T.borderAlpha * (mSmooth <= 0.05 ? 1.0 : 0.92) * modeAlpha;
+        ctx.strokeStyle = mp.isIr ? (MS.dark ? '#f0d28b' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.42)' : 'rgba(20,20,24,.34)');
+        ctx.lineWidth = mp.isIr ? 1.5 : 0.8;
         ctx.stroke();
         ctx.restore();
       }
     } else {
+      const isModern = curSmooth <= 0.01;
+      ctx.lineJoin = isModern ? 'miter' : 'round';
+      ctx.miterLimit = 2.4;
+      ctx.lineCap = isModern ? 'butt' : 'round';
+
       for (let idx = 0; idx < curSnap.length; idx++) {
         const ent = curSnap[idx];
         let effPid = ent.pid, effFa = ent.fa;
@@ -583,7 +627,7 @@
         ctx.save();
         ctx.beginPath();
         for (let r = 0; r < ent.rings.length; r++) {
-          const sr = traceSmoothRing(ent.rings[r], proj, true);
+          const sr = traceEraRing(ent.rings[r], proj, curSmooth, true);
           if (sr) screenRings.push(sr);
         }
 
@@ -591,17 +635,18 @@
         ctx.fillStyle = col; ctx.fill();
 
         const bAlpha = T.borderAlpha * (dimmed ? 0.20 : 1);
-        if (!dimmed) {
-          ctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22);
+        // Watercolor frontier wash ONLY for pre-modern eras; modern surveyed borders stay razor-crisp!
+        if (!dimmed && curSmooth > 0.05) {
+          ctx.globalAlpha = bAlpha * (ent.isIr ? 0.34 : 0.22) * curSmooth;
           ctx.strokeStyle = ent.isIr ? (MS.dark ? '#d8b46c' : '#1d4496') : col;
           ctx.lineWidth = ent.isIr ? 4.0 : 2.6;
           ctx.stroke();
         }
-        ctx.globalAlpha = bAlpha * (isHover ? 1.5 : (isFocus ? 1.35 : 0.85));
-        if (ent.prec === 1 && !isFocus && !isHover) ctx.setLineDash([4, 4]);
+        ctx.globalAlpha = bAlpha * (isHover ? 1.55 : (isFocus ? 1.4 : (isModern ? 1.05 : 0.85)));
+        if (ent.prec === 1 && !isModern && !isFocus && !isHover) ctx.setLineDash([4, 4]);
         ctx.strokeStyle = isHover ? (MS.dark ? '#ffffff' : '#111113')
-          : (isFocus ? T.gold : (ent.isIr ? (MS.dark ? '#e4c47a' : '#1d4496') : (MS.dark ? 'rgba(255,255,255,.36)' : 'rgba(20,20,24,.30)')));
-        ctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? 1.35 : 0.72));
+          : (isFocus ? T.gold : (ent.isIr ? (MS.dark ? '#e4c47a' : '#1d4496') : (MS.dark ? (isModern ? 'rgba(255,255,255,.46)' : 'rgba(255,255,255,.36)') : (isModern ? 'rgba(20,20,24,.38)' : 'rgba(20,20,24,.30)'))));
+        ctx.lineWidth = isHover ? 1.9 : (isFocus ? 1.7 : (ent.isIr ? (isModern ? 1.45 : 1.35) : (isModern ? 0.82 : 0.72)));
         if ((isFocus || isHover) && MS.dark) { ctx.shadowColor = ent.isIr ? '#d8b46c' : col; ctx.shadowBlur = 12; }
         ctx.stroke();
         ctx.setLineDash([]);
