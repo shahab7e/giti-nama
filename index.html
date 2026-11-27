@@ -32,21 +32,21 @@
     </div>
 
     <div class="search-wrap">
-      <input id="q" class="search" type="search" placeholder="جست‌وجو: نام، زادگاه، نبرد یا سال (۵۵۰ پ.م، ۱۳۵۷ ش)…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
+      <input id="q" class="search" type="search" placeholder="جست‌وجو: نام، زادگاه، نبرد یا سال (۵۵۰ پ.م، ۱۳۵۷ ش)…" autocomplete="off" aria-label="جست‌وجو در تاریخ" role="combobox" aria-autocomplete="list" aria-controls="qres" aria-expanded="false">
       <kbd class="skbd" aria-hidden="true">/</kbd>
-      <ul id="qres" class="qres" hidden></ul>
+      <ul id="qres" class="qres" role="listbox" aria-label="نتیجه‌های جست‌وجو" hidden></ul>
     </div>
 
     <nav class="tools" aria-label="ابزارها">
       <div class="view-seg" role="group" aria-label="نمای صفحه">
-        <button class="vbtn on" data-view="split" title="نقشه + نمودار زمانی">دوتایی</button>
-        <button class="vbtn" data-view="map" title="نقشهٔ تمام‌صفحه">نقشه</button>
-        <button class="vbtn" data-view="timeline" title="نمودار زمانی کامل">نمودار</button>
+        <button class="vbtn on" data-view="split" title="نقشه + نمودار زمانی" aria-pressed="true">دوتایی</button>
+        <button class="vbtn" data-view="map" title="نقشهٔ تمام‌صفحه" aria-pressed="false">نقشه</button>
+        <button class="vbtn" data-view="timeline" title="نمودار زمانی کامل" aria-pressed="false">نمودار</button>
       </div>
-      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
+      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" aria-controls="regions" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
       <button id="btnPanel" class="tbtn tbtn-on" aria-controls="panel" aria-expanded="true">برش زمان</button>
-      <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن">☀</button>
-      <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" title="لایه‌ها و تنظیمات نمایش">⚙</button>
+      <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن" aria-label="تغییر پوستهٔ تیره / روشن">☀</button>
+      <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" aria-controls="layers" title="لایه‌ها و تنظیمات نمایش" aria-label="لایه‌ها و تنظیمات نمایش">⚙</button>
     </nav>
 
     <div id="regions" class="layers regions" hidden>
@@ -93,7 +93,7 @@
   <div class="eras-bar">
     <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
     <div class="era-more-wrap">
-      <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false">سایر دوره‌ها ▾</button>
+      <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="moreEras">سایر دوره‌ها ▾</button>
       <div id="moreEras" class="more-eras-pop" hidden></div>
     </div>
   </div>
@@ -101,7 +101,7 @@
   <div class="main" id="main">
     <div class="workspace" id="workspace">
       <section class="map-stage" id="mapStage">
-        <canvas id="map" aria-label="نقشهٔ زندهٔ تاریخ جهان"></canvas>
+        <canvas id="map" role="img" aria-label="نقشهٔ زندهٔ تاریخ جهان؛ سال روی نقشه در کادر کنار آن نوشته شده است"></canvas>
         <div class="map-loading" id="mapLoading" role="status">در حال بارگذاری مرزهای تاریخی…</div>
         <div class="map-hud-year" id="mapYearHud">
           <b id="mapYearVal">۴۸۰ پ.م</b>
@@ -134,13 +134,13 @@
           <button class="pbtn pbtn-play" id="btnPlay" title="پخش / توقف زمان (Space)">▶ پخش</button>
           <button class="pbtn" id="stepFwd" title="۵۰ سال به جلو">۵۰+ ►</button>
           <span class="pdiv"></span>
-          <button class="pbtn spd on" data-spd="1">۱×</button>
-          <button class="pbtn spd" data-spd="3">۳×</button>
-          <button class="pbtn spd" data-spd="8">۸×</button>
+          <button class="pbtn spd on" data-spd="1" aria-pressed="true" title="سرعت پخش: عادی">۱×</button>
+          <button class="pbtn spd" data-spd="3" aria-pressed="false" title="سرعت پخش: سه برابر">۳×</button>
+          <button class="pbtn spd" data-spd="8" aria-pressed="false" title="سرعت پخش: هشت برابر">۸×</button>
         </div>
       </section>
 
-      <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal" title="بکشید تا اندازهٔ نقشه و نمودار عوض شود">
+      <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="اندازهٔ نقشه و نمودار" aria-controls="mapStage" aria-valuemin="22" aria-valuemax="78" aria-valuenow="56" title="بکشید تا اندازهٔ نقشه و نمودار عوض شود (یا کلیدهای ↑ و ↓)">
         <div class="split-grip" aria-hidden="true"></div>
       </div>
 
@@ -152,12 +152,13 @@
       <div id="tip" class="tip" hidden></div>
     </div>
 
-    <aside class="panel" id="panel" aria-live="polite">
+    <aside class="panel" id="panel" aria-label="برش زمان">
       <div class="panel-head">
+        <button class="panel-x" id="panelX" type="button" aria-label="بستن ستون برش زمان" title="بستن">×</button>
         <div class="panel-kicker">برش زمان · جهان در این لحظه</div>
         <div class="panel-year" id="pYear">—</div>
         <div class="panel-cal" id="pCal"></div>
-        <div class="panel-focus" id="pFocus"></div>
+        <div class="panel-focus" id="pFocus" aria-live="polite"></div>
       </div>
       <div class="panel-body" id="pBody"></div>
     </aside>

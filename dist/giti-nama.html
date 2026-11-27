@@ -282,7 +282,7 @@ button,input{font:inherit;color:inherit}
 
 /* Draggable Splitter + Floating Playback Deck */
 .splitter{
-  position:relative;flex:none;height:8px;cursor:row-resize;z-index:20;
+  position:relative;flex:none;height:8px;cursor:row-resize;z-index:20;touch-action:none;
   background:var(--surface);border-top:1px solid var(--line2);border-bottom:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;
 }
@@ -357,7 +357,10 @@ button,input{font:inherit;color:inherit}
 /* ===== Side Inspector Panel (برش زمان) ===== */
 .panel{min-width:0;min-height:0;display:flex;flex-direction:column;border-inline-start:1px solid var(--line);background:var(--surface);overflow:hidden}
 .main.nopanel .panel{display:none}
-.panel-head{padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+.panel-head{position:relative;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+/* close button: only where the panel floats over the timeline (tablets and phones) */
+.panel-x{display:none;position:absolute;top:8px;inset-inline-end:10px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--sunk);color:var(--ink2);font-size:20px;line-height:1;cursor:pointer}
+.panel-x:hover{color:var(--gold);border-color:var(--gold)}
 .panel-kicker{font-size:10.5px;color:var(--muted);font-weight:600}
 .panel-year{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.3}
 .panel-cal{font-size:11.5px;color:var(--gold);font-variant-numeric:tabular-nums;font-weight:600}
@@ -405,7 +408,8 @@ button,input{font:inherit;color:inherit}
 .it .dot{flex:none;width:3.5px;border-radius:4px;margin-block:3px}
 .it .tx{flex:1;min-width:0}
 .it .l1{display:flex;justify-content:space-between;gap:8px}
-.it:hover .nm{color:var(--gold)}
+.it:hover .nm,.it:focus-visible .nm{color:var(--gold)}
+.it:focus-visible{border-radius:6px;outline-offset:1px}
 .it .nm{min-width:0;font-weight:600}
 .it-ruler .nm,.it-person .nm{font-weight:500}
 .it .sub .tag{font-weight:600;color:var(--ink2)}
@@ -431,7 +435,7 @@ button,input{font:inherit;color:inherit}
 
 /* ===== Minimap ===== */
 .mini{height:38px;border-top:1px solid var(--line);background:var(--surface)}
-#minimap{width:100%;height:100%;display:block;cursor:pointer}
+#minimap{width:100%;height:100%;display:block;cursor:pointer;touch-action:none}
 
 /* ===== Modal ===== */
 .modal{position:fixed;inset:0;z-index:65;display:grid;place-items:center;background:rgba(4,6,14,.65);backdrop-filter:blur(6px);padding:16px}
@@ -444,6 +448,8 @@ button,input{font:inherit;color:inherit}
   .main,.main.nopanel{grid-template-columns:minmax(0,1fr)}
   .panel{position:fixed;inset-inline-end:0;top:auto;bottom:38px;width:min(360px,100%);height:min(68vh,540px);z-index:30;
     border:1px solid var(--line2);border-radius:16px 16px 0 0;box-shadow:var(--shadow)}
+  .panel-x{display:grid;place-items:center}
+  .panel-head{padding-inline-end:56px}
 }
 @media (max-width:740px){
   .brand-sub,.skbd{display:none}
@@ -466,21 +472,21 @@ button,input{font:inherit;color:inherit}
     </div>
 
     <div class="search-wrap">
-      <input id="q" class="search" type="search" placeholder="جست‌وجو: نام، زادگاه، نبرد یا سال (۵۵۰ پ.م، ۱۳۵۷ ش)…" autocomplete="off" aria-label="جست‌وجو در تاریخ">
+      <input id="q" class="search" type="search" placeholder="جست‌وجو: نام، زادگاه، نبرد یا سال (۵۵۰ پ.م، ۱۳۵۷ ش)…" autocomplete="off" aria-label="جست‌وجو در تاریخ" role="combobox" aria-autocomplete="list" aria-controls="qres" aria-expanded="false">
       <kbd class="skbd" aria-hidden="true">/</kbd>
-      <ul id="qres" class="qres" hidden></ul>
+      <ul id="qres" class="qres" role="listbox" aria-label="نتیجه‌های جست‌وجو" hidden></ul>
     </div>
 
     <nav class="tools" aria-label="ابزارها">
       <div class="view-seg" role="group" aria-label="نمای صفحه">
-        <button class="vbtn on" data-view="split" title="نقشه + نمودار زمانی">دوتایی</button>
-        <button class="vbtn" data-view="map" title="نقشهٔ تمام‌صفحه">نقشه</button>
-        <button class="vbtn" data-view="timeline" title="نمودار زمانی کامل">نمودار</button>
+        <button class="vbtn on" data-view="split" title="نقشه + نمودار زمانی" aria-pressed="true">دوتایی</button>
+        <button class="vbtn" data-view="map" title="نقشهٔ تمام‌صفحه" aria-pressed="false">نقشه</button>
+        <button class="vbtn" data-view="timeline" title="نمودار زمانی کامل" aria-pressed="false">نمودار</button>
       </div>
-      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
+      <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" aria-controls="regions" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
       <button id="btnPanel" class="tbtn tbtn-on" aria-controls="panel" aria-expanded="true">برش زمان</button>
-      <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن">☀</button>
-      <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" title="لایه‌ها و تنظیمات نمایش">⚙</button>
+      <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن" aria-label="تغییر پوستهٔ تیره / روشن">☀</button>
+      <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" aria-controls="layers" title="لایه‌ها و تنظیمات نمایش" aria-label="لایه‌ها و تنظیمات نمایش">⚙</button>
     </nav>
 
     <div id="regions" class="layers regions" hidden>
@@ -527,7 +533,7 @@ button,input{font:inherit;color:inherit}
   <div class="eras-bar">
     <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
     <div class="era-more-wrap">
-      <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false">سایر دوره‌ها ▾</button>
+      <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="moreEras">سایر دوره‌ها ▾</button>
       <div id="moreEras" class="more-eras-pop" hidden></div>
     </div>
   </div>
@@ -535,7 +541,7 @@ button,input{font:inherit;color:inherit}
   <div class="main" id="main">
     <div class="workspace" id="workspace">
       <section class="map-stage" id="mapStage">
-        <canvas id="map" aria-label="نقشهٔ زندهٔ تاریخ جهان"></canvas>
+        <canvas id="map" role="img" aria-label="نقشهٔ زندهٔ تاریخ جهان؛ سال روی نقشه در کادر کنار آن نوشته شده است"></canvas>
         <div class="map-loading" id="mapLoading" role="status">در حال بارگذاری مرزهای تاریخی…</div>
         <div class="map-hud-year" id="mapYearHud">
           <b id="mapYearVal">۴۸۰ پ.م</b>
@@ -568,13 +574,13 @@ button,input{font:inherit;color:inherit}
           <button class="pbtn pbtn-play" id="btnPlay" title="پخش / توقف زمان (Space)">▶ پخش</button>
           <button class="pbtn" id="stepFwd" title="۵۰ سال به جلو">۵۰+ ►</button>
           <span class="pdiv"></span>
-          <button class="pbtn spd on" data-spd="1">۱×</button>
-          <button class="pbtn spd" data-spd="3">۳×</button>
-          <button class="pbtn spd" data-spd="8">۸×</button>
+          <button class="pbtn spd on" data-spd="1" aria-pressed="true" title="سرعت پخش: عادی">۱×</button>
+          <button class="pbtn spd" data-spd="3" aria-pressed="false" title="سرعت پخش: سه برابر">۳×</button>
+          <button class="pbtn spd" data-spd="8" aria-pressed="false" title="سرعت پخش: هشت برابر">۸×</button>
         </div>
       </section>
 
-      <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal" title="بکشید تا اندازهٔ نقشه و نمودار عوض شود">
+      <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal" tabindex="0" aria-label="اندازهٔ نقشه و نمودار" aria-controls="mapStage" aria-valuemin="22" aria-valuemax="78" aria-valuenow="56" title="بکشید تا اندازهٔ نقشه و نمودار عوض شود (یا کلیدهای ↑ و ↓)">
         <div class="split-grip" aria-hidden="true"></div>
       </div>
 
@@ -586,12 +592,13 @@ button,input{font:inherit;color:inherit}
       <div id="tip" class="tip" hidden></div>
     </div>
 
-    <aside class="panel" id="panel" aria-live="polite">
+    <aside class="panel" id="panel" aria-label="برش زمان">
       <div class="panel-head">
+        <button class="panel-x" id="panelX" type="button" aria-label="بستن ستون برش زمان" title="بستن">×</button>
         <div class="panel-kicker">برش زمان · جهان در این لحظه</div>
         <div class="panel-year" id="pYear">—</div>
         <div class="panel-cal" id="pCal"></div>
-        <div class="panel-focus" id="pFocus"></div>
+        <div class="panel-focus" id="pFocus" aria-live="polite"></div>
       </div>
       <div class="panel-body" id="pBody"></div>
     </aside>
@@ -6717,6 +6724,8 @@ TL.dominion = {
   R.animateTo = animateTo;
 
   // ---------- timeline pointer events ----------
+  // capture keeps a drag going outside the element; if the browser refuses, the gesture still works without it
+  const capture = (el, ev) => { try { el.setPointerCapture(ev.pointerId); } catch (e) { } };
   const pt = (el, ev) => { const r = el.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
   cv.addEventListener('wheel', (ev) => {
     ev.preventDefault(); hideHint();
@@ -6729,9 +6738,10 @@ TL.dominion = {
 
   const ptrs = new Map(); let drag = null, pinch = null, moved = false;
   cv.addEventListener('pointerdown', (ev) => {
-    cv.setPointerCapture(ev.pointerId); ptrs.set(ev.pointerId, pt(cv, ev)); moved = false; hideHint();
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return; // right/middle click: leave to the browser
+    capture(cv, ev); ptrs.set(ev.pointerId, pt(cv, ev)); moved = false; hideHint();
     if (ptrs.size === 1) { const [x, y] = pt(cv, ev); drag = { x, y, u0: S.u0, sy: S.scrollY }; }
-    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), k: S.k, mid: (a[0] + b[0]) / 2 }; drag = null; }
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])), k: S.k, mid: (a[0] + b[0]) / 2 }; drag = null; }
   });
   cv.addEventListener('pointermove', (ev) => {
     const [x, y] = pt(cv, ev);
@@ -6746,6 +6756,7 @@ TL.dominion = {
       if (moved) { S.u0 = drag.u0; panPx(dx); if (drag.y > S.worldTop) S.scrollY = drag.sy - dy; R.clampView(); hideTip(); redrawTL(); }
       return;
     }
+    if (ev.pointerType === 'touch') return; // no hover cursor or tooltips under a finger
     S.hoverX = x < S.PW ? x : null; S.hoverY = y;
     const h = R.hitTest(x, y);
     S.hoverItem = h && h.type !== 'region' ? h.item : null;
@@ -6754,8 +6765,12 @@ TL.dominion = {
     redrawTL();
   });
   const endTL = (ev) => {
+    if (!ptrs.has(ev.pointerId)) return;
     const wasDrag = drag && moved, [x, y] = pt(cv, ev);
     ptrs.delete(ev.pointerId); cv.classList.remove('drag');
+    if (pinch && ptrs.size === 1) { // one finger lifted from a pinch: keep panning with the other
+      const [p] = [...ptrs.values()]; pinch = null; drag = { x: p[0], y: p[1], u0: S.u0, sy: S.scrollY }; moved = true; return;
+    }
     if (ptrs.size < 2) pinch = null;
     if (!ptrs.size) {
       if (drag && !wasDrag && ev.type === 'pointerup') clickTL(x, y);
@@ -6785,29 +6800,44 @@ TL.dominion = {
     ev.preventDefault(); hideHint();
     const [x, y] = pt(mcv, ev);
     const [lonB, latB] = M.unproj(x, y);
-    const factor = Math.exp(-ev.deltaY * 0.0014);
+    const d = ev.deltaMode === 1 ? ev.deltaY * 33 : ev.deltaY; // some mice scroll in lines, not pixels
+    const factor = Math.exp(-d * 0.0014);
     MS.tZoom = Math.max(0.22, Math.min(4.8, MS.tZoom * factor));
     // Gentle zoom toward cursor
     MS.tLon = Math.max(-145, Math.min(155, MS.tLon + (lonB - MS.tLon) * (1 - 1 / factor) * 0.45));
     MS.tLat = Math.max(-35, Math.min(62, MS.tLat + (latB - MS.tLat) * (1 - 1 / factor) * 0.45));
   }, { passive: false });
 
+  // touch: one finger pans, two fingers pinch-zoom and pan together; lifting one finger goes back to panning
+  const mPtrs = new Map(); let mPinch = null;
+  const mMid = () => { const [a, b] = [...mPtrs.values()]; return { x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, d: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])) }; };
+  const panMapBy = (dx, dy) => {
+    const sc = M.scale();
+    MS.tLon = Math.max(-150, Math.min(160, MS.tLon - dx / sc));
+    MS.tLat = Math.max(-40, Math.min(66, MS.tLat + dy / (sc * 1.22)));
+  };
   mcv.addEventListener('pointerdown', (ev) => {
-    mcv.setPointerCapture(ev.pointerId); hideHint();
-    mDrag = { x: ev.clientX, y: ev.clientY }; mMoved = false;
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return; // right/middle click: leave to the browser
+    capture(mcv, ev); hideHint();
+    mPtrs.set(ev.pointerId, [ev.clientX, ev.clientY]);
+    if (mPtrs.size === 1) { mDrag = { x: ev.clientX, y: ev.clientY }; mMoved = false; }
+    else if (mPtrs.size === 2) { const m = mMid(); mPinch = { d: m.d, zoom: MS.tZoom, x: m.x, y: m.y }; mDrag = null; mMoved = true; hideTip(); }
   });
   mcv.addEventListener('pointermove', (ev) => {
+    if (mPtrs.has(ev.pointerId)) mPtrs.set(ev.pointerId, [ev.clientX, ev.clientY]);
+    if (mPinch && mPtrs.size === 2) {
+      const m = mMid();
+      MS.tZoom = Math.max(0.22, Math.min(4.8, mPinch.zoom * m.d / mPinch.d));
+      panMapBy(m.x - mPinch.x, m.y - mPinch.y); mPinch.x = m.x; mPinch.y = m.y;
+      return;
+    }
     if (mDrag) {
       const dx = ev.clientX - mDrag.x, dy = ev.clientY - mDrag.y;
       if (Math.hypot(dx, dy) > 3) { mMoved = true; mcv.classList.add('drag'); }
-      if (mMoved) {
-        const sc = M.scale();
-        MS.tLon = Math.max(-150, Math.min(160, MS.tLon - dx / sc));
-        MS.tLat = Math.max(-40, Math.min(66, MS.tLat + dy / (sc * 1.22)));
-        mDrag.x = ev.clientX; mDrag.y = ev.clientY; hideTip();
-      }
+      if (mMoved) { panMapBy(dx, dy); mDrag.x = ev.clientX; mDrag.y = ev.clientY; hideTip(); }
       return;
     }
+    if (ev.pointerType === 'touch') return; // no hover tooltips under a finger
     const [x, y] = pt(mcv, ev);
     const h = M.hitTest(x, y);
     MS.hover = h;
@@ -6815,6 +6845,13 @@ TL.dominion = {
     if (h) showMapTip(h, ev.clientX, ev.clientY); else hideTip();
   });
   const endMap = (ev) => {
+    if (!mPtrs.has(ev.pointerId)) return;
+    mPtrs.delete(ev.pointerId);
+    if (mPtrs.size === 1) { // one finger lifted from a pinch: keep panning with the other
+      const [p] = [...mPtrs.values()]; mPinch = null; mDrag = { x: p[0], y: p[1] }; mMoved = true; return;
+    }
+    if (mPtrs.size) return;
+    mPinch = null;
     if (mDrag && !mMoved && ev.type === 'pointerup') {
       const [x, y] = pt(mcv, ev);
       const h = M.hitTest(x, y);
@@ -6864,23 +6901,37 @@ TL.dominion = {
 
   // ---------- resizable horizontal splitter + view modes ----------
   const ws = $('workspace'), splitter = $('splitter');
-  let splitDrag = false;
+  let splitDrag = false, splitPct = 56;
+  // only move the split here; the ResizeObserver resizes the canvases once per frame
+  const setSplit = (pct) => {
+    splitPct = Math.max(22, Math.min(78, pct));
+    ws.style.setProperty('--map-pct', splitPct.toFixed(1) + '%');
+    splitter.setAttribute('aria-valuenow', String(Math.round(splitPct)));
+  };
   splitter.addEventListener('pointerdown', (ev) => {
     if (ev.target.closest('.play-deck')) return;
-    splitDrag = true; splitter.classList.add('drag'); splitter.setPointerCapture(ev.pointerId);
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+    splitDrag = true; splitter.classList.add('drag'); capture(splitter, ev);
   });
   splitter.addEventListener('pointermove', (ev) => {
     if (!splitDrag) return;
     const r = ws.getBoundingClientRect();
-    const pct = Math.max(22, Math.min(78, ((ev.clientY - r.top) / r.height) * 100));
-    // only move the split here; the ResizeObserver resizes the canvases once per frame
-    ws.style.setProperty('--map-pct', pct.toFixed(1) + '%');
+    setSplit(((ev.clientY - r.top) / r.height) * 100);
   });
-  splitter.addEventListener('pointerup', () => { splitDrag = false; splitter.classList.remove('drag'); });
+  const endSplit = () => { splitDrag = false; splitter.classList.remove('drag'); };
+  splitter.addEventListener('pointerup', endSplit); splitter.addEventListener('pointercancel', endSplit);
+  // keyboard: ↑ / ↓ make the map smaller / larger, Home / End jump to the limits
+  splitter.addEventListener('keydown', (ev) => {
+    const step = { ArrowUp: -4, ArrowDown: 4, PageUp: -12, PageDown: 12 }[ev.key];
+    if (step != null) setSplit(splitPct + step);
+    else if (ev.key === 'Home') setSplit(22);
+    else if (ev.key === 'End') setSplit(78);
+    else return;
+    ev.preventDefault(); ev.stopPropagation();
+  });
 
   document.querySelectorAll('.vbtn').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.vbtn').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
+    document.querySelectorAll('.vbtn').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
     ws.setAttribute('data-view', b.dataset.view); // the ResizeObserver relayouts the areas that changed size
   }));
 
@@ -6896,8 +6947,8 @@ TL.dominion = {
   $('stepBack').onclick = () => stepBy(-50);
   $('stepFwd').onclick = () => stepBy(50);
   document.querySelectorAll('.spd').forEach(b => b.onclick = () => {
-    document.querySelectorAll('.spd').forEach(x => x.classList.remove('on'));
-    b.classList.add('on'); playSpeed = +b.dataset.spd;
+    document.querySelectorAll('.spd').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    playSpeed = +b.dataset.spd;
   });
 
   // Map camera buttons
@@ -6931,7 +6982,7 @@ TL.dominion = {
   const turnBy = (deg) => { stopPlay(); setActiveYear(yearOfDeg(degOf(MS.tYear) + deg), true); };
   let dialDrag = null, dialPanelT = 0;
   const dialAng = (ev) => { const r = dial.getBoundingClientRect(); return Math.atan2(ev.clientY - r.top - r.height / 2, ev.clientX - r.left - r.width / 2) * 180 / Math.PI; };
-  dial.addEventListener('pointerdown', (ev) => { dialDrag = dialAng(ev); dial.setPointerCapture(ev.pointerId); dial.classList.add('drag'); ev.preventDefault(); });
+  dial.addEventListener('pointerdown', (ev) => { dialDrag = dialAng(ev); capture(dial, ev); dial.classList.add('drag'); ev.preventDefault(); });
   dial.addEventListener('pointermove', (ev) => {
     if (dialDrag == null) return;
     const a = dialAng(ev); let d = a - dialDrag; dialDrag = a;
@@ -6951,19 +7002,21 @@ TL.dominion = {
   // ---------- keyboard ----------
   window.addEventListener('keydown', (ev) => {
     const t = ev.target, k = ev.key;
-    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return;
-    if (k === 'Escape' && !$('about').hidden) { $('about').hidden = true; return; }
+    const typing = (t.tagName === 'INPUT' && !/^(checkbox|radio|button)$/.test(t.type)) || t.tagName === 'TEXTAREA' || t.isContentEditable;
+    if (!typing && k === 'Escape' && !$('about').hidden) { closeAbout(); return; }
+    if (!typing && k === 'Escape' && openPop()) { const id = openPop(); closePops(); $(POPS[id]).focus(); return; }
+    if (t.tagName === 'INPUT' || typing) return; // a checkbox keeps Space for itself
     // leave browser shortcuts (Ctrl/⌘ + …) alone, and let a focused button, link or slider handle its own keys
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
     if (!$('about').hidden) return;
-    if ((ev.code === 'Space' || k === 'Enter') && t.closest && t.closest('button, a, summary, select, [role="slider"], [role="option"]')) return;
+    if ((ev.code === 'Space' || k === 'Enter') && t.closest && t.closest('button, a, summary, select, [role="slider"], [role="option"], [role="button"], [role="separator"]')) return;
     if (k === '/') { ev.preventDefault(); $('q').focus(); return; }
     if (ev.code === 'Space') { ev.preventDefault(); togglePlay(); return; }
     if (k === 'ArrowLeft' || k === 'ArrowRight') { panPx((k === 'ArrowLeft' ? 1 : -1) * S.PW * 0.15); redrawTL(); }
     else if (k === 'ArrowUp' || k === 'ArrowDown') { S.scrollY += k === 'ArrowDown' ? 80 : -80; R.clampView(); redrawTL(); }
     else if (k === '+' || k === '=') zoomAt(S.PW / 2, 1.35);
     else if (k === '-') zoomAt(S.PW / 2, 1 / 1.35);
-    else if (k === 'Escape') { S.focus = null; updatePanel(); redrawTL(); $('about').hidden = true; $('layers').hidden = true; $('regions').hidden = true; $('moreEras').hidden = true; }
+    else if (k === 'Escape') { S.focus = null; updatePanel(); redrawTL(); syncHash(); }
   });
 
   // ---------- tooltips ----------
@@ -7051,7 +7104,7 @@ TL.dominion = {
       const age = S.pinYear != null && S.pinYear >= it.s && S.pinYear <= it.e ? ` · ${TL.fa(Math.floor(S.pinYear - it.s))} ساله` : '';
       tag = (TL.PKIND[it.k] || 'چهره') + age; sub = clip(it.d, 80);
     }
-    return `<div class="it it-${type}" data-k="${id}"><i class="dot" style="background:${dot}"></i><div class="tx">` +
+    return `<div class="it it-${type}" data-k="${id}" role="button" tabindex="0"><i class="dot" style="background:${dot}"></i><div class="tx">` +
       `<div class="l1"><span class="nm">${esc(label)}</span><span class="yy">${yy}</span></div>` +
       `<div class="sub"><b class="tag"${tagC ? ` style="color:${tagC}"` : ''}>${esc(tag)}</b>${sub ? ' · ' + esc(sub) : ''}</div></div></div>`;
   }
@@ -7096,7 +7149,7 @@ TL.dominion = {
     return `<div class="pow-box"><div class="pow-h"><span>بزرگ‌ترین قدرت‌های ${TL.yearLabel(Math.floor(y))}</span><span>میلیون کیلومتر²</span></div>` +
       ranked.map(({ p, a }) => {
         const id = register(p, 'polity');
-        return `<div class="pow-r it" data-k="${id}"><div class="pow-l"><span class="pow-nm"><i style="width:7px;height:7px;border-radius:50%;background:${p.base};flex:none"></i><span>${esc(p.n)}</span></span><span class="pow-v">${TL.fa(a.toFixed(1))}</span></div><div class="pow-tr"><div class="pow-f" style="width:${(a / maxA) * 100}%;background:${p.base}"></div></div></div>`;
+        return `<div class="pow-r it" data-k="${id}" role="button" tabindex="0"><div class="pow-l"><span class="pow-nm"><i style="width:7px;height:7px;border-radius:50%;background:${p.base};flex:none"></i><span>${esc(p.n)}</span></span><span class="pow-v">${TL.fa(a.toFixed(1))}</span></div><div class="pow-tr"><div class="pow-f" style="width:${(a / maxA) * 100}%;background:${p.base}"></div></div></div>`;
       }).join('') + '</div>';
   }
 
@@ -7104,7 +7157,7 @@ TL.dominion = {
     if (!emp || !emp.dom) return '';
     const rows = emp.dom.slice().sort((p, q) => p.s - q.s).map(p => {
       const id = register(p, 'polity');
-      return `<div class="it" data-k="${id}"><i class="dot" style="background:${p.base}"></i><div class="tx"><div class="l1"><span class="nm">${esc(TL.regionById[p.r].n)}</span>` +
+      return `<div class="it" data-k="${id}" role="button" tabindex="0"><i class="dot" style="background:${p.base}"></i><div class="tx"><div class="l1"><span class="nm">${esc(TL.regionById[p.r].n)}</span>` +
         `<span class="yy">${TL.spanLabel(Math.max(p.s, emp.s), Math.min(p.e, emp.e), p.a)}</span></div><div class="sub">${esc(p.n)}</div></div></div>`;
     }).join('');
     return `<div class="dom-box" style="--c:${emp.base}"><div class="dom-t">سرزمین‌های زیر فرمان «${esc(emp.n)}» (${TL.fa(emp.dom.length)} منطقه)</div>${rows}` +
@@ -7173,6 +7226,15 @@ TL.dominion = {
     const el = ev.target.closest('.it'); if (!el) return;
     const [it, type] = reg[+el.dataset.k]; select(it, type, true);
   });
+  // rows are role="button": Enter or Space opens them; the panel is rebuilt, so focus moves to the new card
+  $('pBody').addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const el = ev.target.closest('.it[role="button"]'); if (!el) return;
+    ev.preventDefault();
+    const [it, type] = reg[+el.dataset.k]; select(it, type, true);
+    const card = $('pBody').querySelector('.feat-card');
+    if (card) { card.setAttribute('tabindex', '-1'); card.focus(); }
+  });
 
   function openPanel(force) {
     const m = $('main'), btn = $('btnPanel');
@@ -7181,6 +7243,7 @@ TL.dominion = {
     if (window.innerWidth <= 1100) $('panel').hidden = !open; else $('panel').hidden = false;
   }
   $('btnPanel').onclick = () => openPanel();
+  $('panelX').onclick = () => { openPanel(false); $('btnPanel').focus(); };
 
   // ---------- upgraded search (names + capitals + descriptions + direct year jump!) ----------
   const index = [];
@@ -7221,10 +7284,17 @@ TL.dominion = {
   }
 
   const q = $('q'), qres = $('qres'); let qsel = 0, qlist = [];
+  // the search box is a combobox: its list's visibility and highlighted option are announced to screen readers
+  function showList(open) { qres.hidden = !open; q.setAttribute('aria-expanded', String(open)); if (!open) q.removeAttribute('aria-activedescendant'); }
+  function markSel() {
+    [...qres.children].forEach((li, i) => li.setAttribute('aria-selected', String(i === qsel)));
+    const li = qres.children[qsel];
+    if (li && li.id) { q.setAttribute('aria-activedescendant', li.id); li.scrollIntoView({ block: 'nearest' }); }
+  }
   function runSearch() {
     const raw = q.value.trim(), s = TL.norm(raw);
     qlist = []; qsel = 0;
-    if (!raw) { qres.hidden = true; return; }
+    if (!raw) { showList(false); return; }
     parseYearQuery(raw).forEach(([y, note]) => qlist.push([{ n: 'پرش به سال ' + TL.yearLabel(y) + note, y }, 'jump', 'برش زمان']));
     if (s.length >= 2) {
       const parts = s.split(' '), tight = s.replace(/ /g, '');
@@ -7232,14 +7302,15 @@ TL.dominion = {
       const byFull = byName.length < 10 ? index.filter(r => !byName.includes(r) && parts.every(p => r.fullKey.includes(p))) : [];
       qlist = qlist.concat(byName.slice(0, 12), byFull.slice(0, 6)).slice(0, 14);
     }
-    if (!qlist.length && s.length < 2) { qres.hidden = true; return; }
+    if (!qlist.length && s.length < 2) { showList(false); return; }
     qsel = 0;
-    qres.innerHTML = qlist.map((r, i) => `<li role="option" data-i="${i}" aria-selected="${i === 0}"><span>${esc(r[0].n)}</span><span class="k">${esc(r[2])}</span></li>`).join('') || '<li><span>یافت نشد</span></li>';
-    qres.hidden = false;
+    qres.innerHTML = qlist.map((r, i) => `<li role="option" id="qopt-${i}" data-i="${i}" aria-selected="${i === 0}"><span>${esc(r[0].n)}</span><span class="k">${esc(r[2])}</span></li>`).join('') ||
+      '<li role="option" aria-disabled="true"><span>یافت نشد · نام را کوتاه‌تر یا به شکل دیگری بنویسید</span></li>';
+    showList(true); markSel();
   }
   function pick(i) {
     const r = qlist[i]; if (!r) return;
-    qres.hidden = true; q.blur(); stopPlay();
+    showList(false); q.blur(); stopPlay();
     if (r[1] === 'jump') {
       S.focus = null; setActiveYear(r[0].y, false); animateTo(r[0].y - 120, r[0].y + 120); updatePanel(); syncHash(); return;
     }
@@ -7247,12 +7318,16 @@ TL.dominion = {
   }
   q.addEventListener('input', runSearch);
   q.addEventListener('keydown', (ev) => {
-    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); qsel = (qsel + (ev.key === 'ArrowDown' ? 1 : -1) + qlist.length) % Math.max(qlist.length, 1); [...qres.children].forEach((li, i) => li.setAttribute('aria-selected', String(i === qsel))); }
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      ev.preventDefault(); if (!qlist.length) return;
+      if (qres.hidden) showList(true);
+      qsel = (qsel + (ev.key === 'ArrowDown' ? 1 : -1) + qlist.length) % qlist.length; markSel();
+    }
     if (ev.key === 'Enter') pick(qsel);
-    if (ev.key === 'Escape') { qres.hidden = true; q.blur(); }
+    if (ev.key === 'Escape') { showList(false); q.blur(); }
   });
   qres.addEventListener('pointerdown', (ev) => { const li = ev.target.closest('li[data-i]'); if (li) { ev.preventDefault(); pick(+li.dataset.i); } });
-  q.addEventListener('blur', () => setTimeout(() => (qres.hidden = true), 150));
+  q.addEventListener('blur', () => setTimeout(() => showList(false), 150));
 
   // ---------- era chips (clean 12 primary eras + "سایر دوره‌ها" dropdown so ZERO clipping!) ----------
   const PRIMARY_ERAS = new Set(['همهٔ تاریخ', 'ایلام', 'ماد و هخامنشی', 'اشکانیان', 'ساسانیان', 'ورود اسلام', 'سامانیان و آل‌بویه', 'سلجوقیان', 'مغول و ایلخانان', 'تیموریان', 'صفویه', 'افشار و زند', 'قاجار', 'امروز']);
@@ -7265,10 +7340,21 @@ TL.dominion = {
     (extraIran.length ? '<div class="m-sec">دوره‌های ایران</div>' + extraIran.map(chipHTML).join('') : '') +
     (extraWorld.length ? '<div class="m-sec">دوره‌های جهان</div>' + extraWorld.map(chipHTML).join('') : '');
 
+  // ---------- popovers (layers, regions, more eras): one open at a time, each button's aria-expanded kept in sync ----------
+  const POPS = { layers: 'btnLayers', regions: 'btnRegions', moreEras: 'btnMoreEras' };
+  function setPop(id, open) { $(id).hidden = !open; $(POPS[id]).setAttribute('aria-expanded', String(open)); }
+  function closePops(except) { for (const id in POPS) if (id !== except) setPop(id, false); }
+  function togglePop(id) {
+    const open = $(id).hidden; closePops(id); setPop(id, open);
+    if (open) { const f = $(id).querySelector('button, input'); if (f) f.focus({ preventScroll: true }); }
+  }
+  // Esc inside a popover closes it and puts focus back on its button
+  const openPop = () => Object.keys(POPS).find(id => !$(id).hidden);
+
   function handleEraClick(ev) {
     const b = ev.target.closest('.chip[data-i]'); if (!b) return;
     document.querySelectorAll('.chip.on').forEach(x => x.classList.remove('on')); b.classList.add('on');
-    $('moreEras').hidden = true;
+    setPop('moreEras', false);
     const c = TL.chips[+b.dataset.i];
     stopPlay(); S.focus = null;
     const mid = Math.min(TL.NOW, (c.s + c.e) / 2);
@@ -7279,7 +7365,7 @@ TL.dominion = {
   }
   $('eraChips').addEventListener('click', handleEraClick);
   $('moreEras').addEventListener('click', handleEraClick);
-  $('btnMoreEras').onclick = () => { const m = $('moreEras'); m.hidden = !m.hidden; $('layers').hidden = true; $('regions').hidden = true; $('btnMoreEras').setAttribute('aria-expanded', String(!m.hidden)); };
+  $('btnMoreEras').onclick = () => togglePop('moreEras');
 
   // ---------- toolbar ----------
   $('btnScale').onclick = () => {
@@ -7300,13 +7386,14 @@ TL.dominion = {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     $('btnTheme').textContent = dark ? '☀' : '☾';
     $('btnTheme').title = dark ? 'تغییر به پوستهٔ روشن' : 'تغییر به پوستهٔ تیره';
+    $('btnTheme').setAttribute('aria-label', $('btnTheme').title);
     MS.dark = dark;
     try { localStorage.setItem('giti-nama-theme', dark ? 'dark' : 'light'); localStorage.removeItem('jam-atlas-theme'); } catch (e) { }
     R.readTheme(); redrawTL();
   }
   $('btnTheme').onclick = () => { dark = !dark; applyTheme(); };
 
-  $('btnLayers').onclick = () => { const l = $('layers'); l.hidden = !l.hidden; $('regions').hidden = true; $('moreEras').hidden = true; $('btnLayers').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('btnLayers').onclick = () => togglePop('layers');
   [['lyRulers', 'rulers'], ['lyEvents', 'events'], ['lyPeople', 'people'], ['lyLinks', 'links']].forEach(([id, k]) => {
     $(id).addEventListener('change', (ev) => { S.layers[k] = ev.target.checked; relayout(true); });
   });
@@ -7327,7 +7414,7 @@ TL.dominion = {
     $('btnRegions').textContent = 'سرزمین‌ها' + (S.show ? ` (${TL.fa(S.show.size)})` : '');
     $('btnRegions').classList.toggle('tbtn-on', !!S.show);
     try { localStorage.setItem('jam-regions', S.show ? [...S.show].join(',') || '-' : ''); } catch (e) { }
-    if (!keepPopover) $('regions').hidden = true;
+    if (!keepPopover) setPop('regions', false);
     S.scrollY = 0; relayout(true); updatePanel();
   }
   const fromBoxes = () => setShow(new Set(boxes().filter(b => b.checked).map(b => b.value)), true);
@@ -7343,20 +7430,38 @@ TL.dominion = {
   $('rgNone').onclick = () => setShow(new Set(), true);
   $('rgNear').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'caucasus', 'levant', 'arabia', 'egypt', 'central_asia', 'south_asia']), true);
   $('rgSilk').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'central_asia', 'steppe', 'south_asia', 'china', 'italy', 'greece']), true);
-  $('btnRegions').onclick = () => { const l = $('regions'); l.hidden = !l.hidden; $('layers').hidden = true; $('moreEras').hidden = true; $('btnRegions').setAttribute('aria-expanded', String(!l.hidden)); };
+  $('btnRegions').onclick = () => togglePop('regions');
   try { const v = localStorage.getItem('jam-regions'); if (v) S.show = new Set(v === '-' ? [] : v.split(',')); } catch (e) { }
 
   // Close popovers on outside click
   document.addEventListener('pointerdown', (ev) => {
-    if (!ev.target.closest('#layers,#btnLayers')) $('layers').hidden = true;
-    if (!ev.target.closest('#regions,#btnRegions')) $('regions').hidden = true;
-    if (!ev.target.closest('#moreEras,#btnMoreEras')) $('moreEras').hidden = true;
+    for (const id in POPS) if (!$(id).hidden && !ev.target.closest(`#${id},#${POPS[id]}`)) setPop(id, false);
   });
 
   // ---------- about modal ----------
-  $('btnAbout').onclick = () => { $('layers').hidden = true; $('about').hidden = false; };
-  $('aboutX').onclick = () => { $('about').hidden = true; };
-  $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') $('about').hidden = true; });
+  // focus moves into the dialog, Tab stays inside it, and closing returns focus to where it was
+  let aboutReturn = null;
+  function openAbout() {
+    aboutReturn = document.activeElement; closePops();
+    $('about').hidden = false; $('aboutX').focus();
+  }
+  function closeAbout() {
+    if ($('about').hidden) return;
+    $('about').hidden = true;
+    const back = aboutReturn && document.contains(aboutReturn) && aboutReturn.offsetParent ? aboutReturn : $('btnLayers');
+    back.focus();
+  }
+  $('btnAbout').onclick = openAbout;
+  $('aboutX').onclick = closeAbout;
+  $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') closeAbout(); });
+  $('about').addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Tab') return;
+    const f = [...$('about').querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')].filter(el => el.offsetParent);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  });
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;
   $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>گیتی‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی و متغیرِ مرزهای تاریخی جهان</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
   <ul>
@@ -7404,9 +7509,13 @@ TL.dominion = {
     S.u0 = u - S.PW / S.k / 2; R.clampView();
     setActiveYear(yr, false);
   };
-  mm.addEventListener('pointerdown', (ev) => { mdrag = true; mm.setPointerCapture(ev.pointerId); mmGo(ev); });
+  mm.addEventListener('pointerdown', (ev) => {
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+    mdrag = true; capture(mm, ev); mmGo(ev);
+  });
   mm.addEventListener('pointermove', (ev) => { if (mdrag) mmGo(ev); });
-  mm.addEventListener('pointerup', () => { mdrag = false; updatePanel(); syncHash(); });
+  const endMini = () => { if (!mdrag) return; mdrag = false; updatePanel(); syncHash(); };
+  mm.addEventListener('pointerup', endMini); mm.addEventListener('pointercancel', endMini);
 
   // ---------- URL hash deep-linking ----------
   function syncHash() {
