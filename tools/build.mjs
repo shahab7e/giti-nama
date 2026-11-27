@@ -10,7 +10,9 @@ const headExtras = [...head.matchAll(/<meta (?:name|property)="(?!viewport)[^"]+
 // self-hosted fonts, inlined as data URIs so the single file needs nothing next to it
 const fontCss = read('fonts/fonts.css').replace(/url\(([^)]+\.woff2)\)/g, (_, f) =>
   `url(data:font/woff2;base64,${fs.readFileSync(path.join(root, 'fonts', f)).toString('base64')})`);
-const fonts = `<style>\n${fontCss}</style>`;
+// the OFL asks for the license to travel with the fonts; the single file has no folder, so it carries the text itself
+const ofl = read('fonts/OFL-Vazirmatn.txt').split(/\r?\n/).slice(2).join('\n').replace(/\*\//g, '* /');
+const fonts = `<style>\n${fontCss}\n/*\nVazirmatn and Gulzar (copyright lines above) are licensed as follows:\n${ofl}*/\n</style>`;
 const body = html.match(/<!--APP-START-->([\s\S]*?)<!--APP-END-->/)[1];
 // every <script src> in order, then the preloaded scripts (the historical borders), which app.js runs last
 const scripts = [...html.matchAll(/<script[^>]*\ssrc="([^"]+)"[^>]*><\/script>/g)].map(m => m[1])
