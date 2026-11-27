@@ -6,6 +6,8 @@
 <title>گیتی‌نما — اطلس زندهٔ تاریخ ایران و جهان</title>
 <meta name="description" content="گیتی‌نما: نقشه و نمودار زمانی زندهٔ تاریخ جهان با محوریت ایران؛ ببینید هم‌زمان با هر دوره از تاریخ ایران، بقیهٔ دنیا چه خبر بوده است.">
 <meta name="theme-color" content="#0a0d13">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fa_IR">
 <meta property="og:site_name" content="گیتی‌نما">
@@ -92,6 +94,11 @@
   </header>
 
   <div class="eras-bar">
+    <div class="fun-wrap">
+      <button id="btnStories" class="chip fun" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="stories">روایت‌ها ▾</button>
+      <button id="btnQuiz" class="chip fun" type="button" aria-haspopup="dialog">هم‌روزگار کیست؟</button>
+      <div id="stories" class="more-eras-pop stories-pop" hidden></div>
+    </div>
     <div class="eras" id="eraChips" aria-label="پرش به دوره"></div>
     <div class="era-more-wrap">
       <button id="btnMoreEras" class="chip more-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="moreEras">سایر دوره‌ها ▾</button>
@@ -196,6 +203,30 @@
     </div>
   </div>
 
+  <section class="story" id="story" hidden aria-label="روایت" aria-live="polite">
+    <div class="story-top">
+      <b class="story-name" id="storyName"></b>
+      <span class="story-step" id="storyStep"></span>
+      <button type="button" class="story-x" id="storyX" aria-label="بستن روایت" title="بستن روایت">×</button>
+    </div>
+    <h3 class="story-t" id="storyT"></h3>
+    <p class="story-d" id="storyD"></p>
+    <div class="story-btns">
+      <button type="button" class="sbtn" id="storyPrev">قبلی</button>
+      <button type="button" class="sbtn" id="storyAuto" aria-pressed="false" title="هر چند ثانیه به گام بعد برود">پخش خودکار</button>
+      <button type="button" class="sbtn sbtn-main" id="storyNext">بعدی</button>
+    </div>
+  </section>
+
+  <div class="modal" id="quiz" hidden>
+    <div class="modal-card quiz-card" role="dialog" aria-modal="true" aria-labelledby="quizT">
+      <button class="modal-x" type="button" data-close aria-label="بستن">×</button>
+      <h2 id="quizT">هم‌روزگار کیست؟</h2>
+      <div class="quiz-score" id="quizScore"></div>
+      <div id="quizBody" aria-live="polite"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button type="button" class="lnk" id="toastAct" hidden></button></div>
 
   <div class="modal" id="about" hidden>
@@ -224,6 +255,7 @@
 <script defer src="data/geo-places.js"></script>
 <script defer src="data/dominion.js"></script>
 <script defer src="data/map-info.js"></script>
+<script defer src="data/stories.js"></script>
 <script defer src="js/render.js"></script>
 <script defer src="js/map.js"></script>
 <script defer src="js/app.js"></script>

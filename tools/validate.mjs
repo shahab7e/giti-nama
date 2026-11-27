@@ -52,9 +52,17 @@ for (const [cid, pids] of Object.entries(TL.dominion || {})) {
     else if (Math.min(c.e, q.e) <= Math.max(c.s, q.s)) errs.push(`dominion ${cid}: no overlap with ${pid}`);
   }
 }
+// every story step must point at an event that exists, by its exact name
+for (const st of TL.stories || []) st.steps.forEach((step, i) => {
+  if (!TL.events.some(e => e.n === step.e)) errs.push(`story ${st.id} step ${i + 1}: no event named «${step.e}»`);
+});
 for (const chain of TL.links) chain.forEach(id => { if (!TL.polityById[id]) errs.push(`link: unknown polity ${id}`); });
 const rsrc = fs.readFileSync(path.join(root, 'js/render.js'), 'utf8');
 for (const m of rsrc.matchAll(/new Set\(\[([^\]]+)\]\)/g)) for (const id of m[1].match(/'[^']+'/g) || []) if (!TL.polityById[id.slice(1, -1)]) errs.push(`render.js set: unknown polity ${id}`);
+// the offline cache (sw.js) must list every script the page loads, or that file would be missing offline
+const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+const pageFiles = [...html.matchAll(/<script[^>]*\ssrc="([^"]+)"|<link rel="(?:stylesheet|preload)" href="([^"]+)"/g)].map(m => m[1] || m[2]).filter(f => !/^https?:/.test(f));
+for (const f of pageFiles) if (!sw.includes(`'${f}'`)) errs.push(`sw.js: ${f} is loaded by index.html but not cached for offline use`);
 console.log(`polities ${TL.polities.length}, rulers ${TL.rulers.length}, events ${TL.events.length}, people ${TL.people.length}, regions ${TL.regions.length}`);
 warn.forEach(w => console.log('WARN', w));
 errs.forEach(e => console.log('ERROR', e));

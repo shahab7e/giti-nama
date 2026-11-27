@@ -365,6 +365,7 @@
     const typing = (t.tagName === 'INPUT' && !/^(checkbox|radio|button)$/.test(t.type)) || t.tagName === 'TEXTAREA' || t.isContentEditable;
     if (!typing && k === 'Escape' && openModalId()) { closeModal(); return; }
     if (!typing && k === 'Escape' && tourOn()) { endTour(); return; }
+    if (!typing && k === 'Escape' && story) { endStory(); return; }
     if (!typing && k === 'Escape' && openPop()) { const id = openPop(); closePops(); $(POPS[id]).focus(); return; }
     if (t.tagName === 'INPUT' || typing) return; // a checkbox keeps Space for itself
     // leave browser shortcuts (Ctrl/⌘ + …) alone, and let a focused button, link or slider handle its own keys
@@ -703,7 +704,7 @@
     (extraWorld.length ? '<div class="m-sec">دوره‌های جهان</div>' + extraWorld.map(chipHTML).join('') : '');
 
   // ---------- popovers (layers, regions, more eras): one open at a time, each button's aria-expanded kept in sync ----------
-  const POPS = { layers: 'btnLayers', regions: 'btnRegions', moreEras: 'btnMoreEras' };
+  const POPS = { layers: 'btnLayers', regions: 'btnRegions', moreEras: 'btnMoreEras', stories: 'btnStories' };
   function setPop(id, open) { $(id).hidden = !open; $(POPS[id]).setAttribute('aria-expanded', String(open)); }
   function closePops(except) { for (const id in POPS) if (id !== except) setPop(id, false); }
   function togglePop(id) {
@@ -803,7 +804,7 @@
 
   // ---------- dialogs (help, about) ----------
   // focus moves into the dialog, Tab stays inside it, and closing returns focus to where it was
-  const MODALS = ['help', 'about'];
+  const MODALS = ['help', 'about', 'quiz'];
   let modalReturn = null;
   const openModalId = () => MODALS.find(id => !$(id).hidden);
   function openModal(id) {
@@ -864,7 +865,10 @@
       <tr><td>همین راهنما</td><td><kbd>?</kbd></td></tr>
     </tbody></table>
     <div class="help-foot">
-      <button type="button" class="sbtn sbtn-main" id="helpTour">راهنمای گام‌به‌گام</button>
+      <span style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="sbtn sbtn-main" id="helpTour">راهنمای گام‌به‌گام</button>
+        <button type="button" class="sbtn" id="btnInstall" hidden title="گیتی‌نما را مثل یک برنامه روی گوشی یا کامپیوتر نصب کنید؛ بی‌اینترنت هم کار می‌کند">نصب به‌عنوان برنامه</button>
+      </span>
       <button type="button" class="lnk" id="helpAbout">دربارهٔ گیتی‌نما و منابع</button>
     </div>`;
   $('helpTour').onclick = () => { closeModal(); startTour(); };
@@ -937,6 +941,136 @@
   $('tourSkip').onclick = endTour;
   window.addEventListener('resize', () => { if (tourOn()) showStep(); });
 
+  // ---------- stories: guided journeys through one era, one event at a time (data/stories.js) ----------
+  const STORIES = (TL.stories || []).map(st => ({ ...st, steps: st.steps.map(s => ({ ...s, ev: TL.events.find(e => e.n === s.e) })).filter(s => s.ev) }))
+    .filter(st => st.steps.length);
+  $('stories').innerHTML = STORIES.map((st, i) =>
+    `<button type="button" class="story-pick" data-i="${i}"><b>${esc(st.n)}</b><span>${esc(st.d)} · ${TL.fa(st.steps.length)} گام</span></button>`).join('');
+  $('btnStories').onclick = () => togglePop('stories');
+  $('stories').addEventListener('click', (ev) => { const b = ev.target.closest('.story-pick'); if (b) { closePops(); startStory(+b.dataset.i); } });
+  let story = null, storyI = 0, storyT = 0;
+  const STORY_MS = 9000;
+  function startStory(i) {
+    if (tourOn()) endTour();
+    hideHint(); stopPlay();
+    story = STORIES[i]; storyI = 0; $('story').hidden = false; setStoryAuto(false);
+    showStory(); $('storyNext').focus();
+  }
+  function showStory() {
+    const st = story.steps[storyI], e = st.ev;
+    $('storyName').textContent = story.n;
+    $('storyStep').textContent = `گام ${TL.fa(storyI + 1)} از ${TL.fa(story.steps.length)}`;
+    $('storyT').innerHTML = `${esc(e.n)}<small>${esc(itemYears(e, 'event'))}</small>`;
+    $('storyD').textContent = st.d;
+    $('storyPrev').disabled = storyI === 0;
+    $('storyNext').textContent = storyI === story.steps.length - 1 ? 'پایان' : 'بعدی';
+    // move the year, the timeline and the map to this event; each step replaces, not adds, a history entry
+    quietHistory = true; select(e, 'event', true); quietHistory = false;
+    if (window.innerWidth <= 1100) openPanel(false); // on small screens the story card is the panel
+  }
+  function setStoryAuto(on) {
+    clearTimeout(storyT);
+    $('storyAuto').setAttribute('aria-pressed', String(on));
+    $('storyAuto').textContent = on ? 'توقف خودکار' : 'پخش خودکار';
+    if (on) storyT = setTimeout(function next() {
+      if (!story) return;
+      if (storyI < story.steps.length - 1) { storyI++; showStory(); storyT = setTimeout(next, STORY_MS); } else setStoryAuto(false);
+    }, STORY_MS);
+  }
+  function endStory() { if (!story) return; setStoryAuto(false); story = null; $('story').hidden = true; syncHash(); }
+  $('storyNext').onclick = () => { if (storyI < story.steps.length - 1) { storyI++; showStory(); if ($('storyAuto').getAttribute('aria-pressed') === 'true') setStoryAuto(true); } else { endStory(); toast('پایان روایت. روایت‌های دیگر در دکمهٔ «روایت‌ها» هستند.'); } };
+  $('storyPrev').onclick = () => { if (storyI > 0) { storyI--; showStory(); } };
+  $('storyAuto').onclick = () => setStoryAuto($('storyAuto').getAttribute('aria-pressed') !== 'true');
+  $('storyX').onclick = endStory;
+
+  // ---------- quiz «هم‌روزگار کیست؟»: three kinds of questions built from the data ----------
+  // only people and events with exact (not approximate) dates are used, so every answer is checkable
+  const qPeople = TL.people.filter(p => !p.a && p.e < TL.NOW && p.s > -800);
+  const qEvents = TL.events.filter(e => !e.a && e.w >= 2 && !e.y2);
+  const qDyn = TL.polities.filter(p => p.r === 'iran' && p.lv === 1 && p.k !== 'culture' && !p.a);
+  const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+  const life = (p) => `${TL.yearLabel(p.s)} تا ${TL.yearLabel(p.e)}`;
+  const QUIZ = [
+    function sameTime() { // were these two alive at the same time?
+      const a = rnd(qPeople), mid = (p) => (p.s + p.e) / 2;
+      const near = qPeople.filter(b => b !== a && Math.abs(mid(b) - mid(a)) < 160);
+      if (!near.length) return null;
+      const over = (b) => a.s <= b.e && b.s <= a.e;
+      const wantYes = Math.random() < 0.5, pool = near.filter(b => over(b) === wantYes);
+      const b = rnd(pool.length ? pool : near), yes = over(b);
+      return {
+        q: `آیا «${a.n}» و «${b.n}» هم‌روزگار بودند؟`,
+        opts: ['بله، زمانی هر دو زنده بودند', 'نه، روزگارشان جدا بود'], right: yes ? 0 : 1,
+        why: `<b>${esc(a.n)}</b>: ${life(a)}<br><b>${esc(b.n)}</b>: ${life(b)}`, go: [a, 'person'],
+      };
+    },
+    function whichFirst() { // which of two events came first?
+      const a = rnd(qEvents), b = rnd(qEvents.filter(x => x !== a && x.n !== a.n && Math.abs(x.y - a.y) >= 15 && Math.abs(x.y - a.y) <= 400));
+      if (!b) return null;
+      const first = a.y < b.y ? a : b, opts = shuffle([a, b]);
+      return {
+        q: 'کدام زودتر رخ داد؟', opts: opts.map(x => x.n), right: opts.indexOf(first),
+        why: `<b>${esc(a.n)}</b>: ${TL.yearLabel(a.y)}<br><b>${esc(b.n)}</b>: ${TL.yearLabel(b.y)}`, go: [first, 'event'],
+      };
+    },
+    function whoRuled() { // which dynasty ruled Iran in year Y?
+      for (let tries = 0; tries < 20; tries++) {
+        const y = Math.round(-550 + Math.random() * (1978 + 550)), now = qDyn.filter(p => p.s <= y && y <= p.e);
+        if (now.length !== 1) continue;
+        const right = now[0], others = shuffle(qDyn.filter(p => p !== right && !(p.s <= y && y <= p.e) && Math.abs((p.s + p.e) / 2 - y) < 900)).slice(0, 3);
+        if (others.length < 3) continue;
+        const opts = shuffle([right, ...others]);
+        return {
+          q: `در سال ${TL.yearLabel(y)}، کدام دودمان بر ایران فرمان می‌راند؟`, opts: opts.map(p => p.n), right: opts.indexOf(right),
+          why: `<b>${esc(right.n)}</b>: ${TL.spanLabel(right.s, right.e, right.a)}`, go: [right, 'polity'],
+        };
+      }
+      return null;
+    },
+  ];
+  const ROUND = 10;
+  let quiz = null, best = 0;
+  try { best = +localStorage.getItem('giti-nama-quiz-best') || 0; } catch (e) { }
+  function newQuestion() { for (let i = 0; i < 30; i++) { const q = rnd(QUIZ)(); if (q) return q; } return null; }
+  function startQuiz() { quiz = { n: 0, score: 0, streak: 0, cur: null }; openModal('quiz'); nextQuestion(); }
+  function quizScore() {
+    $('quizScore').textContent = `سؤال ${TL.fa(Math.min(quiz.n, ROUND))} از ${TL.fa(ROUND)} · امتیاز ${TL.fa(quiz.score)} · پیاپی ${TL.fa(quiz.streak)} · بهترین پیاپی ${TL.fa(best)}`;
+  }
+  function nextQuestion() {
+    if (quiz.n >= ROUND) return endQuiz();
+    quiz.cur = newQuestion(); quiz.n++; quizScore();
+    const q = quiz.cur;
+    $('quizBody').innerHTML = `<p class="quiz-q">${esc(q.q)}</p><div class="quiz-opts">` +
+      q.opts.map((o, i) => `<button type="button" class="quiz-opt" data-i="${i}">${esc(o)}</button>`).join('') + '</div>';
+    $('quizBody').querySelector('.quiz-opt').focus();
+  }
+  function answer(i) {
+    const q = quiz.cur, ok = i === q.right;
+    quiz.score += ok ? 1 : 0; quiz.streak = ok ? quiz.streak + 1 : 0;
+    if (quiz.streak > best) { best = quiz.streak; try { localStorage.setItem('giti-nama-quiz-best', String(best)); } catch (e) { } }
+    $('quizBody').querySelectorAll('.quiz-opt').forEach((b, j) => { b.disabled = true; if (j === q.right) b.classList.add('right'); else if (j === i) b.classList.add('wrong'); });
+    $('quizBody').insertAdjacentHTML('beforeend',
+      `<div class="quiz-why">${ok ? 'درست است.' : 'نه، پاسخ درست سبز شده است.'}<br>${q.why}</div>` +
+      `<div class="quiz-foot"><button type="button" class="lnk" id="quizGo">نشانم بده روی نقشه</button>` +
+      `<button type="button" class="sbtn sbtn-main" id="quizNext">${quiz.n >= ROUND ? 'دیدن نتیجه' : 'سؤال بعدی'}</button></div>`);
+    quizScore(); $('quizNext').focus();
+  }
+  function endQuiz() {
+    quizScore();
+    const msg = quiz.score >= 9 ? 'تاریخ‌دان واقعی!' : quiz.score >= 6 ? 'خیلی خوب بود.' : quiz.score >= 3 ? 'بد نبود؛ نمودار را بیشتر بگردید.' : 'گیتی‌نما برای همین است: بگردید و دوباره بیازمایید.';
+    $('quizBody').innerHTML = `<div class="quiz-end"><div class="big">${TL.fa(quiz.score)} از ${TL.fa(ROUND)}</div><p>${msg}</p></div>` +
+      `<div class="quiz-foot"><span></span><button type="button" class="sbtn sbtn-main" id="quizAgain">یک دور دیگر</button></div>`;
+    $('quizAgain').focus();
+  }
+  $('btnQuiz').onclick = startQuiz;
+  $('quizBody').addEventListener('click', (ev) => {
+    const o = ev.target.closest('.quiz-opt'); if (o && !o.disabled) { answer(+o.dataset.i); return; }
+    if (ev.target.id === 'quizNext') nextQuestion();
+    else if (ev.target.id === 'quizAgain') { quiz = { n: 0, score: 0, streak: 0, cur: null }; nextQuestion(); }
+    else if (ev.target.id === 'quizGo') { const [it, type] = quiz.cur.go; closeModal(); select(it, type, true); }
+  });
+
   // ---------- minimap ----------
   let mW = 0, mH = 0;
   function sizeMini() { const r = mm.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); mW = r.width; mH = r.height; mm.width = mW * d; mm.height = mH * d; mctx.setTransform(d, 0, 0, d, 0, 0); }
@@ -987,7 +1121,7 @@
   // #y=<year> plus at most one selection — p=<polity id>, r=<polity id>:<reign start>, e=<event name>, f=<figure name> —
   // and v=map|timeline for a full-page view. A new selection adds a browser history entry (so Back undoes it);
   // moving through time only updates the current one.
-  let restoring = false;
+  let restoring = false, quietHistory = false; // quietHistory: story steps replace the history entry instead of adding one
   function hashOf() {
     const parts = [], f = S.focus;
     if (S.pinYear != null) parts.push('y=' + TL.yearInt(S.pinYear));
@@ -1006,7 +1140,7 @@
     if (restoring) return;
     const h = hashOf(); if (h === location.hash) return;
     const url = h || location.pathname + location.search;
-    try { history[selOf(h) !== selOf(location.hash) ? 'pushState' : 'replaceState'](null, '', url); } catch (e) { }
+    try { history[!quietHistory && selOf(h) !== selOf(location.hash) ? 'pushState' : 'replaceState'](null, '', url); } catch (e) { }
   }
   function itemFromHash(q) {
     if (q.p && TL.own(TL.polityById, q.p)) return [TL.polityById[q.p], 'polity'];
@@ -1139,6 +1273,25 @@
   // First visit (and not arriving through a shared link): a short guided tour
   let firstVisit = false; try { firstVisit = !localStorage.getItem('giti-nama-tour'); } catch (e) { }
   if (firstVisit && !location.hash) setTimeout(() => { if (!openModalId() && !tourOn()) startTour(); }, 1500);
+
+  // ---------- install as an app + offline (sw.js). Not in the single-file build, which has no manifest. ----------
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')) {
+    const hadWorker = !!navigator.serviceWorker.controller;
+    const register = () => navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => {
+      if (!hadWorker) { try { if (!localStorage.getItem('giti-nama-offline')) { localStorage.setItem('giti-nama-offline', '1'); toast('گیتی‌نما حالا بی‌اینترنت هم باز می‌شود.'); } } catch (e) { } }
+    }).catch(() => { });
+    if (document.readyState === 'complete') register(); else window.addEventListener('load', register);
+    window.addEventListener('offline', () => toast('اینترنت قطع است؛ گیتی‌نما از نسخهٔ ذخیره‌شده کار می‌کند.'));
+  }
+  // the browser offers installation: show the button in Help
+  let installEv = null;
+  window.addEventListener('beforeinstallprompt', (ev) => { ev.preventDefault(); installEv = ev; $('btnInstall').hidden = false; });
+  $('btnInstall').onclick = async () => {
+    if (!installEv) return;
+    installEv.prompt(); const { outcome } = await installEv.userChoice; installEv = null; $('btnInstall').hidden = true;
+    if (outcome === 'accepted') toast('گیتی‌نما نصب شد.');
+  };
+  window.addEventListener('appinstalled', () => { $('btnInstall').hidden = true; });
 
   window.GITI = { S, MS, R, M, TL, select, updatePanel, setActiveYear };
 })();
