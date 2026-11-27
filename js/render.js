@@ -527,8 +527,8 @@
     }
 
     drawAxis(ticks); drawCalendar(ticks); drawLabels(oy);
-    if (S.pinYear != null) cursor(R.x(S.pinYear), S.dark ? '#d8b46c' : '#b84a32', TL.yearLabel(Math.floor(S.pinYear)), false);
-    if (S.hoverX != null && S.hoverX < PW) cursor(S.hoverX, S.dark ? '#ffffff' : '#141416', TL.yearLabel(Math.floor(R.yearAt(S.hoverX))), true);
+    if (S.pinYear != null) cursor(R.x(S.pinYear), S.dark ? '#d8b46c' : '#b84a32', TL.yearLabel(TL.yearInt(S.pinYear)), false);
+    if (S.hoverX != null && S.hoverX < PW) cursor(S.hoverX, S.dark ? '#ffffff' : '#141416', TL.yearLabel(TL.yearInt(R.yearAt(S.hoverX))), true);
   };
 
   function cursor(x, col, label, faint) {

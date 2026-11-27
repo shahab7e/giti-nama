@@ -12,15 +12,25 @@ for (const p of TL.polities) {
   if (!reg.has(p.r)) errs.push(`polity ${p.id}: unknown region ${p.r}`);
   if (p.p != null && (p.p < p.s || p.p > p.e)) errs.push(`polity ${p.id}: peak ${p.p} outside span`);
 }
+// rulers whose reign rightly starts before their state (Cyrus was king of Anshan from 559 BC, before the empire)
+const REIGN_BEFORE_STATE = new Set(['Cyrus the Great']);
 for (const r of TL.rulers) {
   const p = TL.polityById[r.pid];
   if (!p) { errs.push(`ruler ${r.n}: unknown polity ${r.pid}`); continue; }
   if (r.s > r.e) errs.push(`ruler ${r.n} (${r.pid}): start ${r.s} > end ${r.e}`);
-  if (r.s < p.s - 5 || r.e > p.e + 5) warn.push(`ruler ${r.n} ${r.s}–${r.e} outside ${p.id} ${p.s}–${p.e}`);
+  if ((r.s < p.s - 5 && !REIGN_BEFORE_STATE.has(r.en)) || r.e > p.e + 5) warn.push(`ruler ${r.n} ${r.s}–${r.e} outside ${p.id} ${p.s}–${p.e}`);
 }
 for (const e of TL.events) {
   if (!reg.has(e.r)) errs.push(`event ${e.n}: unknown region ${e.r}`);
   if (e.y2 != null && e.y2 < e.y) errs.push(`event ${e.n}: y2 < y`);
+  if (e.r === 'iran' && e.w === 3 && !e.d) warn.push(`event ${e.n} (${e.y}): major Iranian event with no description`);
+}
+// Persian text hygiene: Arabic ي/ك instead of Persian ی/ک, and stray tatweel (ـ)
+const textOf = (o) => [o.n, o.d, o.cap].filter(Boolean).join(' ');
+for (const o of [...TL.polities, ...TL.rulers, ...TL.events, ...TL.people]) {
+  const t = textOf(o);
+  if (/[يك]/.test(t)) warn.push(`Arabic ي/ك in: ${o.n}`);
+  if (/ـ/.test(t)) warn.push(`tatweel (ـ) in: ${o.n}`);
 }
 for (const p of TL.people) {
   if (!reg.has(p.r)) errs.push(`person ${p.n}: unknown region ${p.r}`);

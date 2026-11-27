@@ -4,12 +4,16 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace
 const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 const html = read('index.html');
 const title = html.match(/<title>[\s\S]*?<\/title>/)[0];
+const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
+// description / social-preview tags, the favicon, and the tiny theme script that must run before first paint
+const headExtras = [...head.matchAll(/<meta (?:name|property)="(?!viewport)[^"]+"[^>]*>|<link rel="icon"[^>]*>|<script>[^<]*<\/script>/g)].map(m => m[0]).join('\n');
 const fonts = [...html.matchAll(/<link rel="(?:stylesheet|preconnect)"[^>]*fonts\.(?:googleapis|gstatic)[^>]*>/g)].map(m => m[0]).join('\n');
 const body = html.match(/<!--APP-START-->([\s\S]*?)<!--APP-END-->/)[1];
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
 const css = read('css/style.css');
 const js = scripts.map(f => `/* ${f} */\n` + read(f).replace(/<\/script/gi, '<\\/script')).join('\n');
 const out = `${title}
+${headExtras}
 ${fonts}
 <style>
 ${css}

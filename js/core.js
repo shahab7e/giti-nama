@@ -5,6 +5,14 @@
     eras: [], iranEras: [], chips: [], links: [], errors: []
   };
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  TL.own = own;
+
+  // ---------- "now": taken from today's date, so the site never goes stale ----------
+  // Data marks anything still ongoing (a living person, a sitting ruler, an existing state) with end year 2027.
+  const today = new Date();
+  TL.NOW = Math.max(2026.9, today.getFullYear() + (today - new Date(today.getFullYear(), 0, 1)) / 31557600000);
+  TL.ONGOING = 2027;
+  const endOf = (e) => (e != null && e >= TL.ONGOING ? Math.max(e, TL.NOW + 0.1) : e);
 
   // ---------- registry ----------
   TL.addRegions = function (arr) {
@@ -16,7 +24,7 @@
   // row: [id, name, en, start, end, opts]  opts: {p:peak, a:approx(true|'s'|'e'), cap, d, k:kind, lv:1..3, c:color, sub:'iran-local'}
   TL.addPolities = function (regionId, rows) {
     rows.forEach(row => {
-      const [id, n, en, s, e, o = {}] = row;
+      const [id, n, en, s, e0, o = {}] = row, e = endOf(e0);
       if (own(TL.polityById, id)) TL.errors.push('duplicate polity id: ' + id);
       const p = { id, r: regionId, n, en, s, e, p: o.p, a: o.a || false, cap: o.cap || '', d: o.d || '',
         k: o.k || 'state', lv: o.lv || 2, c: o.c || null, idx: 0, rulers: [] };
@@ -26,7 +34,7 @@
   // row: [name, en, start, end, opts]  opts: {d, a}
   TL.addRulers = function (polityId, rows) {
     rows.forEach(row => {
-      const [n, en, s, e, o = {}] = row;
+      const [n, en, s, e0, o = {}] = row, e = endOf(e0);
       const r = { pid: polityId, n, en, s, e, d: o.d || '', a: o.a || false, t: o.t || '' };
       TL.rulers.push(r);
     });
@@ -42,7 +50,7 @@
   TL.addPeople = function (regionId, rows) {
     rows.forEach(row => {
       const [n, en, b, dd, k, o = {}] = row;
-      TL.people.push({ r: regionId, n, en, s: b, e: dd, k: k || 'pol', d: o.d || '', a: o.a || false });
+      TL.people.push({ r: regionId, n, en, s: b, e: endOf(dd), k: k || 'pol', d: o.d || '', a: o.a || false });
     });
   };
   TL.extent = {};
@@ -55,18 +63,29 @@
   // ---------- number + date formatting ----------
   const FA = '۰۱۲۳۴۵۶۷۸۹';
   TL.fa = (v) => String(v).replace(/[0-9]/g, d => FA[d]);
-  // fractional years mark a month inside the year (1882.7 = autumn 1882), so AD years floor
-  const yr = (y) => (y < 0 ? Math.round(-y) : Math.floor(y + 1e-9));
+  // fractional years mark a month inside the year (1882.7 = autumn 1882), so AD years floor.
+  // There is no year zero: anything in (-1, 1) is shown as ۱ پ.م or ۱ م.
+  const yr = (y) => (y < 0 ? Math.max(1, Math.round(-y)) : Math.max(1, Math.floor(y + 1e-9)));
+  // the whole calendar year a point on the axis falls in (signed, never 0): -480.3 → -480, 0.4 → 1
+  TL.yearInt = (y) => (y < 0 ? -yr(y) : yr(y));
+  // move a year by n calendar years, skipping the missing year zero (30 پ.م + 50 = 21 م)
+  TL.addYears = function (y, n) {
+    const r = y + n;
+    if (y < 0 && r >= 0) return r + 1;
+    if (y >= 1 && r < 1) return r - 1;
+    return r;
+  };
   TL.yearLabel = function (y, approx) {
     const pre = approx ? 'حدود ' : '';
     if (y < 0) return pre + TL.fa(yr(y)) + ' پ.م';
     return pre + TL.fa(yr(y)) + ' م';
   };
   TL.yearShort = (y) => (y < 0 ? TL.fa(yr(y)) + ' پ.م' : TL.fa(yr(y)));
+  TL.isNow = (e) => e >= TL.NOW - 1e-6;
   TL.spanLabel = function (s, e, a) {
     const as = a === true || a === 's', ae = a === true || a === 'e';
-    if (s < 0 && e < 0) return (as ? 'حدود ' : '') + TL.fa(-s) + ' تا ' + (ae ? 'حدود ' : '') + TL.fa(-e) + ' پ.م';
-    return TL.yearLabel(s, as) + ' تا ' + (e >= 2026.5 ? 'اکنون' : TL.yearLabel(e, ae));
+    if (s < 0 && e < 0) return (as ? 'حدود ' : '') + TL.fa(yr(s)) + ' تا ' + (ae ? 'حدود ' : '') + TL.fa(yr(e)) + ' پ.م';
+    return TL.yearLabel(s, as) + ' تا ' + (TL.isNow(e) ? 'اکنون' : TL.yearLabel(e, ae));
   };
   // no year zero: 1 BC is followed by AD 1
   TL.duration = (s, e) => Math.round(e - s - (s < 0 && e > 0 ? 1 : 0));
@@ -75,15 +94,15 @@
     y = Math.floor(y);
     if (y < 622) return null;
     const sh1 = y - 622, sh2 = y - 621;
-    const ah1 = Math.floor((y - 622) * 1.030684 + 0.46), ah2 = Math.floor((y + 1 - 622) * 1.030684 + 0.46);
+    const ah1 = Math.max(1, Math.floor((y - 622) * 1.030684 + 0.46)), ah2 = Math.floor((y + 1 - 622) * 1.030684 + 0.46);
     return {
       sh: sh1 <= 0 ? TL.fa(Math.max(sh2, 1)) : TL.fa(sh1) + '–' + TL.fa(sh2),
-      ah: ah1 === ah2 ? TL.fa(Math.max(ah1, 1)) : TL.fa(Math.max(ah1, 1)) + '–' + TL.fa(ah2)
+      ah: ah1 >= ah2 ? TL.fa(ah1) : TL.fa(ah1) + '–' + TL.fa(ah2)
     };
   };
 
   // ---------- time scale: piecewise "compressed" warp (deep past gets less width) or linear ----------
-  TL.T0 = -10000; TL.T1 = 2030; TL.NOW = 2026.9;
+  TL.T0 = -10000; TL.T1 = Math.max(2030, Math.ceil(TL.NOW) + 3);
   const WARP = [[-10000, 0], [-4000, 70], [-3000, 160], [-1000, 430], [0, 650], [1000, 870], [1500, 1075], [1800, 1240], [1900, 1325], [2030, 1425]];
   const LIN = [[-10000, 0], [2030, 1425]];
   TL.scaleMode = 'warp';

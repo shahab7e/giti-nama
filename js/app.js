@@ -41,7 +41,7 @@
   }
 
   function updateMapYearHud() {
-    const y = Math.floor(MS.tYear);
+    const y = TL.yearInt(MS.tYear);
     $('mapYearVal').textContent = TL.yearLabel(y);
     const ir = M.primaryPolity('iran', y);
     const rul = ir ? M.activeRulers(ir.id, y)[0] : null;
@@ -252,8 +252,9 @@
     $('btnPlay').textContent = playing ? '❚❚ توقف' : '▶ پخش';
   }
   $('btnPlay').onclick = togglePlay;
-  $('stepBack').onclick = () => { stopPlay(); setActiveYear((S.pinYear || 0) - 50, true); updatePanel(); };
-  $('stepFwd').onclick = () => { stopPlay(); setActiveYear((S.pinYear || 0) + 50, true); updatePanel(); };
+  const stepBy = (n) => { stopPlay(); setActiveYear(TL.addYears(TL.yearInt(S.pinYear ?? MS.tYear), n), true); updatePanel(); syncHash(); };
+  $('stepBack').onclick = () => stepBy(-50);
+  $('stepFwd').onclick = () => stepBy(50);
   document.querySelectorAll('.spd').forEach(b => b.onclick = () => {
     document.querySelectorAll('.spd').forEach(x => x.classList.remove('on'));
     b.classList.add('on'); playSpeed = +b.dataset.spd;
@@ -282,7 +283,7 @@
     `<line class="${i % 9 ? '' : 'maj'}" x1="50" y1="${i % 9 ? 8.5 : 7}" x2="50" y2="${i % 9 ? 13 : 15}" transform="rotate(${i * 10} 50 50)"/>`).join('');
   dial.setAttribute('aria-valuemin', TL.T0); dial.setAttribute('aria-valuemax', TL.NOW);
   function updateDial() {
-    const y = Math.floor(MS.tYear);
+    const y = TL.yearInt(MS.tYear);
     $('tdTicks').setAttribute('transform', `rotate(${(degOf(MS.tYear) % 360).toFixed(2)} 50 50)`);
     $('tdYear').textContent = TL.yearLabel(y);
     dial.setAttribute('aria-valuenow', y); dial.setAttribute('aria-valuetext', TL.yearLabel(y));
@@ -309,8 +310,13 @@
 
   // ---------- keyboard ----------
   window.addEventListener('keydown', (ev) => {
-    if (ev.target.tagName === 'INPUT') return;
-    const k = ev.key;
+    const t = ev.target, k = ev.key;
+    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return;
+    if (k === 'Escape' && !$('about').hidden) { $('about').hidden = true; return; }
+    // leave browser shortcuts (Ctrl/⌘ + …) alone, and let a focused button, link or slider handle its own keys
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (!$('about').hidden) return;
+    if ((ev.code === 'Space' || k === 'Enter') && t.closest && t.closest('button, a, summary, select, [role="slider"], [role="option"]')) return;
     if (k === '/') { ev.preventDefault(); $('q').focus(); return; }
     if (ev.code === 'Space') { ev.preventDefault(); togglePlay(); return; }
     if (k === 'ArrowLeft' || k === 'ArrowRight') { panPx((k === 'ArrowLeft' ? 1 : -1) * S.PW * 0.15); redrawTL(); }
@@ -341,7 +347,7 @@
       const age = alive ? ` (${TL.fa(Math.floor(S.pinYear - it.s))} ساله در این سال)` : '';
       sub = (TL.PKIND[it.k] || '') + (g && g[2] ? ' · زادگاه: ' + g[2] : '') + (here && g && here[2] !== g[2] ? ' · در این سال در ' + here[2] : '') + age;
     }
-    const dur = t !== 'event' ? ` · ${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال` : '';
+    const dur = t !== 'event' ? ` · ${TL.fa(TL.duration(it.s, Math.min(it.e, TL.NOW)))} سال` : '';
     return `<h4>${esc(it.n)}</h4>${it.en ? `<div class="en">${esc(it.en)}</div>` : ''}<div class="yr">${itemYears(it, t)}${dur}</div>` +
       `<p>${esc(sub)}</p>${extra}${it.d ? `<p>${esc(it.d)}</p>` : ''}`;
   }
@@ -420,7 +426,7 @@
       const maxA = it.maxA || 0;
       meta += it.cap ? `<span>مرکز: <b>${esc(it.cap)}</b></span>` : '';
       meta += maxA >= 0.4 ? `<span>بیشینهٔ قلمرو: <b>${TL.fa(maxA.toFixed(1))} م.ک²</b></span>` : '';
-      meta += `<span>مدت: <b>${TL.fa(TL.duration(it.s, Math.min(it.e, 2026)))} سال</b></span>`;
+      meta += `<span>مدت: <b>${TL.fa(TL.duration(it.s, Math.min(it.e, TL.NOW)))} سال</b></span>`;
     } else if (type === 'person' || type === 'ruler') {
       const g = type === 'person' && TL.personGeo ? TL.personGeo(it) : null;
       if (g && g[2]) meta += `<div class="feat-meta"><span>زادگاه: <b>${esc(g[2])}</b></span></div>`;
@@ -472,8 +478,8 @@
     if (S.focus) { a = S.focus.s; b = S.focus.e; }
     else if (S.pinYear != null) { a = b = S.pinYear; }
     else { const [v0, v1] = R.visRange(); a = b = (v0 + v1) / 2; }
-    const single = a === b, y = Math.floor(single ? a : (S.pinYear ?? a));
-    pY.textContent = single ? TL.yearLabel(y) : TL.spanLabel(Math.floor(a), Math.floor(b));
+    const single = a === b, y = TL.yearInt(single ? a : (S.pinYear ?? a));
+    pY.textContent = single ? TL.yearLabel(y) : TL.spanLabel(a, b);
     const c = TL.calendars(single ? y : Math.floor(a));
     pC.textContent = c ? `خورشیدی ${c.sh} · قمری ${c.ah}` + (single ? '' : ' (آغاز)') : (y < 0 ? 'پیش از میلاد' : 'پیش از هجرت');
     pF.textContent = S.focus ? `◈ هم‌زمان با «${S.focus.item.n}»` : '';
@@ -547,30 +553,42 @@
     const loc = row[1] === 'person' && TL.personGeo ? (TL.personGeo(o)?.[2] || '') : (row[1] === 'event' && TL.eventGeo ? (TL.eventGeo(o)?.[2] || '') : '');
     row.nameKey = TL.norm(o.n + ' ' + (o.en || ''));
     row.fullKey = row.nameKey + ' ' + TL.norm((o.cap || '') + ' ' + loc + ' ' + (o.d || ''));
+    // the same name with no spaces, so «آلبویه» (typed without the half-space) still finds «آل‌بویه»
+    row.tightKey = row.nameKey.replace(/ /g, '');
   });
 
+  // Years typed in any common way: Persian or Arabic digits; پ.م / ق.م for BC; ش / ه.ش for Solar Hijri; ق / ه.ق for Lunar Hijri.
+  // Returns a list of [year, label-suffix] choices (a bare 1357 could be AD or Solar Hijri, so both are offered).
   function parseYearQuery(raw) {
-    const s = raw.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).trim();
-    const m = s.match(/^(-?\d{1,5})\s*(پ\.?م|bc|bce|ش|خورشیدی|م|ad|ce)?$/i);
-    if (!m) return null;
-    let y = parseInt(m[1], 10);
-    const suf = (m[2] || '').toLowerCase();
-    if (/پ|bc/.test(suf)) y = -Math.abs(y);
-    else if (/ش|خورشیدی/.test(suf)) y = y + 621;
-    if (y < TL.T0 || y > TL.T1) return null;
-    return y;
+    const s = raw.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+      .replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').replace(/‌/g, ' ').trim();
+    const m = s.match(/^(-?\d{1,5})\s*(پ\s*\.?\s*م|ق\s*\.?\s*م|bce?|ه\s*\.?\s*ش|ش|خورشیدی|ه\s*\.?\s*ق|ق|قمری|م|ad|ce)?\.?$/i);
+    if (!m) return [];
+    const n = parseInt(m[1], 10), suf = (m[2] || '').toLowerCase().replace(/[\s.]/g, '');
+    if (n === 0) return [];
+    const ok = (y) => y >= TL.T0 && y <= TL.NOW;
+    const solar = (v) => v + 621, lunar = (v) => Math.floor(v * 0.970224 + 621.5669);
+    let out;
+    if (/^(پم|قم|bce?)$/.test(suf)) out = [[-Math.abs(n), '']];
+    else if (/^(هش|ش|خورشیدی)$/.test(suf)) out = [[solar(n), ` (${TL.fa(n)} خورشیدی)`]];
+    else if (/^(هق|ق|قمری)$/.test(suf)) out = [[lunar(n), ` (${TL.fa(n)} قمری)`]];
+    else {
+      out = [[n, '']];
+      // a bare number that reads like a Solar Hijri year: offer that too
+      if (!suf && n >= 1 && ok(solar(n)) && n <= Math.floor(TL.NOW) - 621) out.push([solar(n), ` (${TL.fa(n)} خورشیدی)`]);
+    }
+    return out.filter(([y]) => ok(y));
   }
 
   const q = $('q'), qres = $('qres'); let qsel = 0, qlist = [];
   function runSearch() {
     const raw = q.value.trim(), s = TL.norm(raw);
+    qlist = []; qsel = 0;
     if (!raw) { qres.hidden = true; return; }
-    const jy = parseYearQuery(raw);
-    qlist = [];
-    if (jy != null) qlist.push([{ n: 'پرش به سال ' + TL.yearLabel(jy), y: jy }, 'jump', 'برش زمان']);
+    parseYearQuery(raw).forEach(([y, note]) => qlist.push([{ n: 'پرش به سال ' + TL.yearLabel(y) + note, y }, 'jump', 'برش زمان']));
     if (s.length >= 2) {
-      const parts = s.split(' ');
-      const byName = index.filter(r => parts.every(p => r.nameKey.includes(p))).sort((a, b) => a[0].n.length - b[0].n.length);
+      const parts = s.split(' '), tight = s.replace(/ /g, '');
+      const byName = index.filter(r => parts.every(p => r.nameKey.includes(p)) || (tight.length >= 3 && r.tightKey.includes(tight))).sort((a, b) => a[0].n.length - b[0].n.length);
       const byFull = byName.length < 10 ? index.filter(r => !byName.includes(r) && parts.every(p => r.fullKey.includes(p))) : [];
       qlist = qlist.concat(byName.slice(0, 12), byFull.slice(0, 6)).slice(0, 14);
     }
@@ -636,14 +654,14 @@
     redrawTL();
   };
 
-  let dark = true;
-  try { const sv = localStorage.getItem('jam-atlas-theme'); if (sv) dark = sv === 'dark'; } catch (e) { }
+  // the inline script in <head> already applied the saved theme before first paint; read it back from there
+  let dark = document.documentElement.getAttribute('data-theme') !== 'light';
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     $('btnTheme').textContent = dark ? '☀' : '☾';
     $('btnTheme').title = dark ? 'تغییر به پوستهٔ روشن' : 'تغییر به پوستهٔ تیره';
     MS.dark = dark;
-    try { localStorage.setItem('jam-atlas-theme', dark ? 'dark' : 'light'); } catch (e) { }
+    try { localStorage.setItem('giti-nama-theme', dark ? 'dark' : 'light'); localStorage.removeItem('jam-atlas-theme'); } catch (e) { }
     R.readTheme(); redrawTL();
   }
   $('btnTheme').onclick = () => { dark = !dark; applyTheme(); };
@@ -753,14 +771,14 @@
   // ---------- URL hash deep-linking ----------
   function syncHash() {
     const parts = [];
-    if (S.pinYear != null) parts.push('y=' + Math.round(S.pinYear));
+    if (S.pinYear != null) parts.push('y=' + TL.yearInt(S.pinYear));
     if (S.focus && S.focus.type === 'polity') parts.push('p=' + S.focus.item.id);
     try { history.replaceState(null, '', '#' + parts.join('&')); } catch (e) { }
   }
   function loadHash() {
     const h = (location.hash || '').slice(1); if (!h) return false;
     const params = Object.fromEntries(h.split('&').map(s => s.split('=')));
-    if (params.p && TL.polityById[params.p]) { select(TL.polityById[params.p], 'polity', true); return true; }
+    if (params.p && TL.own(TL.polityById, params.p)) { select(TL.polityById[params.p], 'polity', true); return true; }
     if (params.y && !isNaN(+params.y)) { setActiveYear(+params.y, false); R.fit(+params.y - 350, +params.y + 350, 0.04); return true; }
     return false;
   }
