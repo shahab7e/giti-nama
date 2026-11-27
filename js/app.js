@@ -222,7 +222,7 @@
           else if (h.ent) M.flyTo(h.ent.cx, h.ent.cy, Math.max(1.4, MS.zoom));
         }
       } else {
-        S.focus = null; updatePanel(); redrawTL();
+        S.focus = null; updatePanel(); redrawTL(); syncHash();
       }
     }
     mDrag = null; mcv.classList.remove('drag');
@@ -288,16 +288,18 @@
     ev.preventDefault(); ev.stopPropagation();
   });
 
-  document.querySelectorAll('.vbtn').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.vbtn').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
-    ws.setAttribute('data-view', b.dataset.view); // the ResizeObserver relayouts the areas that changed size
-  }));
+  function setView(v) {
+    document.querySelectorAll('.vbtn').forEach(x => { const on = x.dataset.view === v; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
+    ws.setAttribute('data-view', v); // the ResizeObserver relayouts the areas that changed size
+  }
+  document.querySelectorAll('.vbtn').forEach(b => b.addEventListener('click', () => { setView(b.dataset.view); syncHash(); }));
 
   // ---------- playback deck ----------
-  function stopPlay() { playing = false; $('btnPlay').textContent = '▶ پخش'; }
+  function stopPlay() { if (playing) { playing = false; syncHash(); } $('btnPlay').textContent = '▶ پخش'; }
   function togglePlay() {
     playing = !playing;
-    if (playing && MS.tYear >= TL.NOW - 10) { setActiveYear(-3200, true); }
+    if (playing && MS.tYear >= TL.NOW - 10) { setActiveYear(-3200, true); toast('به امروز رسیده بودید؛ پخش از ۳۲۰۰ پ.م دوباره شروع شد.'); }
+    if (!playing) syncHash();
     $('btnPlay').textContent = playing ? '❚❚ توقف' : '▶ پخش';
   }
   $('btnPlay').onclick = togglePlay;
@@ -361,12 +363,14 @@
   window.addEventListener('keydown', (ev) => {
     const t = ev.target, k = ev.key;
     const typing = (t.tagName === 'INPUT' && !/^(checkbox|radio|button)$/.test(t.type)) || t.tagName === 'TEXTAREA' || t.isContentEditable;
-    if (!typing && k === 'Escape' && !$('about').hidden) { closeAbout(); return; }
+    if (!typing && k === 'Escape' && openModalId()) { closeModal(); return; }
+    if (!typing && k === 'Escape' && tourOn()) { endTour(); return; }
     if (!typing && k === 'Escape' && openPop()) { const id = openPop(); closePops(); $(POPS[id]).focus(); return; }
     if (t.tagName === 'INPUT' || typing) return; // a checkbox keeps Space for itself
     // leave browser shortcuts (Ctrl/⌘ + …) alone, and let a focused button, link or slider handle its own keys
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
-    if (!$('about').hidden) return;
+    if (openModalId()) return;
+    if (k === '?' || k === '؟') { ev.preventDefault(); openModal('help'); return; } // ؟ on a Persian keyboard
     if ((ev.code === 'Space' || k === 'Enter') && t.closest && t.closest('button, a, summary, select, [role="slider"], [role="option"], [role="button"], [role="separator"]')) return;
     if (k === '/') { ev.preventDefault(); $('q').focus(); return; }
     if (ev.code === 'Space') { ev.preventDefault(); togglePlay(); return; }
@@ -476,7 +480,7 @@
     if (type === 'polity') {
       const maxA = it.maxA || 0;
       meta += it.cap ? `<span>مرکز: <b>${esc(it.cap)}</b></span>` : '';
-      meta += maxA >= 0.4 ? `<span>بیشینهٔ قلمرو: <b>${TL.fa(maxA.toFixed(1))} م.ک²</b></span>` : '';
+      meta += maxA >= 0.4 ? `<span>بیشینهٔ قلمرو: <b>${TL.fa(maxA.toFixed(1))} میلیون کیلومتر مربع</b></span>` : '';
       meta += `<span>مدت: <b>${TL.fa(TL.duration(it.s, Math.min(it.e, TL.NOW)))} سال</b></span>`;
     } else if (type === 'person' || type === 'ruler') {
       const g = type === 'person' && TL.personGeo ? TL.personGeo(it) : null;
@@ -504,7 +508,7 @@
     const ranked = active.map(p => ({ p, a: p.prof ? R.areaAt(p, y) : 0 })).filter(x => x.a >= 0.5).sort((a, b) => b.a - a.a).slice(0, 5);
     if (!ranked.length) return '';
     const maxA = ranked[0].a;
-    return `<div class="pow-box"><div class="pow-h"><span>بزرگ‌ترین قدرت‌های ${TL.yearLabel(Math.floor(y))}</span><span>میلیون کیلومتر²</span></div>` +
+    return `<div class="pow-box"><div class="pow-h"><span>بزرگ‌ترین قدرت‌های ${TL.yearLabel(Math.floor(y))}</span><span>میلیون کیلومتر مربع</span></div>` +
       ranked.map(({ p, a }) => {
         const id = register(p, 'polity');
         return `<div class="pow-r it" data-k="${id}" role="button" tabindex="0"><div class="pow-l"><span class="pow-nm"><i style="width:7px;height:7px;border-radius:50%;background:${p.base};flex:none"></i><span>${esc(p.n)}</span></span><span class="pow-v">${TL.fa(a.toFixed(1))}</span></div><div class="pow-tr"><div class="pow-f" style="width:${(a / maxA) * 100}%;background:${p.base}"></div></div></div>`;
@@ -532,8 +536,8 @@
     const single = a === b, y = TL.yearInt(single ? a : (S.pinYear ?? a));
     pY.textContent = single ? TL.yearLabel(y) : TL.spanLabel(a, b);
     const c = TL.calendars(single ? y : Math.floor(a));
-    pC.textContent = c ? `خورشیدی ${c.sh} · قمری ${c.ah}` + (single ? '' : ' (آغاز)') : (y < 0 ? 'پیش از میلاد' : 'پیش از هجرت');
-    pF.textContent = S.focus ? `◈ هم‌زمان با «${S.focus.item.n}»` : '';
+    pC.textContent = c ? `خورشیدی ${c.sh} · قمری ${c.ah}` + (single ? '' : ' (سال آغاز)') : (y < 0 ? 'پیش از میلاد' : 'پیش از هجرت');
+    pF.textContent = S.focus ? `هم‌زمان با «${S.focus.item.n}»` : '';
 
     const win = single ? Math.max(1, (R.visRange()[1] - R.visRange()[0]) * 0.014) : 0;
     A = a - win; B = b + win;
@@ -578,7 +582,7 @@
   }
 
   $('pBody').addEventListener('click', (ev) => {
-    if (ev.target.id === 'clearFocus') { S.focus = null; updatePanel(); redrawTL(); return; }
+    if (ev.target.id === 'clearFocus') { S.focus = null; updatePanel(); redrawTL(); syncHash(); return; }
     const btn = ev.target.closest('.dom-btn');
     if (btn) { const emp = TL.polityById[btn.dataset.emp]; setShow(new Set(emp.dom.map(p => p.r).concat(emp.r).filter(r => r !== 'iran'))); return; }
     const el = ev.target.closest('.it'); if (!el) return;
@@ -730,11 +734,12 @@
     const c = R.yearAt(S.PW / 2), [v0, v1] = R.visRange();
     TL.scaleMode = TL.scaleMode === 'warp' ? 'linear' : 'warp';
     $('btnScale').textContent = TL.scaleMode === 'warp' ? 'فشرده' : 'خطی';
+    $('btnScale').title = TL.scaleMode === 'warp' ? 'گذشتهٔ دور جای کمتری می‌گیرد. برای اینکه هر سال یک اندازه باشد بزنید.' : 'هر سال یک اندازه است. برای جای کمتر به گذشتهٔ دور بزنید.';
     R.fit(v0, v1, 0); if (TL.scaleMode === 'linear') { S.u0 = TL.u(c) - S.PW / S.k / 2; R.clampView(); } redrawTL();
   };
   $('btnDir').onclick = () => {
     S.dir = S.dir === 'ltr' ? 'rtl' : 'ltr';
-    $('btnDir').textContent = S.dir === 'ltr' ? 'چپ←راست' : 'راست←چپ';
+    $('btnDir').textContent = S.dir === 'ltr' ? 'گذشته در چپ' : 'گذشته در راست';
     redrawTL();
   };
 
@@ -771,7 +776,7 @@
     boxes().forEach(b => (b.checked = !S.show || S.show.has(b.value)));
     $('btnRegions').textContent = 'سرزمین‌ها' + (S.show ? ` (${TL.fa(S.show.size)})` : '');
     $('btnRegions').classList.toggle('tbtn-on', !!S.show);
-    try { localStorage.setItem('jam-regions', S.show ? [...S.show].join(',') || '-' : ''); } catch (e) { }
+    try { localStorage.setItem('giti-nama-regions', S.show ? [...S.show].join(',') || '-' : ''); localStorage.removeItem('jam-regions'); } catch (e) { }
     if (!keepPopover) setPop('regions', false);
     S.scrollY = 0; relayout(true); updatePanel();
   }
@@ -789,45 +794,148 @@
   $('rgNear').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'caucasus', 'levant', 'arabia', 'egypt', 'central_asia', 'south_asia']), true);
   $('rgSilk').onclick = () => setShow(new Set(['mesopotamia', 'anatolia', 'central_asia', 'steppe', 'south_asia', 'china', 'italy', 'greece']), true);
   $('btnRegions').onclick = () => togglePop('regions');
-  try { const v = localStorage.getItem('jam-regions'); if (v) S.show = new Set(v === '-' ? [] : v.split(',')); } catch (e) { }
+  try { const v = localStorage.getItem('giti-nama-regions') ?? localStorage.getItem('jam-regions'); if (v) S.show = new Set(v === '-' ? [] : v.split(',')); } catch (e) { }
 
   // Close popovers on outside click
   document.addEventListener('pointerdown', (ev) => {
     for (const id in POPS) if (!$(id).hidden && !ev.target.closest(`#${id},#${POPS[id]}`)) setPop(id, false);
   });
 
-  // ---------- about modal ----------
+  // ---------- dialogs (help, about) ----------
   // focus moves into the dialog, Tab stays inside it, and closing returns focus to where it was
-  let aboutReturn = null;
-  function openAbout() {
-    aboutReturn = document.activeElement; closePops();
-    $('about').hidden = false; $('aboutX').focus();
+  const MODALS = ['help', 'about'];
+  let modalReturn = null;
+  const openModalId = () => MODALS.find(id => !$(id).hidden);
+  function openModal(id) {
+    if (!openModalId()) modalReturn = document.activeElement;
+    closePops(); if (tourOn()) endTour();
+    MODALS.forEach(m => ($(m).hidden = m !== id));
+    $(id).querySelector('[data-close]').focus();
   }
-  function closeAbout() {
-    if ($('about').hidden) return;
-    $('about').hidden = true;
-    const back = aboutReturn && document.contains(aboutReturn) && aboutReturn.offsetParent ? aboutReturn : $('btnLayers');
+  function closeModal() {
+    const id = openModalId(); if (!id) return;
+    $(id).hidden = true;
+    const back = modalReturn && document.contains(modalReturn) && modalReturn.offsetParent ? modalReturn : $('btnHelp');
     back.focus();
   }
-  $('btnAbout').onclick = openAbout;
-  $('aboutX').onclick = closeAbout;
-  $('about').addEventListener('click', (ev) => { if (ev.target.id === 'about') closeAbout(); });
-  $('about').addEventListener('keydown', (ev) => {
-    if (ev.key !== 'Tab') return;
-    const f = [...$('about').querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')].filter(el => el.offsetParent);
-    if (!f.length) return;
-    const first = f[0], last = f[f.length - 1];
-    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
-    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  MODALS.forEach(id => {
+    $(id).addEventListener('click', (ev) => { if (ev.target.id === id || ev.target.closest('[data-close]')) closeModal(); });
+    $(id).addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Tab') return;
+      const f = [...$(id).querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')].filter(el => el.offsetParent);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+      else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    });
   });
+  $('btnAbout').onclick = () => openModal('about');
+  $('btnHelp').onclick = () => openModal('help');
+
+  // ---------- help: how to read the timeline and the map, and how to move around ----------
+  const K = TL.KIND, gold = 'var(--gold)';
+  const lg = (svg, html) => `<li><svg viewBox="0 0 58 26" aria-hidden="true">${svg}</svg><span>${html}</span></li>`;
+  const peopleKinds = Object.entries(TL.PKIND).map(([k, n]) => `<span><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="6.5" width="14" height="3" rx="1.5" fill="${(K[TL.PKINDK[k]] || K.pol).c}"/></svg>${n}</span>`).join('');
+  $('helpBody').innerHTML = `
+    <h3>نمودار زمانی را چطور بخوانیم</h3>
+    <ul class="lg-grid">
+      ${lg('<path d="M2 13C10 13 14 5 28 5S48 9 56 13C48 17 40 21 28 21S10 13 2 13Z" fill="#5f9e8f"/>', '<b>هر نوار رنگی یک حکومت است.</b> درازای آن عمر حکومت است و ضخامتش وسعت قلمروش در هر سال.')}
+      ${lg('<defs><linearGradient id="lgf" x1="0" x2="1"><stop offset="0" stop-color="#c79a4a" stop-opacity="0"/><stop offset=".45" stop-color="#c79a4a"/></linearGradient></defs><rect x="2" y="7" width="54" height="12" rx="6" fill="url(#lgf)"/>', '<b>لبهٔ محو</b> یعنی سال آغاز یا پایان آن تقریبی است.')}
+      ${lg('<rect x="2" y="2" width="54" height="22" rx="3" fill="#5b7fd0" opacity=".14"/><rect x="2" y="8" width="54" height="10" rx="3" fill="#4767b4"/>', '<b>نوار «زیر فرمان …»</b> یعنی آن سرزمین در آن سال‌ها جزو امپراتوری‌ای بزرگ‌تر بوده است.')}
+      ${lg('<rect x="2" y="8" width="17" height="10" rx="3" fill="#7d6a4a"/><rect x="21" y="8" width="22" height="10" rx="3" fill="#6b5a3e"/><rect x="45" y="8" width="11" height="10" rx="3" fill="#7d6a4a"/>', '<b>ردیف فرمانروایان:</b> هر تکه یک فرمانروا؛ روی آن بزنید تا دربارهٔ او بخوانید.')}
+      ${lg(`<rect x="10" y="11" width="38" height="4" rx="2" fill="${K.war.c}" opacity=".3"/><circle cx="10" cy="13" r="6" fill="none" stroke="${K.war.c}" stroke-width="1.4"/><path d="M7 10l6 6M13 10l-6 6" stroke="${K.war.c}" stroke-width="1.6" stroke-linecap="round"/><polygon points="44,8 49,13 44,18 39,13" fill="${K.pol.c}"/>`, '<b>نشانه‌های رویداد:</b> شکلش نوع رویداد است (فهرست پایین) و بزرگ‌تر یعنی مهم‌تر. خط کمرنگ یعنی رویدادی چندساله.')}
+      ${lg(`<rect x="4" y="8" width="30" height="3" rx="1.5" fill="${K.cul.c}"/><rect x="22" y="15" width="32" height="3" rx="1.5" fill="${K.sci.c}"/>`, '<b>خط‌های باریک</b> عمر چهره‌های نامدار است؛ رنگ هر خط نوع کار اوست.')}
+      ${lg(`<line x1="29" y1="1" x2="29" y2="25" stroke="${gold}" stroke-width="2"/><rect x="17" y="1" width="24" height="9" rx="4.5" fill="${gold}"/>`, '<b>خط طلایی</b> سالِ انتخاب‌شده است. نقشه و ستون «برش زمان» همین سال را نشان می‌دهند.')}
+      ${lg('<rect x="2" y="4" width="54" height="7" rx="2" fill="currentColor" opacity=".12"/><rect x="2" y="15" width="54" height="7" rx="2" fill="currentColor" opacity=".22"/><rect x="20" y="15" width="12" height="7" rx="1" fill="none" stroke="var(--gold)"/>', '<b>پایین نمودار</b> سال خورشیدی و قمری است. نوار کوچک پایین صفحه همهٔ تاریخ را نشان می‌دهد؛ روی آن بزنید تا به هر دوره بپرید.')}
+    </ul>
+    <h3>رنگ خط چهره‌ها</h3>
+    <div class="lg-marks">${peopleKinds}</div>
+    <h3>نشانه‌های نقشه و رویدادها</h3>
+    <div class="lg-marks">${$('mapLegend').innerHTML}</div>
+    <h3>کار با گیتی‌نما</h3>
+    <table class="help-keys"><tbody>
+      <tr><td>جابه‌جایی در زمان</td><td>نمودار را بکشید، یا <kbd>←</kbd> <kbd>→</kbd></td></tr>
+      <tr><td>بزرگ‌نمایی</td><td>چرخ موس یا دو انگشت، روی نقشه یا نمودار؛ روی نمودار <kbd>+</kbd> <kbd>-</kbd> هم کار می‌کند</td></tr>
+      <tr><td>انتخاب یک سال</td><td>روی نمودار بزنید؛ یا چرخ زمان را بچرخانید</td></tr>
+      <tr><td>دیدن جزئیات</td><td>روی هر حکومت، فرمانروا، رویداد یا چهره بزنید</td></tr>
+      <tr><td>پخش و توقف</td><td>دکمهٔ پخش یا <kbd>Space</kbd></td></tr>
+      <tr><td>جست‌وجو</td><td><kbd>/</kbd>؛ نام، جا یا سال، مثلاً «حافظ» یا «۵۵۰ پ.م» یا «۱۳۵۷ ش»</td></tr>
+      <tr><td>پاک‌کردن انتخاب</td><td><kbd>Esc</kbd></td></tr>
+      <tr><td>همین راهنما</td><td><kbd>?</kbd></td></tr>
+    </tbody></table>
+    <div class="help-foot">
+      <button type="button" class="sbtn sbtn-main" id="helpTour">راهنمای گام‌به‌گام</button>
+      <button type="button" class="lnk" id="helpAbout">دربارهٔ گیتی‌نما و منابع</button>
+    </div>`;
+  $('helpTour').onclick = () => { closeModal(); startTour(); };
+  $('helpAbout').onclick = () => openModal('about');
+
+  // ---------- about: what the site is, where the data comes from, how accurate it is ----------
   const counts = `${TL.fa(TL.polities.length)} حکومت و تمدن، ${TL.fa(TL.rulers.length)} فرمانروا، ${TL.fa(TL.events.length)} رویداد و ${TL.fa(TL.people.length)} چهره`;
-  $('aboutBody').innerHTML = `<p>این نسخهٔ «اطلس فضا-زمان» از <b>گیتی‌نما</b>، ${counts} را در ${TL.fa(TL.regions.length)} منطقه هم‌زمان روی <b>نقشهٔ واقعی و متغیرِ مرزهای تاریخی جهان</b> و نمودار تاریخی زیر آن نمایش می‌دهد.</p>
+  const REPO = 'https://github.com/shahab7e/giti-nama';
+  $('aboutBody').innerHTML = `<p><b>گیتی‌نما</b> تاریخ جهان را با محوریت ایران نشان می‌دهد: ${counts} در ${TL.fa(TL.regions.length)} سرزمین، از نوسنگی زاگرس تا امروز، روی نقشه‌ای با مرزهای تاریخی و نمودار زمانی زیر آن. ایران همیشه بالای نمودار است تا دیده شود هم‌زمان با هر دوره از تاریخ ایران، بقیهٔ دنیا چه خبر بوده است.</p>
+  <h3>منابع</h3>
   <ul>
-  <li><b>مرزهای واقعی و متناسب با دقت هر دوره:</b> در دوران باستان و سده‌های میانه مرزها به‌صورت منحنی‌های نرم و تاریخی رسم می‌شوند؛ از عصر معاهدات سدهٔ ۱۹ به‌تدریج دقیق‌تر شده و از ۱۹۱۴ میلادی تا مرزهای کنونی (برگرفته از Natural Earth 50m) به‌صورت خطوط دقیق، تیز و کاملاً هم‌تراز با مرزهای رسمی جهان نمایش داده می‌شوند.</li>
-  <li><b>پخش تاریخ:</b> دکمهٔ پخش (یا کلید Space) زمان را به‌آرامی پیش می‌برد تا رشد و جابه‌جایی مرزهای امپراتوری‌ها را زنده روی نقشه تماشا کنید.</li>
-  <li><b>تقویم سه‌گانه:</b> سال میلادی بالا، و خورشیدی و قمری پایین نمودار؛ جست‌وجو با نام، پایتخت یا پرش مستقیم به سال (مثلاً <code>۵۵۰ پ.م</code> یا <code>۱۳۵۷ ش</code>).</li>
-  <li><b>میان‌برها:</b> <code>/</code> جست‌وجو · <code>Space</code> پخش/توقف · <code>← →</code> جابه‌جایی زمان · <code>+ −</code> بزرگ‌نمایی · <code>Esc</code> پاک‌کردن انتخاب.</li>
-  </ul>`;
+  <li><b>مرزهای پیش از ۱۹۱۴:</b> بر پایهٔ <a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener">historical-basemaps</a> (پروانهٔ GPLv3)، با اصلاح‌های تاریخی برای ایران، خاور نزدیک، آسیای میانه، چین، هند و مدیترانه. این مرزها برای دوران کهن منحنی‌های نرم و تقریبی‌اند و از سدهٔ نوزدهم به بعد دقیق‌تر می‌شوند.</li>
+  <li><b>خشکی، دریاها، رودها و مرزهای امروزی:</b> <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a> (۱:۵۰ میلیون).</li>
+  <li><b>وسعت قلمروها:</b> برآوردی‌اند؛ بیشینهٔ بیشترشان از فهرست «بزرگ‌ترین امپراتوری‌ها»ی ویکی‌پدیا آمده است.</li>
+  <li><b>قلم‌ها:</b> <a href="https://github.com/rastikerdar/vazirmatn" target="_blank" rel="noopener">وزیرمتن</a> و <a href="https://github.com/simoncozens/Gulzar" target="_blank" rel="noopener">گلزار</a>، با پروانهٔ SIL Open Font License.</li>
+  </ul>
+  <h3>دربارهٔ دقت</h3>
+  <p>تاریخ‌های کهن، به‌ویژه پیش از هزارهٔ یکم پ.م، تقریبی‌اند و در نمودار با لبه‌های محو نشان داده می‌شوند. سال‌های خورشیدی و قمری تقریبی‌اند و از روی سال میلادی حساب می‌شوند. اگر خطایی دیدید، <a href="${REPO}/issues" target="_blank" rel="noopener">آن را گزارش کنید</a> یا خودتان اصلاحش را <a href="${REPO}" target="_blank" rel="noopener">در گیت‌هاب</a> بفرستید.</p>`;
+
+  // ---------- toast: a short message at the bottom of the screen, with an optional action ----------
+  let toastT = 0;
+  function toast(msg, actLabel, onAct, ms = 6000) {
+    $('toastMsg').textContent = msg;
+    const a = $('toastAct'); a.hidden = !actLabel; a.textContent = actLabel || '';
+    a.onclick = () => { $('toast').hidden = true; if (onAct) onAct(); };
+    $('toast').hidden = false; clearTimeout(toastT); toastT = setTimeout(() => ($('toast').hidden = true), ms);
+  }
+
+  // ---------- first-visit tour: a spotlight on each main part of the page, one at a time ----------
+  const TOUR = [
+    { el: 'mapStage', t: 'نقشهٔ زنده', d: 'مرزهای جهان در سالِ انتخاب‌شده. نقشه را بکشید و زوم کنید، و روی هر کشور یا نشانه بزنید تا دربارهٔ آن بخوانید.' },
+    { el: 'stage', t: 'نمودار زمانی', d: 'هر نوار رنگی یک حکومت است و ضخامتش وسعت قلمروش. ایران همیشه بالاست. روی نمودار بزنید تا نقشه به همان سال برود.' },
+    { el: 'playDeck', t: 'پخش تاریخ', d: 'تاریخ را جلو ببرید و جابه‌جایی مرزها را تماشا کنید. چرخ زمان کنار نقشه هم سال را جابه‌جا می‌کند.' },
+    { el: 'btnPanel', t: 'برش زمان', d: 'فهرست هر آنچه در همان سال در جهان بوده است: حکومت‌ها، فرمانروایان، رویدادها و چهره‌ها.' },
+    { el: 'q', t: 'جست‌وجو', d: 'نام، جا یا سال را بنویسید؛ مثلاً «حافظ»، «چالدران» یا «۵۵۰ پ.م».' },
+    { el: 'btnHelp', t: 'راهنما', d: 'معنای رنگ‌ها و نشانه‌ها و همهٔ میان‌برها اینجاست. هر وقت خواستید، این راهنما را هم از همان‌جا دوباره ببینید.' },
+  ];
+  let tourI = -1, tourSteps = [];
+  const tourOn = () => tourI >= 0;
+  const visible = (el) => el && el.offsetParent !== null && el.getBoundingClientRect().width > 0;
+  function startTour() {
+    hideHint(); stopPlay(); closePops();
+    tourSteps = TOUR.filter(s => visible($(s.el)));
+    if (!tourSteps.length) return;
+    tourI = 0; $('tour').hidden = false; showStep();
+  }
+  function showStep() {
+    const st = tourSteps[tourI], r = $(st.el).getBoundingClientRect(), pad = 6, W = innerWidth, H = innerHeight;
+    const sx = Math.max(4, r.left - pad), sy = Math.max(4, r.top - pad);
+    Object.assign($('tourSpot').style, { left: sx + 'px', top: sy + 'px', width: (Math.min(W - 4, r.right + pad) - sx) + 'px', height: (Math.min(H - 4, r.bottom + pad) - sy) + 'px' });
+    $('tourStep').textContent = `گام ${TL.fa(tourI + 1)} از ${TL.fa(tourSteps.length)}`;
+    $('tourT').textContent = st.t; $('tourD').textContent = st.d;
+    $('tourPrev').hidden = tourI === 0;
+    $('tourNext').textContent = tourI === tourSteps.length - 1 ? 'پایان' : 'بعدی';
+    // below the target if it fits, else above, else over the target's lower part
+    const card = $('tourCard'), cw = card.offsetWidth, ch = card.offsetHeight, gap = 12;
+    let top = r.bottom + gap;
+    if (top + ch > H - 16) top = r.top - gap - ch >= 16 ? r.top - gap - ch : Math.max(16, Math.min(H - ch - 16, r.bottom - ch - 16));
+    const left = Math.max(16, Math.min(W - cw - 16, r.left + r.width / 2 - cw / 2));
+    Object.assign(card.style, { top: top + 'px', left: left + 'px' });
+    card.focus({ preventScroll: true });
+  }
+  function endTour() {
+    if (!tourOn()) return;
+    tourI = -1; $('tour').hidden = true;
+    try { localStorage.setItem('giti-nama-tour', 'done'); } catch (e) { }
+  }
+  $('tourNext').onclick = () => { if (tourI < tourSteps.length - 1) { tourI++; showStep(); } else endTour(); };
+  $('tourPrev').onclick = () => { if (tourI > 0) { tourI--; showStep(); } };
+  $('tourSkip').onclick = endTour;
+  window.addEventListener('resize', () => { if (tourOn()) showStep(); });
 
   // ---------- minimap ----------
   let mW = 0, mH = 0;
@@ -876,19 +984,65 @@
   mm.addEventListener('pointerup', endMini); mm.addEventListener('pointercancel', endMini);
 
   // ---------- URL hash deep-linking ----------
-  function syncHash() {
-    const parts = [];
+  // #y=<year> plus at most one selection — p=<polity id>, r=<polity id>:<reign start>, e=<event name>, f=<figure name> —
+  // and v=map|timeline for a full-page view. A new selection adds a browser history entry (so Back undoes it);
+  // moving through time only updates the current one.
+  let restoring = false;
+  function hashOf() {
+    const parts = [], f = S.focus;
     if (S.pinYear != null) parts.push('y=' + TL.yearInt(S.pinYear));
-    if (S.focus && S.focus.type === 'polity') parts.push('p=' + S.focus.item.id);
-    try { history.replaceState(null, '', '#' + parts.join('&')); } catch (e) { }
+    if (f) {
+      const it = f.item;
+      if (f.type === 'polity') parts.push('p=' + encodeURIComponent(it.id));
+      else if (f.type === 'ruler') parts.push('r=' + encodeURIComponent(it.pid + ':' + it.s));
+      else if (f.type === 'event') parts.push('e=' + encodeURIComponent(it.n));
+      else if (f.type === 'person') parts.push('f=' + encodeURIComponent(it.n));
+    }
+    const v = ws.getAttribute('data-view'); if (v === 'map' || v === 'timeline') parts.push('v=' + v);
+    return parts.length ? '#' + parts.join('&') : '';
+  }
+  const selOf = (h) => h.replace(/^#/, '').split('&').filter(x => /^[pref]=/.test(x)).join('&');
+  function syncHash() {
+    if (restoring) return;
+    const h = hashOf(); if (h === location.hash) return;
+    const url = h || location.pathname + location.search;
+    try { history[selOf(h) !== selOf(location.hash) ? 'pushState' : 'replaceState'](null, '', url); } catch (e) { }
+  }
+  function itemFromHash(q) {
+    if (q.p && TL.own(TL.polityById, q.p)) return [TL.polityById[q.p], 'polity'];
+    if (q.r) { const i = q.r.lastIndexOf(':'), pid = q.r.slice(0, i), st = +q.r.slice(i + 1); const r = TL.rulers.find(x => x.pid === pid && x.s === st); if (r) return [r, 'ruler']; }
+    if (q.e) { const e = TL.events.find(x => x.n === q.e); if (e) return [e, 'event']; }
+    if (q.f) { const p = TL.people.find(x => x.n === q.f); if (p) return [p, 'person']; }
+    return null;
   }
   function loadHash() {
-    const h = (location.hash || '').slice(1); if (!h) return false;
-    const params = Object.fromEntries(h.split('&').map(s => s.split('=')));
-    if (params.p && TL.own(TL.polityById, params.p)) { select(TL.polityById[params.p], 'polity', true); return true; }
-    if (params.y && !isNaN(+params.y)) { setActiveYear(+params.y, false); R.fit(+params.y - 350, +params.y + 350, 0.04); return true; }
-    return false;
+    const q = {};
+    (location.hash || '').slice(1).split('&').forEach(x => { const i = x.indexOf('='); if (i > 0) { try { q[x.slice(0, i)] = decodeURIComponent(x.slice(i + 1)); } catch (e) { } } });
+    restoring = true;
+    try {
+      setView(q.v === 'map' || q.v === 'timeline' ? q.v : 'split');
+      const hit = itemFromHash(q), y = q.y !== undefined && q.y !== '' && isFinite(+q.y) ? +q.y : null;
+      if (hit) select(hit[0], hit[1], true); else S.focus = null;
+      if (y != null) { setActiveYear(y, false, true); if (!hit) R.fit(y - 350, y + 350, 0.04); }
+      updatePanel(); redrawTL();
+      return !!(hit || y != null);
+    } finally { restoring = false; }
   }
+  // Back / Forward, and a link pasted into this same tab
+  window.addEventListener('popstate', () => loadHash());
+  window.addEventListener('hashchange', () => loadHash());
+
+  // ---------- share: copy a link to this year and selection (or open the phone's share sheet) ----------
+  $('btnShare').onclick = async () => {
+    syncHash();
+    const url = location.href, title = document.title;
+    const text = (S.focus ? S.focus.item.n + ' · ' : '') + $('pYear').textContent + ' · گیتی‌نما';
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+      try { await navigator.share({ title, text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try { await navigator.clipboard.writeText(url); toast('پیوند کپی شد. هر کس آن را باز کند، همین سال و همین انتخاب را می‌بیند.'); }
+    catch (e) { toast('این پیوند را کپی کنید: ' + url, null, null, 12000); }
+  };
 
   // ---------- hint ----------
   let hintT = setTimeout(hideHint, 9500);
@@ -948,6 +1102,7 @@
 
   // ---------- boot ----------
   applyTheme();
+  const filterRestored = !!S.show; // a region filter remembered from an earlier visit
   if (S.show) setShow(S.show, true);
   M.resize(); R.resize(); R.layout(); sizeMini();
   if (!loadHash()) {
@@ -955,7 +1110,7 @@
     setActiveYear(-480, false); // Start at Achaemenid zenith — instant visual impact!
     M.presetEurasia();
   }
-  if (window.innerWidth <= 1100) openPanel(false);
+  if (window.innerWidth <= 1100 && !S.focus) openPanel(false); // a shared link to a selection keeps its card open
   updateMapYearHud();
   updatePanel();
   redrawTL();
@@ -979,5 +1134,11 @@
     ['400 12px Vazirmatn', '700 12px Vazirmatn', '700 20px Gulzar'].forEach(f => document.fonts.load(f, 'ایران').then(fontsReady, () => { }));
     document.fonts.ready.then(fontsReady);
   }
+  // A remembered region filter hides lanes, so say so once, with a way out
+  if (filterRestored && S.show) toast(`فیلتر سرزمین‌ها از بازدید پیش روشن است: فقط ${TL.fa(S.show.size)} ردیف زیر ایران دیده می‌شود.`, 'نمایش همه', () => setShow(null, true), 10000);
+  // First visit (and not arriving through a shared link): a short guided tour
+  let firstVisit = false; try { firstVisit = !localStorage.getItem('giti-nama-tour'); } catch (e) { }
+  if (firstVisit && !location.hash) setTimeout(() => { if (!openModalId() && !tourOn()) startTour(); }, 1500);
+
   window.GITI = { S, MS, R, M, TL, select, updatePanel, setActiveYear };
 })();

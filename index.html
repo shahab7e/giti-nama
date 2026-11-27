@@ -45,6 +45,7 @@
       </div>
       <button id="btnRegions" class="tbtn" aria-haspopup="true" aria-expanded="false" aria-controls="regions" title="فیلتر سرزمین‌ها">سرزمین‌ها</button>
       <button id="btnPanel" class="tbtn tbtn-on" aria-controls="panel" aria-expanded="true">برش زمان</button>
+      <button id="btnHelp" class="tbtn tbtn-ico" type="button" aria-haspopup="dialog" title="راهنما: معنای رنگ‌ها و نشانه‌ها (کلید ?)" aria-label="راهنما">?</button>
       <button id="btnTheme" class="tbtn tbtn-ico" title="تغییر پوستهٔ تیره / روشن" aria-label="تغییر پوستهٔ تیره / روشن">☀</button>
       <button id="btnLayers" class="tbtn tbtn-ico" aria-haspopup="true" aria-expanded="false" aria-controls="layers" title="لایه‌ها و تنظیمات نمایش" aria-label="لایه‌ها و تنظیمات نمایش">⚙</button>
     </nav>
@@ -78,14 +79,14 @@
       <div class="ly-grp">تنظیمات زمان</div>
       <div class="set-row">
         <span>مقیاس زمان</span>
-        <button id="btnScale" class="sbtn" type="button">فشرده</button>
+        <button id="btnScale" class="sbtn" type="button" title="گذشتهٔ دور جای کمتری می‌گیرد. برای اینکه هر سال یک اندازه باشد بزنید.">فشرده</button>
       </div>
       <div class="set-row">
         <span>جهت گذر زمان</span>
-        <button id="btnDir" class="sbtn" type="button">چپ←راست</button>
+        <button id="btnDir" class="sbtn" type="button" title="گذشته در کدام سمت نمودار باشد">گذشته در چپ</button>
       </div>
       <div class="set-foot">
-        <button id="btnAbout" class="lnk" type="button">دربارهٔ گیتی‌نما و منابع گاه‌شماری</button>
+        <button id="btnAbout" class="lnk" type="button">دربارهٔ گیتی‌نما و منابع</button>
       </div>
     </div>
   </header>
@@ -156,7 +157,10 @@
       <div class="panel-head">
         <button class="panel-x" id="panelX" type="button" aria-label="بستن ستون برش زمان" title="بستن">×</button>
         <div class="panel-kicker">برش زمان · جهان در این لحظه</div>
-        <div class="panel-year" id="pYear">—</div>
+        <div class="panel-yr-row">
+          <div class="panel-year" id="pYear">—</div>
+          <button class="share-btn" id="btnShare" type="button" title="پیوندی به همین سال و همین انتخاب، برای فرستادن به دیگران">پیوند این برش</button>
+        </div>
         <div class="panel-cal" id="pCal"></div>
         <div class="panel-focus" id="pFocus" aria-live="polite"></div>
       </div>
@@ -168,10 +172,36 @@
     <canvas id="minimap" aria-label="نقشهٔ کوچک کل زمان"></canvas>
   </footer>
 
+  <div class="modal" id="help" hidden>
+    <div class="modal-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpT">
+      <button class="modal-x" type="button" data-close aria-label="بستن">×</button>
+      <h2 id="helpT">راهنمای گیتی‌نما</h2>
+      <div id="helpBody"></div>
+    </div>
+  </div>
+
+  <div class="tour" id="tour" hidden>
+    <div class="tour-spot" id="tourSpot" aria-hidden="true"></div>
+    <div class="tour-card" id="tourCard" role="dialog" aria-modal="false" aria-labelledby="tourT" aria-describedby="tourD" tabindex="-1">
+      <div class="tour-step" id="tourStep"></div>
+      <h3 id="tourT"></h3>
+      <p id="tourD"></p>
+      <div class="tour-btns">
+        <button type="button" class="lnk" id="tourSkip">رد کردن راهنما</button>
+        <span>
+          <button type="button" class="sbtn" id="tourPrev">قبلی</button>
+          <button type="button" class="sbtn sbtn-main" id="tourNext">بعدی</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button type="button" class="lnk" id="toastAct" hidden></button></div>
+
   <div class="modal" id="about" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="aboutT">
-      <button class="modal-x" id="aboutX" aria-label="بستن">×</button>
-      <h2 id="aboutT">دربارهٔ گیتی‌نما و منابع گاه‌شماری</h2>
+      <button class="modal-x" id="aboutX" type="button" data-close aria-label="بستن">×</button>
+      <h2 id="aboutT">دربارهٔ گیتی‌نما و منابع</h2>
       <div id="aboutBody"></div>
     </div>
   </div>
