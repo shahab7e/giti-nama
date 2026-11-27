@@ -11,7 +11,10 @@
   M.init(mcv);
   if (TL.errors.length) console.warn('data errors', TL.errors);
 
-  const redrawTL = () => { tlDirty = true; };
+  // the map must be redrawn on the next frame. Every state change that redraws the timeline (year, focus, filter,
+  // layers, theme) shows on the map too, so redrawTL marks both.
+  let mapDirty = true;
+  const redrawTL = () => { tlDirty = true; mapDirty = true; };
 
   // ---------- sizing ----------
   function relayout(keepCenter) {
@@ -21,7 +24,10 @@
     if (c != null && S.PW > 40) { S.k = oldK; S.u0 = TL.u(c) - S.PW / S.k / 2; R.clampView(); }
     sizeMini(); redrawTL();
   }
-  new ResizeObserver(() => relayout(true)).observe($('workspace'));
+  // the map and timeline areas change size on window resize, splitter drags and view switches;
+  // the observer batches all of these into one relayout per frame
+  const ro = new ResizeObserver(() => relayout(true));
+  ['workspace', 'mapStage', 'stage'].forEach(id => ro.observe($(id)));
 
   // ---------- active map/slice year sync ----------
   function setActiveYear(y, panTimelineIfOffscreen, snapMap) {
@@ -232,16 +238,15 @@
     if (!splitDrag) return;
     const r = ws.getBoundingClientRect();
     const pct = Math.max(22, Math.min(78, ((ev.clientY - r.top) / r.height) * 100));
+    // only move the split here; the ResizeObserver resizes the canvases once per frame
     ws.style.setProperty('--map-pct', pct.toFixed(1) + '%');
-    relayout(true);
   });
   splitter.addEventListener('pointerup', () => { splitDrag = false; splitter.classList.remove('drag'); });
 
   document.querySelectorAll('.vbtn').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.vbtn').forEach(x => x.classList.remove('on'));
     b.classList.add('on');
-    ws.setAttribute('data-view', b.dataset.view);
-    setTimeout(() => relayout(true), 20);
+    ws.setAttribute('data-view', b.dataset.view); // the ResizeObserver relayouts the areas that changed size
   }));
 
   // ---------- playback deck ----------
@@ -787,11 +792,27 @@
   let hintT = setTimeout(hideHint, 9500);
   function hideHint() { clearTimeout(hintT); $('hint').classList.add('off'); }
 
-  // ---------- main 60fps animation loop ----------
-  let panelTick = 0;
+  // ---------- main animation loop ----------
+  // The map is redrawn every frame only while something moves (playback, camera or year easing, an ink flood,
+  // a cross-fade) or for a moment after the user touches anything. Otherwise its small ambient animations
+  // (moving dashes, ripples) run at a calm 12 fps, and after 30 s without input the map stops redrawing.
+  const IDLE_FRAME_MS = 1000 / 12, IDLE_STOP_MS = 30000, ACTIVE_MS = 1500;
+  const calm = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  let panelTick = 0, lastInput = performance.now(), lastMapT = 0, histReady = false; // the first frame that sees TL.HIST hides the loading note
+  const poke = () => { lastInput = performance.now(); };
+  ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart'].forEach(t => window.addEventListener(t, poke, { passive: true, capture: true }));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { poke(); mapDirty = true; } });
+
   function frame(now) {
+    // schedule the next frame first, so one error can never freeze the map and timeline for good
+    requestAnimationFrame(frame);
+    try { tick(now); } catch (err) { console.error(err); }
+  }
+  function tick(now) {
     const dt = Math.min(0.05, (now - lastFrameT) / 1000);
     lastFrameT = now;
+
+    if (!histReady && TL.HIST) { histReady = true; mapDirty = true; $('mapLoading').hidden = true; }
 
     if (playing) {
       // Adaptive playback pace: moves faster across deep prehistory, slower through dense modern centuries
@@ -806,15 +827,21 @@
       }
     }
 
-    M.step(dt);
-    M.draw();
+    const sinceInput = now - lastInput;
+    const active = mapDirty || playing || !M.settled() || MS.busy || sinceInput < ACTIVE_MS;
+    const ambient = !calm.matches && sinceInput < IDLE_STOP_MS && now - lastMapT >= IDLE_FRAME_MS;
+    if (active || ambient) {
+      // the map clock advances by real time since its last frame (capped), so ambient motion keeps its pace at 12 fps
+      M.step(lastMapT ? Math.min(0.1, (now - lastMapT) / 1000) : dt);
+      M.draw();
+      lastMapT = now; mapDirty = false;
+    }
 
     if (tlDirty) {
       tlDirty = false;
       R.draw();
       drawMini();
     }
-    requestAnimationFrame(frame);
   }
 
   // ---------- boot ----------
@@ -831,6 +858,19 @@
   updatePanel();
   redrawTL();
   requestAnimationFrame(frame);
+
+  // The historical borders (2.4 MB) are preloaded by index.html but run only now, after the first paint, so the
+  // header, timeline and panel are usable at once. The frame loop notices TL.HIST and draws the map.
+  // (In the single-file build they are inlined, so TL.HIST is already set and nothing is loaded here.)
+  if (!TL.HIST) {
+    requestAnimationFrame(() => setTimeout(() => {
+      if (TL.HIST) return; // the single-file build runs the inlined borders right after this file
+      const s = document.createElement('script');
+      s.src = 'data/hist-borders.js';
+      s.onerror = () => { const el = $('mapLoading'); el.textContent = 'مرزهای تاریخی بارگذاری نشد. صفحه را دوباره باز کنید.'; el.classList.add('failed'); };
+      document.body.appendChild(s);
+    }, 0));
+  }
 
   const fontsReady = () => { R.clearCache(); R.layout(); redrawTL(); };
   if (document.fonts) {

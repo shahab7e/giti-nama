@@ -766,6 +766,7 @@
 
     MS.polyHits = [];
     MS.pinHits = [];
+    MS.busy = false; // set again below while an ink flood or a cross-fade is running
 
     ctx.setTransform(MS.dpr, 0, 0, MS.dpr, 0, 0);
 
@@ -904,10 +905,15 @@
     const geoKey = [cv.width, cv.height, MS.lon.toFixed(5), MS.lat.toFixed(5), MS.zoom.toFixed(5)].join('|');
 
     // Prepare the neighbouring intervals' fields while the browser is idle (each takes ~50 ms) so playback never hitches
-    if (!MS.prefetching && window.requestIdleCallback) {
+    if (!MS.prefetching) {
       const ys = SNAP_YEARS, k = ys.indexOf(era.a), todo = [[ys[k + 1], ys[k + 2]], [ys[k - 1], ys[k]]]
         .filter(([p, q]) => p != null && q != null && !fieldCache.has(p + '|' + q));
-      if (todo.length) { MS.prefetching = true; requestIdleCallback(() => { eraField(todo[0][0], todo[0][1]); MS.prefetching = false; }); }
+      if (todo.length) {
+        MS.prefetching = true;
+        const run = () => { try { eraField(todo[0][0], todo[0][1]); } catch (err) { console.error(err); } finally { MS.prefetching = false; } };
+        // browsers without requestIdleCallback (Safari) still prefetch, just a moment later
+        if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 2000 }); else setTimeout(run, 300);
+      }
     }
 
     // Moving to another interval (or jumping far): cross-fade from the last frame's territory, never a hard cut
@@ -929,6 +935,7 @@
     topCv = LA.cv;
     if (era.a !== era.b && era.t > 0) {
       const f = eraField(era.a, era.b), st = inkStep(f, era.t);
+      if (st.moving) MS.busy = true; // an ink flood is still spreading: keep drawing every frame
       MS.blend = { f, t: era.t, hitsA: LA.hits, hitsB: null, md: null, mw: 0 };
       if (st.any) {
         const LB = layerFor(era.b, LA);
@@ -971,6 +978,7 @@
     // Cross-fade still running after an interval change
     const fadeE = MS.fadeStart != null ? (MS.t - MS.fadeStart) / 0.6 : 1;
     if (fadeE < 1 && fadeCv) {
+      MS.busy = true;
       if (!tmpCv) { tmpCv = document.createElement('canvas'); tmpG = tmpCv.getContext('2d'); compCv = document.createElement('canvas'); compG = compCv.getContext('2d'); }
       if (tmpCv.width !== cv.width || tmpCv.height !== cv.height) { tmpCv.width = cv.width; tmpCv.height = cv.height; }
       const e = smooth01(clamp(fadeE, 0, 1));
@@ -1391,6 +1399,8 @@
     MS.W = Math.max(0, r.width); MS.H = Math.max(0, r.height);
     cv.width = Math.round(MS.W * MS.dpr); cv.height = Math.round(MS.H * MS.dpr);
   };
+  // camera and year have landed on their targets (M.step snaps them exactly once close enough)
+  M.settled = () => MS.lon === MS.tLon && MS.lat === MS.tLat && MS.zoom === MS.tZoom && MS.year === MS.tYear;
   M.step = function (dt) {
     MS.t += dt;
     // Ease toward targets, then land exactly (a settled camera lets the border layers stay cached)

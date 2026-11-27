@@ -15,10 +15,12 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='34%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23ffe6a3'/%3E%3Cstop offset='.55' stop-color='%23c48e29'/%3E%3Cstop offset='1' stop-color='%231d4496'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='28' fill='url(%23g)'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('giti-nama-theme')||localStorage.getItem('jam-atlas-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gulzar&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap">
+<!-- fonts are self-hosted (fonts/), so first paint never waits on Google; the main Persian text font is fetched early -->
+<link rel="preload" href="fonts/vazirmatn-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="css/style.css">
+<!-- the 2.4 MB historical borders download in parallel but run only after the first paint (see app.js) -->
+<link rel="preload" href="data/hist-borders.js" as="script">
 </head>
 <body>
 <!--APP-START-->
@@ -100,6 +102,7 @@
     <div class="workspace" id="workspace">
       <section class="map-stage" id="mapStage">
         <canvas id="map" aria-label="نقشهٔ زندهٔ تاریخ جهان"></canvas>
+        <div class="map-loading" id="mapLoading" role="status">در حال بارگذاری مرزهای تاریخی…</div>
         <div class="map-hud-year" id="mapYearHud">
           <b id="mapYearVal">۴۸۰ پ.م</b>
           <span id="mapYearSub">هخامنشیان</span>
@@ -173,26 +176,25 @@
   </div>
 </div>
 <!--APP-END-->
-<script src="js/core.js"></script>
-<script src="data/regions.js"></script>
-<script src="data/world-map.js"></script>
-<script src="data/hist-borders.js"></script>
-<script src="data/iran.js"></script>
-<script src="data/iran-rulers.js"></script>
-<script src="data/iran-events.js"></script>
-<script src="data/near-east.js"></script>
-<script src="data/asia.js"></script>
-<script src="data/europe.js"></script>
-<script src="data/africa-americas.js"></script>
-<script src="data/extent.js"></script>
-<script src="data/world-rulers.js"></script>
-<script src="data/world-events.js"></script>
-<script src="data/people.js"></script>
-<script src="data/geo-places.js"></script>
-<script src="data/dominion.js"></script>
-<script src="data/map-info.js"></script>
-<script src="js/render.js"></script>
-<script src="js/map.js"></script>
-<script src="js/app.js"></script>
+<script defer src="js/core.js"></script>
+<script defer src="data/regions.js"></script>
+<script defer src="data/world-map.js"></script>
+<script defer src="data/iran.js"></script>
+<script defer src="data/iran-rulers.js"></script>
+<script defer src="data/iran-events.js"></script>
+<script defer src="data/near-east.js"></script>
+<script defer src="data/asia.js"></script>
+<script defer src="data/europe.js"></script>
+<script defer src="data/africa-americas.js"></script>
+<script defer src="data/extent.js"></script>
+<script defer src="data/world-rulers.js"></script>
+<script defer src="data/world-events.js"></script>
+<script defer src="data/people.js"></script>
+<script defer src="data/geo-places.js"></script>
+<script defer src="data/dominion.js"></script>
+<script defer src="data/map-info.js"></script>
+<script defer src="js/render.js"></script>
+<script defer src="js/map.js"></script>
+<script defer src="js/app.js"></script>
 </body>
 </html>

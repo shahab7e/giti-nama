@@ -135,6 +135,10 @@ button,input{font:inherit;color:inherit}
 }
 #map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
 #map.drag{cursor:grabbing}
+.map-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;pointer-events:none;color:var(--ink2);font-size:13px;background:var(--bg)}
+.map-loading::before{content:"";width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);border-top-color:var(--gold);animation:spin .9s linear infinite}
+.map-loading.failed::before{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 .map-hud-year{
   position:absolute;top:12px;right:14px;z-index:10;pointer-events:none;

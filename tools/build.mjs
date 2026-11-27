@@ -7,9 +7,14 @@ const title = html.match(/<title>[\s\S]*?<\/title>/)[0];
 const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
 // description / social-preview tags, the favicon, and the tiny theme script that must run before first paint
 const headExtras = [...head.matchAll(/<meta (?:name|property)="(?!viewport)[^"]+"[^>]*>|<link rel="icon"[^>]*>|<script>[^<]*<\/script>/g)].map(m => m[0]).join('\n');
-const fonts = [...html.matchAll(/<link rel="(?:stylesheet|preconnect)"[^>]*fonts\.(?:googleapis|gstatic)[^>]*>/g)].map(m => m[0]).join('\n');
+// self-hosted fonts, inlined as data URIs so the single file needs nothing next to it
+const fontCss = read('fonts/fonts.css').replace(/url\(([^)]+\.woff2)\)/g, (_, f) =>
+  `url(data:font/woff2;base64,${fs.readFileSync(path.join(root, 'fonts', f)).toString('base64')})`);
+const fonts = `<style>\n${fontCss}</style>`;
 const body = html.match(/<!--APP-START-->([\s\S]*?)<!--APP-END-->/)[1];
-const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
+// every <script src> in order, then the preloaded scripts (the historical borders), which app.js runs last
+const scripts = [...html.matchAll(/<script[^>]*\ssrc="([^"]+)"[^>]*><\/script>/g)].map(m => m[1])
+  .concat([...html.matchAll(/<link rel="preload" href="([^"]+\.js)" as="script">/g)].map(m => m[1]));
 const css = read('css/style.css');
 const js = scripts.map(f => `/* ${f} */\n` + read(f).replace(/<\/script/gi, '<\\/script')).join('\n');
 const out = `${title}

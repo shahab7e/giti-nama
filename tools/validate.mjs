@@ -2,7 +2,9 @@
 import fs from 'node:fs'; import vm from 'node:vm'; import path from 'node:path';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const files = [...html.matchAll(/<script src="((?:js\/core|data\/[^"]+)\.js)"><\/script>/g)].map(m => m[1]);
+// the page's data scripts in order, then the preloaded ones (historical borders) that the app runs last
+const files = [...html.matchAll(/<script[^>]*\ssrc="((?:js\/core|data\/[^"]+)\.js)"[^>]*><\/script>/g)].map(m => m[1])
+  .concat([...html.matchAll(/<link rel="preload" href="(data\/[^"]+\.js)" as="script">/g)].map(m => m[1]));
 const ctx = { window: {}, console }; ctx.window = ctx; vm.createContext(ctx);
 for (const f of files) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
 const TL = ctx.TL, errs = [...TL.errors], warn = [];
